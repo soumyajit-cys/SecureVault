@@ -1,2 +1,31 @@
 # SecureVault
-SecureVault is an enterprise-grade encryption platform that enables secure encryption and decryption of files, folders, and messages using AES-256 and Argon2id. It features secure key management, integrity verification, encrypted file sharing, audit logging, and role-based access control through a modern web dashboard.
+
+Enterprise-grade encryption and secure file management platform.
+
+## Current Phase
+
+Phase 1:
+- Clean Architecture foundation
+- FastAPI
+- PostgreSQL
+- SQLAlchemy 2
+- Alembic
+- Health API
+- Logging
+- Configuration system
+
+## Start
+
+```bash
+cp .env.example .env
+
+pip install -r backend/requirements.txt
+
+cd backend
+
+uvicorn app.main:app --reload
+```
+
+Health Check:
+
+http://localhost:8000/api/v1/health
