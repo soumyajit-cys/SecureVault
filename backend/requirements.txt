@@ -24,3 +24,10 @@ structlog
 pytest
 pytest-asyncio
 httpx
+
+email-validator
+
+pydantic
+pydantic-settings
+email-validator
+
