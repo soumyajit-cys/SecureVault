@@ -3,6 +3,11 @@ from sqlalchemy.orm import Session
 from app.domain.models.permission import Permission
 from app.domain.models.role import Role
 
+from app.domain.models.permission import Permission
+from app.domain.models.role_permission import (
+    RolePermission
+)
+
 from app.scripts.seed_permissions import (
     PERMISSIONS,
 )
