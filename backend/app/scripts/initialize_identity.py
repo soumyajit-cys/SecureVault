@@ -16,6 +16,11 @@ from app.scripts.seed_roles import (
 )
 
 
+def seed_role_permissions(
+    db: Session,
+):
+    ...
+
 def seed_permissions(
     db: Session,
 ):
