@@ -32,3 +32,8 @@ class InvalidTokenError(AuthenticationError):
 
 class PermissionDeniedError(AuthorizationError):
     pass
+
+class WeakPasswordError(
+    AuthenticationError
+):
+    pass
