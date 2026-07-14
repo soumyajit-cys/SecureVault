@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from backend.app.schemas.rbac import RoleInfo
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import EmailStr
@@ -7,7 +8,9 @@ from pydantic import Field
 
 from app.schemas.audit import AuditLogResponse
 from app.schemas.common import TimestampSchema
-from app.schemas.role import RoleResponse
+from app.schemas.rbac import (
+    RoleInfo
+)
 from app.schemas.session import SessionResponse
 
 
@@ -50,7 +53,8 @@ class UserResponse(TimestampSchema):
 
     locked_until: datetime | None = None
 
-    roles: list[RoleResponse] = []
+    roles: list[RoleInfo] = []
+    
 
 
 class UserProfile(UserResponse):
