@@ -17,3 +17,13 @@ FILE_DECRYPTED = "file.decrypted"
 FILE_SHARED = "file.shared"
 
 ADMIN_ACTION = "admin.action"
+
+TOKEN_REPLAY_DETECTED = (
+    "token.replay_detected"
+)
+
+TOKEN_ROTATED = (
+    "token.rotated"
+)
+
+
