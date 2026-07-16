@@ -7,6 +7,8 @@ from app.infrastructure.repositories.base_repository import (
 
 from sqlalchemy import select
 
+from sqlalchemy import select
+
 def get_by_family(
     self,
     family: str,
@@ -44,6 +46,25 @@ def revoke_family(
 
     self.db.flush()
 
+def get_active_by_hash(
+    self,
+    token_hash: str,
+):
+
+    stmt = (
+        select(
+            RefreshToken
+        )
+        .where(
+            RefreshToken.token_hash
+            == token_hash,
+            RefreshToken.revoked.is_(False),
+        )
+    )
+
+    return self.db.scalar(
+        stmt
+    )
 
 class SQLAlchemyRefreshTokenRepository(
     SQLAlchemyRepository[
