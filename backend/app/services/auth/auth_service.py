@@ -2,6 +2,10 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
+from app.services.auth.token_utils import (
+    hash_token,
+)
+
 from app.core.config import get_settings
 from app.core.exceptions import (
     AccountLockedError,
@@ -297,7 +301,49 @@ class AuthService:
     )
 
     return {
-            
+
         "access_token": access,
         "refresh_token": new_refresh,
     }
+
+def logout(
+    self,
+    refresh_token: str,
+):
+
+    claims = (
+        self.refresh_service
+        .jwt_service
+        .decode_token(
+            refresh_token
+        )
+    )
+
+    token_hash = (
+        hash_token(
+            refresh_token
+        )
+    )
+
+    token = (
+        self.refresh_service
+        .repository
+        .get_by_token_hash(
+            token_hash
+        )
+    )
+
+    if token:
+
+        self.refresh_service.repository.revoke_family(
+            token.token_family
+        )
+
+    self.audit_service.log(
+        claims.sub,
+        USER_LOGOUT,
+    )
+
+    return True
+
+
