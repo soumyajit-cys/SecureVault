@@ -10,6 +10,11 @@ from app.schemas.auth import (
     RegisterRequest,
 )
 
+from app.schemas.auth import (
+    RefreshRequest,
+    LogoutRequest,
+)
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
@@ -40,4 +45,26 @@ def login(
     return auth_service.login(
         payload.email,
         payload.password,
+    )
+
+@router.post("/refresh")
+def refresh(
+    payload: RefreshRequest,
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    return auth_service.refresh(
+        payload.refresh_token
+    )
+
+@router.post("/logout")
+def logout(
+    payload: LogoutRequest,
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    return auth_service.logout(
+        payload.refresh_token
     )
