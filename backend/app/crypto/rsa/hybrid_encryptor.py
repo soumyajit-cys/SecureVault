@@ -1,0 +1,2 @@
+class HybridEncryptor:
+    pass
