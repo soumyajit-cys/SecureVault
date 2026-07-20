@@ -9,3 +9,7 @@ class EncryptedPayload(
     ciphertext: str
 
     tag: str
+
+    algorithm: str = (
+        "AES-256-GCM"
+    )
