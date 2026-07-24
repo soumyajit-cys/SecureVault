@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import serialization
 
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric import rsa
+from app.crypto.models.key_pair import RSAKeyPair
 
 from app.crypto.exceptions import (
     DecryptionError,
@@ -25,20 +26,16 @@ class RSAService:
 
     def generate_key_pair(
         self,
-    ) -> tuple[
-        rsa.RSAPrivateKey,
-        rsa.RSAPublicKey,
-    ]:
+    ) -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
 
         private_key = rsa.generate_private_key(
             public_exponent=self.PUBLIC_EXPONENT,
             key_size=self.KEY_SIZE,
         )
 
-        return (
-            private_key,
-            private_key.public_key(),
-        )
+        public_key = private_key.public_key()
+
+        return private_key, public_key
 
     def serialize_public_key(
         self,
