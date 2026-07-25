@@ -18,10 +18,14 @@ from app.crypto.models.encrypted_payload import (
     EncryptedPayload,
 )
 
+from app.crypto.interfaces.symmetric_cipher import (
+    SymmetricCipher,
+)
 
 class AESGCMCipher(
-    SymmetricCipher
+    SymmetricCipher,
 ):
+
 
     NONCE_SIZE = 12
 
