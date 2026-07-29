@@ -16,7 +16,8 @@ from .encrypted_data import EncryptedData
 from .hash_result import HashResult
 from .hybrid_payload import HybridEncryptedPayload
 from .key_pair import RSAKeyPair
-
+from .hybrid_encryptor import HybridEncryptor
+from .rsa_service import RSAService
 
 
 
@@ -36,4 +37,9 @@ _all__ = [
     "HashResult",
     "HybridEncryptedPayload",
     "RSAKeyPair",
+]
+
+__all__ = [
+    "HybridEncryptor",
+    "RSAService",
 ]
