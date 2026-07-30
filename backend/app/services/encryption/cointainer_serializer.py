@@ -6,50 +6,67 @@ from pathlib import Path
 from typing import BinaryIO
 
 from app.crypto.file.file_header import FileHeader
-
-from app.crypto.models.encrypted_payload import (
-    EncryptedPayload,
-)
+from app.crypto.models.encrypted_payload import EncryptedPayload
 
 MAGIC = b"SVLT"
 FORMAT_VERSION = 1
 
 
 class InvalidContainerError(Exception):
-    """Raised when a SecureVault container is invalid."""
+    """Raised when an encrypted SecureVault container is invalid."""
 
 
 class ContainerSerializer:
     """
-    Reads and writes SecureVault encrypted container headers.
+    Handles reading and writing SecureVault encrypted containers.
 
-    Container Layout:
+    Container Layout
 
-    +-------------------------------+
-    | MAGIC (4 bytes)               |
-    +-------------------------------+
-    | VERSION (4 bytes)             |
-    +-------------------------------+
-    | HEADER_LENGTH (4 bytes)       |
-    +-------------------------------+
-    | JSON HEADER                   |
-    +-------------------------------+
-    | WRAPPED_KEY_LENGTH (4 bytes)  |
-    +-------------------------------+
-    | WRAPPED_KEY                   |
-    +-------------------------------+
-    | ENCRYPTED DATA ...            |
-    +-------------------------------+
+    +------------------------------------------------+
+    | MAGIC (4 bytes)                                |
+    +------------------------------------------------+
+    | VERSION (4 bytes)                              |
+    +------------------------------------------------+
+    | HEADER_LENGTH (4 bytes)                        |
+    +------------------------------------------------+
+    | HEADER (JSON)                                  |
+    +------------------------------------------------+
+    | WRAPPED_KEY_LENGTH (4 bytes)                   |
+    +------------------------------------------------+
+    | WRAPPED_KEY                                    |
+    +------------------------------------------------+
+    | CHUNK                                           |
+    | CHUNK                                           |
+    | CHUNK                                           |
+    | ...                                             |
+    +------------------------------------------------+
+
+    Chunk Layout
+
+    +---------------------------------------------+
+    | NONCE_LENGTH (4 bytes)                      |
+    +---------------------------------------------+
+    | NONCE                                       |
+    +---------------------------------------------+
+    | TAG_LENGTH (4 bytes)                        |
+    +---------------------------------------------+
+    | TAG                                         |
+    +---------------------------------------------+
+    | CIPHERTEXT_LENGTH (4 bytes)                 |
+    +---------------------------------------------+
+    | CIPHERTEXT                                  |
+    +---------------------------------------------+
     """
+
+    # -------------------------------------------------
+    # Header
+    # -------------------------------------------------
 
     def write_header(
         self,
         stream: BinaryIO,
         header: FileHeader,
     ) -> None:
-        """
-        Write the SecureVault header.
-        """
 
         header_dict = {
             "version": header.version,
@@ -81,11 +98,8 @@ class ContainerSerializer:
         self,
         stream: BinaryIO,
     ) -> dict:
-        """
-        Read a SecureVault header.
-        """
 
-        magic = stream.read(4)
+        magic = self._read_exact(stream, 4)
 
         if magic != MAGIC:
             raise InvalidContainerError(
@@ -94,7 +108,7 @@ class ContainerSerializer:
 
         version = struct.unpack(
             ">I",
-            stream.read(4),
+            self._read_exact(stream, 4),
         )[0]
 
         if version != FORMAT_VERSION:
@@ -104,25 +118,27 @@ class ContainerSerializer:
 
         header_length = struct.unpack(
             ">I",
-            stream.read(4),
+            self._read_exact(stream, 4),
         )[0]
 
-        header_data = stream.read(
-            header_length
+        header_bytes = self._read_exact(
+            stream,
+            header_length,
         )
 
         return json.loads(
-            header_data.decode("utf-8")
+            header_bytes.decode("utf-8")
         )
+
+    # -------------------------------------------------
+    # Wrapped AES Session Key
+    # -------------------------------------------------
 
     def write_wrapped_key(
         self,
         stream: BinaryIO,
         wrapped_key: bytes,
     ) -> None:
-        """
-        Store the RSA-encrypted AES session key.
-        """
 
         stream.write(
             struct.pack(">I", len(wrapped_key))
@@ -134,18 +150,117 @@ class ContainerSerializer:
         self,
         stream: BinaryIO,
     ) -> bytes:
-        """
-        Read the RSA-wrapped AES session key.
-        """
 
         key_length = struct.unpack(
             ">I",
-            stream.read(4),
+            self._read_exact(stream, 4),
         )[0]
 
-        return stream.read(
-            key_length
+        return self._read_exact(
+            stream,
+            key_length,
         )
+
+    # -------------------------------------------------
+    # Chunk Serialization
+    # -------------------------------------------------
+
+    def write_chunk(
+        self,
+        stream: BinaryIO,
+        payload: EncryptedPayload,
+    ) -> None:
+
+        nonce = payload.nonce.encode("utf-8")
+        tag = payload.tag.encode("utf-8")
+        ciphertext = payload.ciphertext.encode("utf-8")
+
+        stream.write(
+            struct.pack(">I", len(nonce))
+        )
+
+        stream.write(nonce)
+
+        stream.write(
+            struct.pack(">I", len(tag))
+        )
+
+        stream.write(tag)
+
+        stream.write(
+            struct.pack(">I", len(ciphertext))
+        )
+
+        stream.write(ciphertext)
+
+    def read_chunk(
+        self,
+        stream: BinaryIO,
+    ) -> EncryptedPayload | None:
+
+        length_bytes = stream.read(4)
+
+        if length_bytes == b"":
+            return None
+
+        if len(length_bytes) != 4:
+            raise InvalidContainerError(
+                "Corrupted encrypted container."
+            )
+
+        nonce_length = struct.unpack(
+            ">I",
+            length_bytes,
+        )[0]
+
+        nonce = self._read_exact(
+            stream,
+            nonce_length,
+        ).decode("utf-8")
+
+        tag_length = struct.unpack(
+            ">I",
+            self._read_exact(stream, 4),
+        )[0]
+
+        tag = self._read_exact(
+            stream,
+            tag_length,
+        ).decode("utf-8")
+
+        cipher_length = struct.unpack(
+            ">I",
+            self._read_exact(stream, 4),
+        )[0]
+
+        ciphertext = self._read_exact(
+            stream,
+            cipher_length,
+        ).decode("utf-8")
+
+        return EncryptedPayload(
+            nonce=nonce,
+            tag=tag,
+            ciphertext=ciphertext,
+        )
+
+    def iter_chunks(
+        self,
+        stream: BinaryIO,
+    ):
+
+        while True:
+
+            chunk = self.read_chunk(stream)
+
+            if chunk is None:
+                break
+
+            yield chunk
+
+    # -------------------------------------------------
+    # File Helpers
+    # -------------------------------------------------
 
     def write_file(
         self,
@@ -153,21 +268,13 @@ class ContainerSerializer:
         header: FileHeader,
         wrapped_key: bytes,
     ) -> BinaryIO:
-        """
-        Create a new SecureVault container and write its header.
-
-        Returns an open binary stream positioned immediately after
-        the wrapped session key so encrypted payloads can be written.
-        """
 
         path.parent.mkdir(
             parents=True,
             exist_ok=True,
         )
 
-        stream = path.open(
-            "wb"
-        )
+        stream = path.open("wb")
 
         self.write_header(
             stream,
@@ -185,27 +292,15 @@ class ContainerSerializer:
         self,
         path: Path,
     ) -> tuple[BinaryIO, dict, bytes]:
-        """
-        Open an existing SecureVault container.
 
-        Returns:
-            (
-                binary_stream,
-                header_dict,
-                wrapped_key,
-            )
-        """
-
-        stream = path.open(
-            "rb"
-        )
+        stream = path.open("rb")
 
         header = self.read_header(
-            stream
+            stream,
         )
 
         wrapped_key = self.read_wrapped_key(
-            stream
+            stream,
         )
 
         return (
@@ -213,3 +308,22 @@ class ContainerSerializer:
             header,
             wrapped_key,
         )
+
+    # -------------------------------------------------
+    # Internal Helpers
+    # -------------------------------------------------
+
+    @staticmethod
+    def _read_exact(
+        stream: BinaryIO,
+        size: int,
+    ) -> bytes:
+
+        data = stream.read(size)
+
+        if len(data) != size:
+            raise InvalidContainerError(
+                "Unexpected end of encrypted container."
+            )
+
+        return data
