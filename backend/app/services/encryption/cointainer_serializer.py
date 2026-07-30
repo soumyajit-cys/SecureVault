@@ -7,6 +7,10 @@ from typing import BinaryIO
 
 from app.crypto.file.file_header import FileHeader
 
+from app.crypto.models.encrypted_payload import (
+    EncryptedPayload,
+)
+
 MAGIC = b"SVLT"
 FORMAT_VERSION = 1
 
