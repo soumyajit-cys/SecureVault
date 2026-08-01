@@ -5,10 +5,6 @@ from app.api.dependencies.rbac import (
     require_role,
 )
 
-api_router.include_router(
-    admin_router
-)
-
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
