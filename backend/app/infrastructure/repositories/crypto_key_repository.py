@@ -44,7 +44,8 @@ class SQLAlchemyCryptoKeyRepository(
                 self.model.user_id == user_id
             )
             .order_by(
-                self.model.created_at.desc()
+                self.model.created_at.desc(),
+                self.model.id.desc(),
             )
         )
 
@@ -69,7 +70,8 @@ class SQLAlchemyCryptoKeyRepository(
                 self.model.status == "active",
             )
             .order_by(
-                self.model.created_at.desc()
+                self.model.created_at.desc(),
+                self.model.id.desc(),
             )
             .limit(1)
         )
