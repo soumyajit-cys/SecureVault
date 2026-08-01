@@ -14,7 +14,23 @@ FILE_ENCRYPTED = "file.encrypted"
 
 FILE_DECRYPTED = "file.decrypted"
 
+FILE_UPLOADED = "file.uploaded"
+
+FILE_DOWNLOADED = "file.downloaded"
+
+FILE_DELETED = "file.deleted"
+
 FILE_SHARED = "file.shared"
+
+FOLDER_ENCRYPTED = "folder.encrypted"
+
+FOLDER_DECRYPTED = "folder.decrypted"
+
+KEY_GENERATED = "key.generated"
+
+KEY_ROTATED = "key.rotated"
+
+KEY_REVOKED = "key.revoked"
 
 ADMIN_ACTION = "admin.action"
 

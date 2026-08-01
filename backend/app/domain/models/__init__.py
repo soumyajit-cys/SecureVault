@@ -5,6 +5,7 @@ from app.domain.models.refresh_token import RefreshToken
 from app.domain.models.role import Role
 from app.domain.models.role_permission import RolePermission
 from app.domain.models.session import Session
+from app.domain.models.stored_file import StoredFile
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 
@@ -18,6 +19,7 @@ __all__ = [
     "Session",
     "AuditLog",
     "CryptoKey",
+    "StoredFile",
 ]
 
 
