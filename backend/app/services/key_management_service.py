@@ -99,8 +99,10 @@ class KeyManagementService:
             keypair.private_key
         )
 
-        encrypted = self._encrypt_private_key(
-            private_pem
+        encrypted, salt = (
+            self._encrypt_private_key(
+                private_pem
+            )
         )
 
         expires_at = None
@@ -127,7 +129,7 @@ class KeyManagementService:
             private_key_nonce=encrypted.nonce,
             private_key_tag=encrypted.tag,
             private_key_salt=base64.b64encode(
-                encrypted.salt
+                salt
             ).decode(),
             fingerprint=self._rsa.fingerprint(
                 keypair.public_key
@@ -394,15 +396,16 @@ class KeyManagementService:
     def _encrypt_private_key(
         self,
         private_pem: bytes,
-    ) -> EncryptedPayload:
+    ) -> tuple[EncryptedPayload, bytes]:
         """
         Encrypt private key material with AES-256-GCM under a
         per-key derived master key.
+
+        Returns:
+            (encrypted payload, salt)
         """
 
-        salt = base64.b64decode(
-            self._aes.generate_nonce()
-        )
+        salt = self._aes.generate_nonce()
 
         master = self._master_key(
             salt
@@ -415,9 +418,7 @@ class KeyManagementService:
                 key=master,
             )
 
-            payload.salt = salt
-
-            return payload
+            return payload, salt
 
         except Exception as exc:
             raise EncryptionError(
