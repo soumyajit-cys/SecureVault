@@ -18,4 +18,6 @@ class FileMetadata:
 
     sha256: str = ""
 
+    chunk_count: int = 0
+
     owner_id: str | None = None
