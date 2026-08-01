@@ -249,16 +249,44 @@ class AuthService:
 
     def logout(
         self,
-        user_id,
+        refresh_token: str,
     ):
 
+        claims = (
+            self.refresh_service
+            .jwt_service
+            .decode_token(
+                refresh_token
+            )
+        )
+
+        token_hash = (
+            hash_token(
+                refresh_token
+            )
+        )
+
+        token = (
+            self.refresh_service
+            .repository
+            .get_by_token_hash(
+                token_hash
+            )
+        )
+
+        if token:
+
+            self.refresh_service.repository.revoke_family(
+                token.token_family
+            )
+
         self.audit_service.log(
-            user_id,
+            claims.sub,
             USER_LOGOUT,
         )
 
         return True
-    
+
     def refresh(self, refresh_token: str):
 
         claims = (
@@ -269,81 +297,40 @@ class AuthService:
             )
         )
 
-    user = self.users.get(
-        claims.sub
-    )
-
-    context = AuthContext(
-        user_id=user.id,
-        email=user.email,
-        session_id=claims.session_id,
-        roles=[],
-        permissions=[],
-    )
-
-    new_refresh = (
-        self.refresh_service
-        .rotate(
-            refresh_token,
-            context,
-            datetime.now(UTC)
-            + timedelta(
-                days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-            ),
-        )
-    )
-
-    access = (
-        self.token_service
-        .create_access_token(
-            context
-        )
-    )
-
-    return {
-
-        "access_token": access,
-        "refresh_token": new_refresh,
-    }
-
-def logout(
-    self,
-    refresh_token: str,
-):
-
-    claims = (
-        self.refresh_service
-        .jwt_service
-        .decode_token(
-            refresh_token
-        )
-    )
-
-    token_hash = (
-        hash_token(
-            refresh_token
-        )
-    )
-
-    token = (
-        self.refresh_service
-        .repository
-        .get_by_token_hash(
-            token_hash
-        )
-    )
-
-    if token:
-
-        self.refresh_service.repository.revoke_family(
-            token.token_family
+        user = self.users.get(
+            claims.sub
         )
 
-    self.audit_service.log(
-        claims.sub,
-        USER_LOGOUT,
-    )
+        context = AuthContext(
+            user_id=user.id,
+            email=user.email,
+            session_id=claims.session_id,
+            roles=[],
+            permissions=[],
+        )
 
-    return True
+        new_refresh = (
+            self.refresh_service
+            .rotate(
+                refresh_token,
+                context,
+                datetime.now(UTC)
+                + timedelta(
+                    days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+                ),
+            )
+        )
+
+        access = (
+            self.token_service
+            .create_access_token(
+                context
+            )
+        )
+
+        return {
+            "access_token": access,
+            "refresh_token": new_refresh,
+        }
 
 
