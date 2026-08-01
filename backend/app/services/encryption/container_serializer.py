@@ -326,6 +326,52 @@ class ContainerSerializer:
         )
 
     # -------------------------------------------------
+    # File Metadata
+    # -------------------------------------------------
+
+    @staticmethod
+    def metadata_from_header(
+        header_dict: dict,
+    ) -> FileMetadata | None:
+        """
+        Recover FileMetadata stored inside a container header.
+        """
+
+        raw = header_dict.get(
+            "metadata"
+        )
+
+        if not raw:
+            return None
+
+        try:
+
+            return FileMetadata(
+                filename=str(
+                    raw.get("filename", "")
+                ),
+                extension=str(
+                    raw.get("extension", "")
+                ),
+                mime_type=str(
+                    raw.get("mime_type", "")
+                ),
+                original_size=int(
+                    raw.get("original_size", 0)
+                ),
+                encrypted_size=int(
+                    raw.get("encrypted_size", 0)
+                ),
+                sha256=str(
+                    raw.get("sha256", "")
+                ),
+                owner_id=raw.get("owner_id"),
+            )
+
+        except (TypeError, ValueError):
+            return None
+
+    # -------------------------------------------------
     # Internal Helpers
     # -------------------------------------------------
 
