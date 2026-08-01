@@ -164,8 +164,10 @@ def test_encrypt_missing_folder(tmp_path, keypair):
 
 def test_decrypt_missing_container(tmp_path, keypair):
 
+    from app.crypto.exceptions import DecryptionError
+
     with pytest.raises(
-        EncryptionError
+        DecryptionError
     ):
 
         FolderDecryptor().decrypt_folder(
@@ -187,10 +189,10 @@ def test_decrypt_folder_wrong_key(
 
     other = RSAService().generate_key_pair()
 
-    import pytest as pt
+    from app.crypto.exceptions import DecryptionError
 
-    with pt.raises(
-        Exception
+    with pytest.raises(
+        DecryptionError
     ):
 
         FolderDecryptor().decrypt_folder(
