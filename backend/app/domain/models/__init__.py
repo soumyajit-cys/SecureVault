@@ -1,4 +1,5 @@
 from app.domain.models.audit_log import AuditLog
+from app.domain.models.crypto_key import CryptoKey
 from app.domain.models.permission import Permission
 from app.domain.models.refresh_token import RefreshToken
 from app.domain.models.role import Role
@@ -16,6 +17,7 @@ __all__ = [
     "RefreshToken",
     "Session",
     "AuditLog",
+    "CryptoKey",
 ]
 
 
