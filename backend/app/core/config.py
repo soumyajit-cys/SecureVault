@@ -19,28 +19,31 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-
-def new_func():
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     MAX_LOGIN_ATTEMPTS: int = 5
-
     ACCOUNT_LOCK_MINUTES: int = 15
 
     PASSWORD_MIN_LENGTH: int = 12
-
     PASSWORD_REQUIRE_UPPERCASE: bool = True
-
     PASSWORD_REQUIRE_LOWERCASE: bool = True
-
     PASSWORD_REQUIRE_NUMBER: bool = True
-
     PASSWORD_REQUIRE_SPECIAL: bool = True
 
-new_func()
+    STORAGE_DIR: str = "storage"
 
-model_config = SettingsConfigDict(
+    ENCRYPTED_FILE_EXTENSION: str = ".svlt"
+    ENCRYPTED_ARCHIVE_EXTENSION: str = ".svltz"
+
+    KEY_ROTATION_INTERVAL_DAYS: int = 90
+    KEY_RETENTION_DAYS: int = 365
+
+    GARBAGE_COLLECTION_ENABLED: bool = True
+    GARBAGE_COLLECTION_INTERVAL_HOURS: int = 24
+    TEMP_FILE_MAX_AGE_HOURS: int = 24
+
+    MAX_UPLOAD_SIZE_BYTES: int = 4 * 1024 * 1024 * 1024
+
+    model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
         extra="ignore",
@@ -50,4 +53,3 @@ model_config = SettingsConfigDict(
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

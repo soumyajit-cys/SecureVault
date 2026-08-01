@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from backend.app.schemas.rbac import RoleInfo
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import EmailStr
