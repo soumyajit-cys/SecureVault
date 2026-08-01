@@ -121,9 +121,16 @@ class FileDecryptor:
                 f"Encrypted file not found: {source}"
             )
 
-        stream, header_dict, wrapped_key = (
-            self._serializer.open_file(source)
-        )
+        try:
+
+            stream, header_dict, wrapped_key = (
+                self._serializer.open_file(source)
+            )
+
+        except Exception as exc:
+            raise DecryptionError(
+                f"Invalid encrypted container: {exc}"
+            ) from exc
 
         try:
 
@@ -269,9 +276,16 @@ class FileDecryptor:
                 f"Encrypted file not found: {source}"
             )
 
-        container, _, wrapped_key = (
-            self._serializer.open_file(source)
-        )
+        try:
+
+            container, _, wrapped_key = (
+                self._serializer.open_file(source)
+            )
+
+        except Exception as exc:
+            raise DecryptionError(
+                f"Invalid encrypted container: {exc}"
+            ) from exc
 
         try:
 
