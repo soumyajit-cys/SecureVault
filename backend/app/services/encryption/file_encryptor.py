@@ -156,13 +156,17 @@ class FileEncryptor:
             metadata,
         )
 
+        chunk_reader = ChunkReader(
+            chunk_size=header.chunk_size
+        )
+
         try:
 
             sha256 = self._encrypt_chunks(
                 source,
                 stream,
                 session_key,
-                header.chunk_size,
+                chunk_reader,
                 metadata,
             )
 
@@ -249,11 +253,15 @@ class FileEncryptor:
             wrapped_key,
         )
 
+        chunk_reader = ChunkReader(
+            chunk_size=header.chunk_size
+        )
+
         sha256 = self._encrypt_chunks(
             source,
             stream,
             session_key,
-            header.chunk_size,
+            chunk_reader,
             metadata,
         )
 
@@ -281,7 +289,7 @@ class FileEncryptor:
         source: Path,
         stream: BinaryIO,
         session_key: bytes,
-        chunk_size: int,
+        chunk_reader: ChunkReader,
         metadata: FileMetadata,
     ) -> str:
         """
@@ -296,7 +304,7 @@ class FileEncryptor:
         encrypted_size = 0
 
         for chunk in (
-            self._chunk_reader.read(source)
+            chunk_reader.read(source)
         ):
 
             sha256.update(chunk)
