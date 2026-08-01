@@ -42,10 +42,6 @@ from app.crypto.interfaces.kdf import (
     KeyDerivationFunction,
 )
 
-from app.crypto.interfaces.symmetric_cipher import (
-    CipherAlgorithm,
-)
-
 from app.crypto.models.derived_key import (
     DerivedKey,
 )
