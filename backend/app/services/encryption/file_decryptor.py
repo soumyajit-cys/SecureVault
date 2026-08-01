@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import BinaryIO
 
@@ -174,14 +175,29 @@ class FileDecryptor:
                         4 * 1024 * 1024,
                     )
                 ),
-                created_at=header_dict.get("created_at"),
+                created_at=(
+                    datetime.fromisoformat(
+                        header_dict["created_at"]
+                    )
+                    if header_dict.get("created_at")
+                    else datetime.now(UTC)
+                ),
             )
 
-            sha256, chunk_count = self._decrypt_chunks(
-                stream,
-                output,
-                session_key,
+            output.parent.mkdir(
+                parents=True,
+                exist_ok=True,
             )
+
+            with output.open("wb") as out:
+
+                sha256, chunk_count = (
+                    self._decrypt_chunks(
+                        stream,
+                        out,
+                        session_key,
+                    )
+                )
 
             integrity_verified = True
 
