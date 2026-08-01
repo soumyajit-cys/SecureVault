@@ -33,6 +33,15 @@ class InvalidTokenError(AuthenticationError):
 class PermissionDeniedError(AuthorizationError):
     pass
 
+
+class NotFoundError(SecureVaultException):
+    pass
+
+
+class FileTooLargeError(SecureVaultException):
+    pass
+
+
 class WeakPasswordError(
     AuthenticationError
 ):
