@@ -107,7 +107,13 @@ class KeyManagementService:
 
         expires_at = None
 
-        if validity_days > 0:
+        if validity_days <= 0:
+
+            # Zero or negative validity: the key is
+            # immediately eligible for expiration.
+            expires_at = datetime.now(UTC)
+
+        else:
 
             expires_at = (
                 datetime.now(UTC)
