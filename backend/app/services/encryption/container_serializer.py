@@ -88,6 +88,7 @@ class ContainerSerializer:
                 "original_size": metadata.original_size,
                 "encrypted_size": metadata.encrypted_size,
                 "sha256": metadata.sha256,
+                "chunk_count": metadata.chunk_count,
                 "owner_id": metadata.owner_id,
             }
 
@@ -364,6 +365,9 @@ class ContainerSerializer:
                 ),
                 sha256=str(
                     raw.get("sha256", "")
+                ),
+                chunk_count=int(
+                    raw.get("chunk_count", 0)
                 ),
                 owner_id=raw.get("owner_id"),
             )
