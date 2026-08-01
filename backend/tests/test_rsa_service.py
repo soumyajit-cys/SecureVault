@@ -15,17 +15,17 @@ def test_generate_key_pair():
 
     service = RSAService()
 
-    private_key, public_key = (
+    keypair = (
         service.generate_key_pair()
     )
 
     assert isinstance(
-        private_key,
+        keypair.private_key,
         RSAPrivateKey,
     )
 
     assert isinstance(
-        public_key,
+        keypair.public_key,
         RSAPublicKey,
     )
 
@@ -34,12 +34,12 @@ def test_public_key_serialization():
 
     service = RSAService()
 
-    _, public_key = (
+    keypair = (
         service.generate_key_pair()
     )
 
     pem = service.serialize_public_key(
-        public_key
+        keypair.public_key
     )
 
     loaded = service.load_public_key(
@@ -56,12 +56,12 @@ def test_private_key_serialization_without_password():
 
     service = RSAService()
 
-    private_key, _ = (
+    keypair = (
         service.generate_key_pair()
     )
 
     pem = service.serialize_private_key(
-        private_key
+        keypair.private_key
     )
 
     loaded = service.load_private_key(
@@ -78,12 +78,12 @@ def test_private_key_serialization_with_password():
 
     service = RSAService()
 
-    private_key, _ = (
+    keypair = (
         service.generate_key_pair()
     )
 
     pem = service.serialize_private_key(
-        private_key,
+        keypair.private_key,
         password="SecureVaultPassword123!",
     )
 
@@ -102,7 +102,7 @@ def test_encrypt_decrypt():
 
     service = RSAService()
 
-    private_key, public_key = (
+    keypair = (
         service.generate_key_pair()
     )
 
@@ -112,12 +112,12 @@ def test_encrypt_decrypt():
 
     ciphertext = service.encrypt(
         plaintext,
-        public_key,
+        keypair.public_key,
     )
 
     decrypted = service.decrypt(
         ciphertext,
-        private_key,
+        keypair.private_key,
     )
 
     assert decrypted == plaintext
@@ -127,13 +127,13 @@ def test_public_key_fingerprint():
 
     service = RSAService()
 
-    _, public_key = (
+    keypair = (
         service.generate_key_pair()
     )
 
     fingerprint = (
         service.fingerprint(
-            public_key
+            keypair.public_key
         )
     )
 
@@ -192,24 +192,24 @@ def test_decrypt_with_wrong_private_key():
 
     service = RSAService()
 
-    private_a, public_a = (
+    keypair_a = (
         service.generate_key_pair()
     )
 
-    private_b, _ = (
+    keypair_b = (
         service.generate_key_pair()
     )
 
     ciphertext = service.encrypt(
         b"SecureVault",
-        public_a,
+        keypair_a.public_key,
     )
 
     try:
 
         service.decrypt(
             ciphertext,
-            private_b,
+            keypair_b.private_key,
         )
 
         assert False
