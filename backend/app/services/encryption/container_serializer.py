@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import BinaryIO
 
 from app.crypto.file.file_header import FileHeader
+from app.crypto.file.file_metadata import FileMetadata
 from app.crypto.models.encrypted_payload import EncryptedPayload
 
 MAGIC = b"SVLT"
@@ -66,6 +67,7 @@ class ContainerSerializer:
         self,
         stream: BinaryIO,
         header: FileHeader,
+        metadata: FileMetadata | None = None,
     ) -> None:
 
         header_dict = {
@@ -76,6 +78,18 @@ class ContainerSerializer:
             "chunk_size": header.chunk_size,
             "created_at": header.created_at.isoformat(),
         }
+
+        if metadata is not None:
+
+            header_dict["metadata"] = {
+                "filename": metadata.filename,
+                "extension": metadata.extension,
+                "mime_type": metadata.mime_type,
+                "original_size": metadata.original_size,
+                "encrypted_size": metadata.encrypted_size,
+                "sha256": metadata.sha256,
+                "owner_id": metadata.owner_id,
+            }
 
         header_bytes = json.dumps(
             header_dict,
@@ -267,6 +281,7 @@ class ContainerSerializer:
         path: Path,
         header: FileHeader,
         wrapped_key: bytes,
+        metadata: FileMetadata | None = None,
     ) -> BinaryIO:
 
         path.parent.mkdir(
@@ -279,6 +294,7 @@ class ContainerSerializer:
         self.write_header(
             stream,
             header,
+            metadata,
         )
 
         self.write_wrapped_key(
