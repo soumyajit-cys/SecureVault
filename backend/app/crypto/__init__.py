@@ -27,7 +27,7 @@ from app.crypto.hashing.sha256 import (
 )
 
 from app.crypto.interfaces.asymmetric import (
-    AsymmetricEngine,
+    AsymmetricCipher,
 )
 
 from app.crypto.interfaces.cipher import (
@@ -106,5 +106,5 @@ __all__ = [
     "RSAService",
     "SHA256Engine",
     "SymmetricCipher",
-    "AsymmetricEngine",
+    "AsymmetricCipher",
 ]
