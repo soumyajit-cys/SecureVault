@@ -81,7 +81,6 @@ from app.crypto.rsa.rsa_service import (
 __all__ = [
     "AESGCMCipher",
     "Argon2KDF",
-    "CipherAlgorithm",
     "CryptoException",
     "DecryptionError",
     "DerivedKey",
