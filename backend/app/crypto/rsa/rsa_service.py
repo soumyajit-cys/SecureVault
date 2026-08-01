@@ -26,7 +26,7 @@ class RSAService:
 
     def generate_key_pair(
         self,
-    ) -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
+    ) -> RSAKeyPair:
 
         private_key = rsa.generate_private_key(
             public_exponent=self.PUBLIC_EXPONENT,
@@ -35,7 +35,10 @@ class RSAService:
 
         public_key = private_key.public_key()
 
-        return private_key, public_key
+        return RSAKeyPair(
+            private_key=private_key,
+            public_key=public_key,
+        )
 
     def serialize_public_key(
         self,
