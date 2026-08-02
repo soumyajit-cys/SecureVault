@@ -45,28 +45,34 @@ export default function Register() {
   }
 
   return (
-    <div className="grid-bg flex min-h-screen items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-neon-cyan text-3xl font-bold text-vault-950 shadow-glow">
-            ▣
+          <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+            <svg
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5" />
+            </svg>
           </span>
-          <h1 className="mt-4 text-2xl font-bold tracking-wide text-white">
-            SECUREVAULT
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Create your account
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Provision a new vault account
+            Provision a new vault workspace.
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-lg border border-vault-700 bg-vault-900/80 p-6 shadow-2xl backdrop-blur"
+          className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-card"
         >
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-300">
-            Create account
-          </h2>
-
           <TextField
             label="Email"
             type="email"
@@ -102,7 +108,7 @@ export default function Register() {
           />
 
           {error && (
-            <p className="rounded border border-neon-red/40 bg-neon-red/10 px-3 py-2 text-sm text-neon-red">
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </p>
           )}
@@ -114,7 +120,7 @@ export default function Register() {
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link to="/login" className="text-neon-cyan hover:underline">
+          <Link to="/login" className="font-medium text-brand-600 hover:text-brand-700">
             Sign in
           </Link>
         </p>

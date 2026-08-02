@@ -71,8 +71,8 @@ export default function KeyManager() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Key Manager</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Key Manager</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Keys are generated server-side; their private material is never exposed.
         </p>
       </div>
@@ -105,7 +105,9 @@ export default function KeyManager() {
           </div>
         </div>
         {genMutation.error && (
-          <p className="mt-3 text-sm text-neon-red">{extractDetail(genMutation.error)}</p>
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {extractDetail(genMutation.error)}
+          </p>
         )}
       </Card>
 
@@ -117,7 +119,7 @@ export default function KeyManager() {
               header: "Key",
               render: (r: Key) => (
                 <div>
-                  <p className="font-medium text-slate-100">{r.name}</p>
+                  <p className="font-medium text-slate-900">{r.name}</p>
                   <p className="text-xs text-slate-500">
                     {r.algorithm} · {r.key_size}-bit · {r.fingerprint?.slice(0, 12)}
                   </p>
@@ -133,14 +135,14 @@ export default function KeyManager() {
               key: "expires",
               header: "Expires",
               render: (r: Key) => (
-                <span className="text-xs text-slate-400">{formatDate(r.expires_at)}</span>
+                <span className="text-xs text-slate-500">{formatDate(r.expires_at)}</span>
               )
             },
             {
               key: "created",
               header: "Created",
               render: (r: Key) => (
-                <span className="text-xs text-slate-400">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
               )
             },
             {
@@ -188,10 +190,10 @@ export default function KeyManager() {
         title="Key generated"
         onClose={() => setPubKey(null)}
       >
-        <p className="mb-3 text-sm text-slate-400">
+        <p className="mb-3 text-sm text-slate-500">
           The public part of the new key pair (for verification):
         </p>
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-vault-950 p-4 text-xs text-neon-green">
+        <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-300">
           {pubKey}
         </pre>
       </Modal>

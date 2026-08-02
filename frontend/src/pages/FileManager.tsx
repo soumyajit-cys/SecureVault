@@ -73,11 +73,11 @@ export default function FileManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">File Manager</h1>
-          <p className="text-sm text-slate-500">
-            Files are sealed client-side and never stored in plaintext.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">File Manager</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Files are sealed with AES-256-GCM and never stored in plaintext.
           </p>
         </div>
         <input
@@ -102,7 +102,7 @@ export default function FileManager() {
         action={
           <div className="flex items-center gap-3">
             <input
-              className="w-56 rounded border border-vault-600 bg-vault-900 px-3 py-1.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-neon-cyan/70"
+              className="w-56 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
               placeholder="Search by filename…"
               value={search}
               onChange={(e) => {
@@ -134,7 +134,7 @@ export default function FileManager() {
               header: "Filename",
               render: (r: StoredFile) => (
                 <button
-                  className="text-left text-neon-cyan hover:underline"
+                  className="text-left font-medium text-brand-600 hover:text-brand-700 hover:underline"
                   onClick={() => setPreview(r)}
                 >
                   {r.original_filename}
@@ -145,7 +145,7 @@ export default function FileManager() {
               key: "size",
               header: "Size",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   {formatBytes(r.original_size)}
                 </span>
               )
@@ -163,7 +163,7 @@ export default function FileManager() {
               key: "created",
               header: "Created",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-400">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
               )
             },
             {
@@ -172,7 +172,7 @@ export default function FileManager() {
               render: (r: StoredFile) => (
                 <div className="flex gap-2">
                   <Button variant="success" size="sm" onClick={() => handleDownload(r)}>
-                    Decrypt
+                    Download
                   </Button>
                   <Button variant="danger" size="sm" onClick={() => deleteMutation.mutate(r.id)}>
                     Delete
@@ -210,7 +210,7 @@ export default function FileManager() {
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4">
                 <dt className="text-slate-500">{k}</dt>
-                <dd className="max-w-xs truncate text-right font-mono text-slate-200">{v}</dd>
+                <dd className="max-w-xs truncate text-right font-mono text-slate-800">{v}</dd>
               </div>
             ))}
           </dl>

@@ -42,10 +42,11 @@ export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts);
   const dismiss = useToastStore((s) => s.dismiss);
 
-  const styles: Record<ToastType, string> = {
-    success: "border-neon-green/60 text-neon-green",
-    error: "border-neon-red/60 text-neon-red",
-    info: "border-neon-cyan/60 text-neon-cyan"
+  const tones: Record<ToastType, string> = {
+    success:
+      "bg-emerald-50 text-emerald-800 ring-emerald-600/30",
+    error: "bg-red-50 text-red-800 ring-red-600/30",
+    info: "bg-brand-50 text-brand-800 ring-brand-600/30"
   };
 
   return (
@@ -53,10 +54,14 @@ export function ToastHost() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`pointer-events-auto rounded-md border bg-vault-900/95 px-4 py-3 text-sm shadow-lg backdrop-blur ${styles[t.type]}`}
+          role="status"
+          className={`pointer-events-auto flex items-start gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium shadow-modal ring-1 ${tones[t.type]}`}
           onClick={() => dismiss(t.id)}
         >
-          {t.message}
+          <span aria-hidden="true">
+            {t.type === "success" ? "✓" : t.type === "error" ? "✕" : "ℹ"}
+          </span>
+          <span>{t.message}</span>
         </div>
       ))}
     </div>

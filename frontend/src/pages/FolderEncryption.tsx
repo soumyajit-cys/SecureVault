@@ -62,10 +62,10 @@ export default function FolderEncryption() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Folder Tools</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Folder Tools</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Encrypt an entire folder (zip + AES-256-GCM) or restore a stored archive.
           </p>
         </div>
@@ -109,20 +109,22 @@ export default function FolderEncryption() {
             {
               key: "name",
               header: "Archive",
-              render: (r: StoredFile) => <span>{r.original_filename}</span>
+              render: (r: StoredFile) => (
+                <span className="font-medium text-slate-900">{r.original_filename}</span>
+              )
             },
             {
               key: "files",
               header: "Files",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-400">{r.folder_file_count}</span>
+                <span className="text-xs text-slate-500">{r.folder_file_count}</span>
               )
             },
             {
               key: "size",
               header: "Size",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   {formatBytes(r.original_size)}
                 </span>
               )
@@ -140,7 +142,7 @@ export default function FolderEncryption() {
               key: "created",
               header: "Encrypted",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-400">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
               )
             },
             {
@@ -175,17 +177,17 @@ export default function FolderEncryption() {
         title="Folder restored"
         onClose={() => setRestoreInfo(null)}
       >
-        <p className="mb-4 text-sm text-neon-green">
+        <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           The archive was decrypted and expanded successfully.
         </p>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-slate-500">Paths</dt>
-            <dd className="font-mono text-slate-200">{restoreInfo?.restoredPath}</dd>
+            <dd className="font-mono text-slate-800">{restoreInfo?.restoredPath}</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-slate-500">Files</dt>
-            <dd className="font-mono text-slate-200">{restoreInfo?.files}</dd>
+            <dd className="font-mono text-slate-800">{restoreInfo?.files}</dd>
           </div>
         </dl>
       </Modal>

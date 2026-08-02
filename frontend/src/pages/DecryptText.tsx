@@ -33,8 +33,8 @@ export default function DecryptText() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Decrypt Text</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Decrypt Text</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Verify integrity and recover the plaintext.
         </p>
       </div>
@@ -75,10 +75,10 @@ export default function DecryptText() {
             disabled={!ciphertext.trim()}
             onClick={() => decryptMutation.mutate()}
           >
-            Decrypt & verify
+            Decrypt &amp; verify
           </Button>
           {decryptMutation.error && (
-            <p className="rounded border border-neon-red/40 bg-neon-red/10 px-3 py-2 text-sm text-neon-red">
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {errorMessage(decryptMutation.error)}
             </p>
           )}
@@ -87,7 +87,7 @@ export default function DecryptText() {
 
       {plaintext !== null && (
         <Card title="Plaintext">
-          <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-vault-950 p-4 text-sm text-slate-100">
+          <pre className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
             {plaintext}
           </pre>
         </Card>

@@ -12,26 +12,27 @@ import type { AuditLog } from "@/types";
 
 const PAGE_SIZE = 15;
 
-const actionColor: Record<string, "green" | "red" | "amber" | "cyan" | "purple" | "slate"> =
-  {
-    "user.registered": "cyan",
-    "user.login": "green",
-    "user.logout": "slate",
-    "user.password_changed": "amber",
-    "token.refreshed": "cyan",
-    "account.locked": "red",
-    "file.encrypted": "purple",
-    "file.decrypted": "green",
-    "file.uploaded": "purple",
-    "file.downloaded": "cyan",
-    "file.deleted": "red",
-    "folder.encrypted": "purple",
-    "folder.decrypted": "green",
-    "key.generated": "cyan",
-    "key.rotated": "amber",
-    "key.revoked": "red",
-    "admin.action": "slate"
-  };
+type BadgeTone = "green" | "red" | "amber" | "cyan" | "purple" | "slate" | "indigo";
+
+const actionColor: Record<string, BadgeTone> = {
+  "user.registered": "indigo",
+  "user.login": "green",
+  "user.logout": "slate",
+  "user.password_changed": "amber",
+  "token.refreshed": "indigo",
+  "account.locked": "red",
+  "file.encrypted": "purple",
+  "file.decrypted": "green",
+  "file.uploaded": "purple",
+  "file.downloaded": "indigo",
+  "file.deleted": "red",
+  "folder.encrypted": "purple",
+  "folder.decrypted": "green",
+  "key.generated": "indigo",
+  "key.rotated": "amber",
+  "key.revoked": "red",
+  "admin.action": "slate"
+};
 
 export default function AuditLogs() {
   const [page, setPage] = useState(1);
@@ -44,10 +45,10 @@ export default function AuditLogs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Audit Logs</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Audit Logs</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Every security-relevant action is immutably logged.
           </p>
         </div>
@@ -82,7 +83,7 @@ export default function AuditLogs() {
               key: "resource",
               header: "Resource",
               render: (r: AuditLog) => (
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-500">
                   {r.resource_type ?? "—"}
                   {r.resource_id ? ` · ${r.resource_id.slice(0, 8)}…` : ""}
                 </div>
@@ -92,7 +93,7 @@ export default function AuditLogs() {
               key: "details",
               header: "Details",
               render: (r: AuditLog) => (
-                <span className="max-w-md truncate text-xs text-slate-400">
+                <span className="max-w-md truncate text-xs text-slate-500">
                   {r.details ?? "—"}
                 </span>
               )
@@ -101,7 +102,7 @@ export default function AuditLogs() {
               key: "created",
               header: "Timestamp",
               render: (r: AuditLog) => (
-                <span className="text-xs text-slate-400">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
               )
             }
           ]}

@@ -8,8 +8,8 @@ export default function Profile() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Your Profile</h1>
-        <p className="text-sm text-slate-500">Account, roles and status.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your Profile</h1>
+        <p className="mt-1 text-sm text-slate-500">Account, roles and status.</p>
       </div>
 
       <Card title="Account details">
@@ -23,13 +23,13 @@ export default function Profile() {
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-4">
               <dt className="text-slate-500">{k}</dt>
-              <dd className="font-mono text-slate-200">{v}</dd>
+              <dd className="font-mono text-sm text-slate-800">{v}</dd>
             </div>
           ))}
         </dl>
         <div className="mt-4 flex flex-wrap gap-2">
           {me?.roles?.map((r) => (
-            <Badge key={r.id} color="cyan">
+            <Badge key={r.id} color="indigo">
               {r.name}
             </Badge>
           ))}

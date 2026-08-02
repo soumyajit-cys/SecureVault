@@ -1,23 +1,30 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type Variant = "primary" | "ghost" | "danger" | "success" | "outline";
+type Size = "sm" | "md";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
-  size?: "sm" | "md";
+  size?: Size;
   loading?: boolean;
   children: ReactNode;
 }
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-neon-cyan/90 text-vault-950 hover:bg-neon-cyan shadow-glow font-semibold",
+    "bg-brand-600 text-white shadow-sm hover:bg-brand-700 focus-visible:outline-brand-600",
   outline:
-    "border border-vault-600 text-slate-200 hover:border-neon-cyan/60 hover:text-neon-cyan",
-  ghost: "text-slate-300 hover:text-white hover:bg-vault-800",
-  danger: "bg-neon-red/90 text-vault-950 hover:bg-neon-red font-semibold",
+    "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-brand-500",
+  ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+  danger:
+    "bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:outline-red-600",
   success:
-    "bg-neon-green/90 text-vault-950 hover:bg-neon-green shadow-glow-green font-semibold"
+    "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-emerald-600"
+};
+
+const sizes: Record<Size, string> = {
+  sm: "px-2.5 py-1.5 text-xs",
+  md: "px-4 py-2 text-sm"
 };
 
 export default function Button({
@@ -31,9 +38,7 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${
-        size === "sm" ? "px-2.5 py-1 text-xs" : "px-4 py-2 text-sm"
-      } ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

@@ -36,8 +36,8 @@ export default function EncryptText() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Encrypt Text</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Encrypt Text</h1>
+        <p className="mt-1 text-sm text-slate-500">
           AES-256-GCM with per-message nonce and authenticated encryption.
         </p>
       </div>
@@ -82,14 +82,16 @@ export default function EncryptText() {
             Encrypt
           </Button>
           {encryptMutation.error && (
-            <p className="text-sm text-neon-red">{extractDetail(encryptMutation.error)}</p>
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {extractDetail(encryptMutation.error)}
+            </p>
           )}
         </div>
       </Card>
 
       {result && (
         <Card title="Ciphertext result">
-          <pre className="overflow-x-auto rounded bg-vault-950 p-4 text-xs text-neon-green">
+          <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-300">
             {result}
           </pre>
         </Card>

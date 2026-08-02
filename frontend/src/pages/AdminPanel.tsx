@@ -55,38 +55,48 @@ export default function AdminPanel() {
     onError: (err) => toastError(extractDetail(err))
   });
 
+  const stats = [
+    {
+      label: "Storage used",
+      value: formatBytes(usage?.storage_bytes ?? 0),
+      sub: `${usage?.stored_file_count ?? 0} stored · ${usage?.temp_file_count ?? 0} temp`,
+      tone: "text-brand-600"
+    },
+    {
+      label: "Files vs folders",
+      value: String(summary?.file_count ?? 0),
+      sub: `files · ${summary?.folder_count ?? 0} folder archives`,
+      tone: "text-slate-900"
+    },
+    {
+      label: "Deduplication saving",
+      value: formatBytes(
+        Math.max(0, (summary?.original_bytes ?? 0) - (summary?.encrypted_bytes ?? 0))
+      ),
+      sub: `original ${formatBytes(summary?.original_bytes ?? 0)}`,
+      tone: "text-slate-900"
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-        <p className="text-sm text-slate-500">Platform-wide storage and user management.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Admin Panel</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Platform-wide storage and user management.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card title="Storage used">
-          <p className="text-2xl font-bold text-neon-cyan">
-            {formatBytes(usage?.storage_bytes ?? 0)}
-          </p>
-          <p className="text-xs text-slate-500">
-            {usage?.stored_file_count ?? 0} stored · {usage?.temp_file_count ?? 0} temp
-          </p>
-        </Card>
-        <Card title="Files vs folders">
-          <p className="text-2xl font-bold text-neon-green">
-            {summary?.file_count ?? 0}
-          </p>
-          <p className="text-xs text-slate-500">
-            files · {summary?.folder_count ?? 0} folder archives
-          </p>
-        </Card>
-        <Card title="Deduplication saving">
-          <p className="text-2xl font-bold text-neon-amber">
-            {formatBytes(Math.max(0, (summary?.original_bytes ?? 0) - (summary?.encrypted_bytes ?? 0)))}
-          </p>
-          <p className="text-xs text-slate-500">
-            original {formatBytes(summary?.original_bytes ?? 0)}
-          </p>
-        </Card>
+        {stats.map((s) => (
+          <Card key={s.label}>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              {s.label}
+            </p>
+            <p className={`mt-2 text-2xl font-bold tracking-tight ${s.tone}`}>{s.value}</p>
+            <p className="mt-1 text-xs text-slate-500">{s.sub}</p>
+          </Card>
+        ))}
       </div>
 
       <Card
@@ -97,12 +107,12 @@ export default function AdminPanel() {
           </Button>
         }
       >
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500">
           Purge soft-deleted files, orphaned container blobs, missing records and stray
           temporary files.
         </p>
         <Modal open={gcResult !== null} title="GC report" onClose={() => setGcResult(null)}>
-          <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-vault-950 p-4 text-xs text-neon-green">
+          <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-300">
             {gcResult}
           </pre>
         </Modal>
@@ -116,7 +126,7 @@ export default function AdminPanel() {
               header: "User",
               render: (r: User) => (
                 <div>
-                  <p className="font-medium text-slate-100">{r.username}</p>
+                  <p className="font-medium text-slate-900">{r.username}</p>
                   <p className="text-xs text-slate-500">{r.email}</p>
                 </div>
               )
@@ -127,7 +137,7 @@ export default function AdminPanel() {
               render: (r: User) => (
                 <div className="flex flex-wrap gap-1">
                   {r.roles.map((role) => (
-                    <Badge key={role.id} color="cyan">
+                    <Badge key={role.id} color="indigo">
                       {role.name}
                     </Badge>
                   ))}

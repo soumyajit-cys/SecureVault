@@ -17,14 +17,12 @@ export default function Card({
 }: CardProps) {
   return (
     <section
-      className={`rounded-lg border border-vault-700 bg-vault-900/70 shadow-lg backdrop-blur ${className}`}
+      className={`rounded-xl border border-slate-200 bg-white shadow-card ${className}`}
     >
       {(title || action) && (
-        <header className="flex items-center justify-between border-b border-vault-700 px-5 py-4">
+        <header className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-100">
-              {title}
-            </h2>
+            <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
             {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
           </div>
           {action}

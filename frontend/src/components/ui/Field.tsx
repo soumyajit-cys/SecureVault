@@ -13,10 +13,10 @@ interface BaseFieldProps {
 }
 
 const baseField =
-  "w-full rounded border border-vault-600 bg-vault-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-colors focus:border-neon-cyan/70 focus:ring-1 focus:ring-neon-cyan/40";
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20";
 
 function fieldClass(hasError: boolean, extra = ""): string {
-  return `${baseField} ${hasError ? "border-neon-red" : ""} ${extra}`;
+  return `${baseField} ${hasError ? "border-red-400 focus:border-red-500 focus:ring-red-500/20" : ""} ${extra}`;
 }
 
 function fieldId(label?: string): string | undefined {
@@ -38,19 +38,19 @@ function FieldShell({
 }) {
   const id = fieldId(label);
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {label && (
         <label
           htmlFor={id}
-          className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+          className="block text-[13px] font-medium text-slate-700"
         >
           {label}
-          {required && <span className="text-neon-red"> *</span>}
+          {required && <span className="text-red-500"> *</span>}
         </label>
       )}
       {children}
       {error ? (
-        <p className="text-xs text-red-400">{error}</p>
+        <p className="text-xs text-red-600">{error}</p>
       ) : hint ? (
         <p className="text-xs text-slate-500">{hint}</p>
       ) : null}

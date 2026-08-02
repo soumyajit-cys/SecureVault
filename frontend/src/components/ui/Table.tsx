@@ -22,7 +22,7 @@ export default function Table<T>({
   if (loading) {
     return (
       <div className="flex justify-center py-10 text-sm text-slate-400">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-vault-500 border-t-neon-cyan" />
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-brand-600" />
       </div>
     );
   }
@@ -35,17 +35,17 @@ export default function Table<T>({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-vault-700 text-xs uppercase tracking-wider text-slate-400">
+          <tr className="border-b border-slate-200 text-xs font-semibold tracking-wide text-slate-500">
             {columns.map((col) => (
-              <th key={col.key} className="px-4 py-3 font-medium">
+              <th key={col.key} className="px-4 py-3">
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-vault-800">
+        <tbody className="divide-y divide-slate-100">
           {rows.map((row, i) => (
-            <tr key={i} className="text-slate-200 transition-colors hover:bg-vault-800/50">
+            <tr key={i} className="text-slate-700 transition-colors hover:bg-slate-50">
               {columns.map((col) => (
                 <td key={col.key} className="px-4 py-3">
                   {col.render(row)}
