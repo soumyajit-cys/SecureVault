@@ -180,57 +180,147 @@ export default function Landing() {
           <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-24 text-center lg:pt-32">
-          <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-brand-200 bg-white/60 px-3.5 py-1.5 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {shieldCheck}
-            </svg>
-            Enterprise-grade encryption
-          </span>
-
-          <h1 className="mx-auto mt-8 max-w-3xl animate-fade-up text-4xl font-extrabold tracking-tight text-slate-900 [animation-delay:80ms] sm:text-5xl lg:text-6xl">
-            Encrypt files, folders and text —{" "}
-            <span className="bg-brand-gradient bg-clip-text text-transparent">
-              by design, at rest.
+        <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-6 pb-24 pt-16 lg:grid-cols-2 lg:pb-28 lg:pt-24">
+          {/* Left: marketing copy */}
+          <div className="text-center lg:text-left">
+            <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-brand-200 bg-white/60 px-3.5 py-1.5 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {shieldCheck}
+              </svg>
+              Enterprise-grade encryption
             </span>
-          </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl animate-fade-up text-lg leading-relaxed text-slate-600 [animation-delay:160ms]">
-            SecureVault seals your sensitive data with authenticated AES-256-GCM
-            encryption, manages your keys, and keeps a complete audit trail — from
-            first upload to permanent deletion.
-          </p>
+            <h1 className="mt-8 animate-fade-up text-4xl font-extrabold tracking-tight text-slate-900 [animation-delay:80ms] sm:text-5xl lg:text-6xl">
+              Encrypt files, folders and text —{" "}
+              <span className="bg-brand-gradient bg-clip-text text-transparent">
+                by design, at rest.
+              </span>
+            </h1>
 
-          <div className="mt-10 flex animate-fade-up flex-col items-center justify-center gap-3 [animation-delay:240ms] sm:flex-row">
-            <Link
-              to={isAuthenticated ? "/dashboard" : "/register"}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-brand-gradient px-7 py-3 text-base font-semibold text-white shadow-glow transition-all duration-200 hover:shadow-glow hover:brightness-110 active:scale-[0.98] sm:w-auto"
-            >
-              {isAuthenticated ? "Open your vault" : "Start encrypting free"}
-            </Link>
-            <Link
-              to={isAuthenticated ? "/file-manager" : "/login"}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-7 py-3 text-base font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-400 hover:bg-slate-50 active:scale-[0.98] sm:w-auto"
-            >
-              Sign in
-            </Link>
+            <p className="mx-auto mt-6 max-w-xl animate-fade-up text-lg leading-relaxed text-slate-600 [animation-delay:160ms] lg:mx-0">
+              SecureVault seals your sensitive data with authenticated AES-256-GCM
+              encryption, manages your keys, and keeps a complete audit trail — from
+              first upload to permanent deletion.
+            </p>
+
+            <div className="mt-8 animate-fade-up text-slate-900 [animation-delay:240ms]">
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center rounded-xl bg-brand-gradient px-7 py-3 text-base font-semibold text-white shadow-glow transition-all duration-200 hover:shadow-glow hover:brightness-110 active:scale-[0.98]"
+                >
+                  Open your vault
+                </Link>
+              ) : (
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center rounded-xl bg-brand-gradient px-7 py-3 text-base font-semibold text-white shadow-glow transition-all duration-200 hover:shadow-glow hover:brightness-110 active:scale-[0.98]"
+                >
+                  Start encrypting free
+                </Link>
+              )}
+            </div>
+
+            {/* Trust row */}
+            <dl className="mx-auto mt-14 grid max-w-lg grid-cols-3 gap-6 lg:mx-0">
+              {[
+                ["AES-256", "authenticated encryption"],
+                ["Argon2id", "password hashing"],
+                ["Zero-copy", "sealed plaintext paths"]
+              ].map(([k, v]) => (
+                <div key={k} className="text-center lg:text-left">
+                  <dt className="bg-brand-gradient bg-clip-text text-xl font-extrabold text-transparent">
+                    {k}
+                  </dt>
+                  <dd className="mt-1 text-xs text-slate-500">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          {/* Trust row */}
-          <dl className="mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-6">
-            {[
-              ["AES-256", "authenticated encryption"],
-              ["Argon2id", "password hashing"],
-              ["Zero-copy", "sealed plaintext paths"]
-            ].map(([k, v]) => (
-              <div key={k} className="text-center">
-                <dt className="bg-brand-gradient bg-clip-text text-xl font-extrabold text-transparent">
-                  {k}
-                </dt>
-                <dd className="mt-1 text-xs text-slate-500">{v}</dd>
+          {/* Right: embedded login */}
+          {isAuthenticated ? (
+            <div className="animate-fade-up mx-auto w-full max-w-md text-center lg:justify-self-end">
+              <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-8 shadow-modal backdrop-blur-xl">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-glow">
+                  <IconShield />
+                </div>
+                <h2 className="mt-5 text-xl font-extrabold tracking-tight text-slate-900">
+                  You&apos;re already signed in
+                </h2>
+                <p className="mt-1.5 text-sm text-slate-500">
+                  Continue to your sealed workspace.
+                </p>
+                <Link
+                  to="/dashboard"
+                  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand-gradient px-6 py-3 text-sm font-semibold text-white shadow-glow-sm transition-all duration-200 hover:shadow-glow active:scale-[0.98]"
+                >
+                  Open dashboard
+                </Link>
               </div>
-            ))}
-          </dl>
+            </div>
+          ) : (
+            <div className="animate-fade-up mx-auto w-full max-w-sm [animation-delay:120ms] lg:justify-self-end">
+              <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-8 shadow-modal backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow-sm">
+                    <IconShield />
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
+                      Sign in
+                    </h2>
+                    <p className="text-xs text-slate-500">Welcome back to the vault</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleLogin} className="mt-7 space-y-4">
+                  <TextField
+                    label="Email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                  />
+                  <TextField
+                    label="Password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                  />
+
+                  {error && (
+                    <div className="animate-fade-in rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                      {error}
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full py-3"
+                    loading={loading}
+                  >
+                    {loading ? "Signing in…" : "Sign in"}
+                  </Button>
+                </form>
+
+                <p className="mt-5 text-center text-sm text-slate-500">
+                  No account?{" "}
+                  <Link
+                    to="/register"
+                    className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                  >
+                    Create one — it&apos;s free
+                  </Link>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
