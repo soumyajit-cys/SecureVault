@@ -338,3 +338,219 @@ def test_unauthorized_access_rejected(client):
     )
 
     assert response.status_code == 401
+
+
+def test_change_password_flow(client, user_token):
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    changed = client.post(
+        "/api/v1/auth/change-password",
+        headers=headers,
+        json={
+            "current_password": "SecureVault#2026",
+            "new_password": "NewSecureVault#2027",
+        },
+    )
+
+    assert changed.status_code == 200
+
+    assert changed.json()["changed"] is True
+
+    stale = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "api@example.com",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert stale.status_code == 401
+
+    fresh = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "api@example.com",
+            "password": "NewSecureVault#2027",
+        },
+    )
+
+    assert fresh.status_code == 200
+
+
+def test_files_summary(client, user_token):
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    client.post(
+        "/api/v1/keys",
+        headers=headers,
+        json={"name": "primary"},
+    )
+
+    client.post(
+        "/api/v1/files/upload",
+        headers=headers,
+        files={
+            "upload": (
+                "sum.txt",
+                b"x" * 4096,
+                "text/plain",
+            )
+        },
+    )
+
+    summary = client.get(
+        "/api/v1/files/summary",
+        headers=headers,
+    )
+
+    assert summary.status_code == 200
+
+    body = summary.json()
+
+    assert body["file_count"] == 1
+
+    assert body["original_bytes"] == 4096
+
+    assert body["encrypted_bytes"] > 0
+
+
+@pytest.fixture
+def admin_token(client, db_session):
+    """
+    Register a user and promote them to the Admin role.
+    """
+
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "boss@example.com",
+            "username": "boss",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert response.status_code == 200
+
+    from app.domain.models.user import User
+    from app.domain.models.role import Role
+    from app.domain.models.user_role import UserRole
+
+    user = (
+        db_session.query(User)
+        .filter(User.email == "boss@example.com")
+        .first()
+    )
+
+    admin_role = (
+        db_session.query(Role)
+        .filter(Role.name == "Admin")
+        .first()
+    )
+
+    user.roles.append(
+        UserRole(role=admin_role)
+    )
+
+    db_session.commit()
+
+    login = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "boss@example.com",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert login.status_code == 200
+
+    return login.json()["access_token"]
+
+
+def test_admin_user_management(client, user_token, admin_token):
+    admin_headers = {
+        "Authorization": f"Bearer {admin_token}"
+    }
+
+    users = client.get(
+        "/api/v1/admin/users",
+        headers=admin_headers,
+    )
+
+    assert users.status_code == 200
+
+    body = users.json()
+
+    assert body["total"] >= 2
+
+    victim = next(
+        u for u in body["items"]
+        if u["email"] == "api@example.com"
+    )
+
+    deactivate = client.post(
+        f"/api/v1/admin/users/{victim['id']}/deactivate",
+        headers=admin_headers,
+    )
+
+    assert deactivate.status_code == 200
+
+    blocked = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "api@example.com",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert blocked.status_code == 401
+
+    activate = client.post(
+        f"/api/v1/admin/users/{victim['id']}/activate",
+        headers=admin_headers,
+    )
+
+    assert activate.status_code == 200
+
+    allowed = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "api@example.com",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert allowed.status_code == 200
+
+
+def test_admin_endpoint_requires_admin(client, user_token):
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    forbidden = client.get(
+        "/api/v1/admin/users",
+        headers=headers,
+    )
+
+    assert forbidden.status_code == 403
+
+
+def test_admin_storage_usage(client, admin_token):
+    headers = {
+        "Authorization": f"Bearer {admin_token}"
+    }
+
+    usage = client.get(
+        "/api/v1/admin/storage",
+        headers=headers,
+    )
+
+    assert usage.status_code == 200
+
+    assert "storage_bytes" in usage.json()
+
+    assert "temp_file_count" in usage.json()
