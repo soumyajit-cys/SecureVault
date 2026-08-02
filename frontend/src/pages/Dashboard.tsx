@@ -87,7 +87,7 @@ export default function Dashboard() {
         {quickActions.map((a) => (
           <Link
             key={a.label}
-            to={a.path}
+            to={a.to}
             className={`rounded-lg border bg-vault-900/70 p-6 transition-transform hover:scale-[1.02] ${a.color}`}
           >
             <p className="text-sm font-bold uppercase tracking-wider">{a.label}</p>
