@@ -554,3 +554,73 @@ def test_admin_storage_usage(client, admin_token):
     assert "storage_bytes" in usage.json()
 
     assert "temp_file_count" in usage.json()
+
+
+def test_folder_archive_flow(client, user_token, tmp_path):
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    client.post(
+        "/api/v1/keys",
+        headers=headers,
+        json={"name": "primary"},
+    )
+
+    archive = tmp_path / "docs.zip"
+    import zipfile
+
+    with zipfile.ZipFile(archive, "w") as z:
+        z.writestr("readme.txt", "one")
+        z.writestr("nested/config.toml", "two")
+
+    upload = client.post(
+        "/api/v1/folders/upload",
+        headers=headers,
+        files={
+            "upload": (
+                "arch.zip",
+                archive.read_bytes(),
+                "application/zip",
+            )
+        },
+    )
+
+    assert upload.status_code == 201
+
+    payload = upload.json()
+
+    assert payload["file_count"] == 2
+
+    listing = client.get(
+        "/api/v1/folders",
+        headers=headers,
+    )
+
+    assert listing.status_code == 200
+
+    assert listing.json()["total"] >= 1
+
+    folder_id = client.get(
+        "/api/v1/folders",
+        headers=headers,
+    ).json()["items"][0]["id"]
+
+    restored = client.post(
+        f"/api/v1/folders/{folder_id}/restore",
+        headers=headers,
+    )
+
+    assert restored.status_code == 200
+
+    body = restored.json()
+
+    assert body["restored_files"] >= 2
+
+    from pathlib import Path
+
+    restored_root = Path(body["restored_path"])
+
+    assert (restored_root / "readme.txt").exists()
+
+    assert (restored_root / "nested" / "config.toml").exists()

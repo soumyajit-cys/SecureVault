@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
+import Modal from "@/components/ui/Modal";
 import Table from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Pagination from "@/components/ui/Pagination";
@@ -15,11 +16,17 @@ import type { StoredFile } from "@/types";
 
 const PAGE_SIZE = 10;
 
+interface RestoreInfo {
+  restoredPath: string;
+  files: number;
+}
+
 export default function FolderEncryption() {
   const queryClient = useQueryClient();
   const zipInput = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
   const [keyId, setKeyId] = useState("");
+  const [restoreInfo, setRestoreInfo] = useState<RestoreInfo | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["folders", { page, page_size: PAGE_SIZE }],
@@ -43,7 +50,13 @@ export default function FolderEncryption() {
 
   const restoreMutation = useMutation({
     mutationFn: (id: string) => folders.restore(id),
-    onSuccess: () => toastSuccess("Decrypted folder archive downloaded"),
+    onSuccess: (res) => {
+      setRestoreInfo({
+        restoredPath: res.restored_path,
+        files: res.restored_files
+      });
+      toastSuccess("Folder restored");
+    },
     onError: (err) => toastError(extractDetail(err))
   });
 
@@ -140,7 +153,7 @@ export default function FolderEncryption() {
                   loading={restoreMutation.isPending}
                   onClick={() => restoreMutation.mutate(r.id)}
                 >
-                  Decrypt & download
+                  Restore
                 </Button>
               )
             }
@@ -156,6 +169,26 @@ export default function FolderEncryption() {
           onChange={setPage}
         />
       </Card>
+
+      <Modal
+        open={restoreInfo !== null}
+        title="Folder restored"
+        onClose={() => setRestoreInfo(null)}
+      >
+        <p className="mb-4 text-sm text-neon-green">
+          The archive was decrypted and expanded successfully.
+        </p>
+        <dl className="space-y-2 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Paths</dt>
+            <dd className="font-mono text-slate-200">{restoreInfo?.restoredPath}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Files</dt>
+            <dd className="font-mono text-slate-200">{restoreInfo?.files}</dd>
+          </div>
+        </dl>
+      </Modal>
     </div>
   );
 }

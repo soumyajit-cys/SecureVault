@@ -64,11 +64,19 @@ export const folders = {
     api.get<Paginated<StoredFile>>("/folders/", { params }).then((r) => r.data),
   upload: (zip: File, keyId?: string) => {
     const form = new FormData();
-    form.append("file", zip);
+    form.append("upload", zip);
     if (keyId) form.append("key_id", keyId);
     return api.post<StoredFile>("/folders/upload", form).then((r) => r.data);
   },
-  restore: (id: string) => api.get(`/folders/${id}/restore`).then((r) => r.data)
+  restore: (id: string) =>
+    api
+      .post<{
+        file_id: string;
+        restored_path: string;
+        restored_files: number;
+        restored_directories: number;
+      }>(`/folders/${id}/restore`)
+      .then((r) => r.data)
 };
 
 export const keys = {

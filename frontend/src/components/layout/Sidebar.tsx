@@ -48,7 +48,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
-        {user?.roles?.some((r) => r.name === "admin") && (
+        {user?.roles?.some((r) => r.name.toLowerCase() === "admin") && (
           <NavLink
             to="/admin"
             className={({ isActive }) =>
