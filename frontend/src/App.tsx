@@ -56,7 +56,7 @@ export default function App() {
             />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </App>
+        </AppShell>
       </ProtectedRoute>
     ),
     []
