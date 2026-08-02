@@ -1,5 +1,11 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import Button from "@/components/ui/Button";
+import { TextField } from "@/components/ui/Field";
+import { auth, profile } from "@/lib/endpoints";
+import { extractDetail } from "@/lib/api";
+import { IconShield } from "@/components/layout/Sidebar";
 
 const shieldIcon = (
   <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z" />
@@ -71,6 +77,36 @@ const steps = [
 
 export default function Landing() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const setTokens = useAuthStore((s) => s.setTokens);
+  const setUser = useAuthStore((s) => s.setUser);
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await auth.login({ email, password });
+      setTokens(res.access_token, res.refresh_token);
+      try {
+        const me = await profile.me();
+        setUser(me);
+      } catch {
+        setUser(null);
+      }
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setError(extractDetail(err));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-surface-soft">
