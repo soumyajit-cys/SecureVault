@@ -75,3 +75,22 @@ def logout(
     return auth_service.logout(
         payload.refresh_token
     )
+
+@router.post("/change-password")
+def change_password(
+    payload: PasswordChangeRequest,
+    current_user=Depends(
+        get_current_user
+    ),
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    return {
+        "message": "Password changed",
+        "changed": auth_service.change_password(
+            current_user,
+            payload.current_password,
+            payload.new_password,
+        ),
+    }
