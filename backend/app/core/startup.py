@@ -6,7 +6,11 @@ from app.core.database import (
 
 from app.scripts.initialize_identity import (
     seed_permissions,
+    seed_role_permissions,
     seed_roles,
+)
+from app.scripts.bootstrap_admin import (
+    seed_bootstrap_admin,
 )
 
 
@@ -17,7 +21,7 @@ def initialize_security_data():
     try:
         seed_permissions(db)
         seed_roles(db)
+        seed_role_permissions(db)
+        seed_bootstrap_admin(db)
     finally:
         db.close()
-
-        

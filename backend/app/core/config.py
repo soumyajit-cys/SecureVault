@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     PASSWORD_REQUIRE_NUMBER: bool = True
     PASSWORD_REQUIRE_SPECIAL: bool = True
 
+    VAULT_ADMIN_EMAIL: str | None = None
+    VAULT_ADMIN_USERNAME: str | None = None
+    VAULT_ADMIN_PASSWORD: str | None = None
+
     STORAGE_DIR: str = "storage"
 
     ENCRYPTED_FILE_EXTENSION: str = ".svlt"
