@@ -25,7 +25,6 @@ const statusColor: Record<Key["status"], "green" | "red" | "amber"> = {
 export default function KeyManager() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [generating, setGenerating] = useState(false);
   const [pubKey, setPubKey] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", algorithm: "AES-256-GCM", key_size: 256, expires_in_days: "" });
 
@@ -43,7 +42,6 @@ export default function KeyManager() {
         expires_in_days: form.expires_in_days ? Number(form.expires_in_days) : undefined
       }),
     onSuccess: (res) => {
-      setGenerating(true);
       setPubKey(res.public_key_pem);
       toastSuccess("Key generated");
       queryClient.invalidateQueries({ queryKey: ["keys"] });
@@ -210,13 +208,3 @@ export default function KeyManager() {
     </div>
   );
 }
-
-function statusColor(status: Key["status"]) {
-  return statusColorMap[status];
-}
-
-const statusColorMap: Record<Key["status"], "green" | "red" | "amber"> = {
-  active: "green",
-  revoked: "red",
-  expired: "amber"
-};
