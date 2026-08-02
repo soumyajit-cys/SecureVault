@@ -69,7 +69,7 @@ def encrypt_text(
             )
         )
 
-    except KeyManagementService.KeyNotFoundError as exc:
+    except KeyNotFoundError as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
@@ -132,7 +132,7 @@ def decrypt_text(
             hybrid,
         )
 
-    except KeyManagementService.KeyNotFoundError as exc:
+    except KeyNotFoundError as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
