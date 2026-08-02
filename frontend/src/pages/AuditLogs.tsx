@@ -12,7 +12,7 @@ import type { AuditLog } from "@/types";
 
 const PAGE_SIZE = 15;
 
-const actionColors: Record<string, "green" | "red" | "amber" | "cyan" | "purple" | "slate"> =
+const actionColor: Record<string, "green" | "red" | "amber" | "cyan" | "purple" | "slate"> =
   {
     "user.registered": "cyan",
     "user.login": "green",
