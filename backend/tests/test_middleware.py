@@ -130,7 +130,9 @@ def test_rate_limit_isolation_from_trusted_proxy():
     client = TestClient(app)
 
     headers = {
-        "X-Forwarded-For": "203.0.113.7"
+        "X-Forwarded-For": (
+            "203.0.113.7, 10.0.0.1"
+        )
     }
 
     client.post("/ping", headers=headers)
@@ -145,7 +147,9 @@ def test_rate_limit_isolation_from_trusted_proxy():
     )
 
     different_ip = {
-        "X-Forwarded-For": "203.0.113.9"
+        "X-Forwarded-For": (
+            "203.0.113.9, 10.0.0.1"
+        )
     }
 
     assert (
