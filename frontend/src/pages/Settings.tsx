@@ -48,7 +48,7 @@ export default function Settings() {
     }
   }
 
-  async function handleLogoutAll() {
+  async function handleLogout() {
     try {
       await api.post("/auth/logout", { refresh_token: localStorage.getItem("securevault_refresh_token") });
     } catch {

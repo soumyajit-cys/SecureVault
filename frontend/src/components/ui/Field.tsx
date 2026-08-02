@@ -12,8 +12,6 @@ interface BaseFieldProps {
   defaultShow?: boolean;
 }
 
-type FieldProps<Element> = BaseFieldProps & Element;
-
 const baseField =
   "w-full rounded border border-vault-600 bg-vault-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-colors focus:border-neon-cyan/70 focus:ring-1 focus:ring-neon-cyan/40";
 
@@ -21,7 +19,7 @@ function fieldClass(hasError: boolean, extra = ""): string {
   return `${baseField} ${hasError ? "border-neon-red" : ""} ${extra}`;
 }
 
-function fieldId(label?: string): string {
+function fieldId(label?: string): string | undefined {
   return label ? label.toLowerCase().trim().replace(/[^a-z0-9]/g, "-") : undefined;
 }
 
