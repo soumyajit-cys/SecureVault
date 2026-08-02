@@ -26,7 +26,10 @@ export default function KeyManager() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pubKey, setPubKey] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", algorithm: "AES-256-GCM", key_size: 256, expires_in_days: "" });
+  const [form, setForm] = useState({
+    name: "",
+    validity_days: ""
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["keys", { page, page_size: PAGE_SIZE }],
@@ -36,10 +39,8 @@ export default function KeyManager() {
   const genMutation = useMutation({
     mutationFn: () =>
       keys.generate({
-        name: form.name.trim() || "auto-generated",
-        algorithm: form.algorithm,
-        key_size: form.key_size,
-        expires_in_days: form.expires_in_days ? Number(form.expires_in_days) : undefined
+        name: form.name.trim() || "secret-auto",
+        validity_days: form.validity_days ? Number(form.validity_days) : undefined
       }),
     onSuccess: (res) => {
       setPubKey(res.public_key_pem);
@@ -50,7 +51,7 @@ export default function KeyManager() {
   });
 
   const rotateMutation = useMutation({
-    mutationFn: (id: string) => keys.rotate(id),
+    mutationFn: (id: string) => keys.rotate({ current_key_id: id }),
     onSuccess: () => {
       toastSuccess("Key rotated");
       queryClient.invalidateQueries({ queryKey: ["keys"] });
@@ -72,58 +73,39 @@ export default function KeyManager() {
       <div>
         <h1 className="text-2xl font-bold text-white">Key Manager</h1>
         <p className="text-sm text-slate-500">
-          Keys are generated server-side and their private material is never exposed.
+          Keys are generated server-side; their private material is never exposed.
         </p>
       </div>
 
       <Card title="Generate new key">
         <div className="grid gap-4 sm:grid-cols-4">
           <TextField
-            label="Name"
-            placeholder="primary-2026"
+            label="Title"
+            placeholder="e.g. primary-2026"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <TextField
-            label="Expires in (days)"
+            label="Validity (days)"
             type="number"
             min={1}
-            placeholder="365"
-            value={form.expires_in_days}
-            onChange={(e) => setForm({ ...form, expires_in_days: e.target.value })}
+            placeholder="90"
+            value={form.validity_days}
+            onChange={(e) => setForm({ ...form, validity_days: e.target.value })}
           />
-          <div className="space-y-1">
-            <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400">
-              Algorithm
-            </span>
-            <select
-              className="w-full rounded border border-vault-600 bg-vault-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-neon-cyan/70"
-              value={form.algorithm}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  algorithm: e.target.value,
-                  key_size: e.target.value === "AES-128-GCM" ? 128 : 256
-                })
-              }
-            >
-              <option>AES-256-GCM</option>
-              <option>AES-128-GCM</option>
-              <option>ChaCha20</option>
-            </select>
-          </div>
           <div className="flex items-end">
             <Button
               className="w-full"
               loading={genMutation.isPending}
               onClick={() => genMutation.mutate()}
+              disabled={!form.name.trim()}
             >
               Generate
             </Button>
           </div>
         </div>
-        {revokeMutation.error && (
-          <p className="mt-3 text-sm text-neon-red">{extractDetail(revokeMutation.error)}</p>
+        {genMutation.error && (
+          <p className="mt-3 text-sm text-neon-red">{extractDetail(genMutation.error)}</p>
         )}
       </Card>
 
@@ -167,12 +149,21 @@ export default function KeyManager() {
               render: (r: Key) => (
                 <div className="flex gap-2">
                   {r.status === "active" && (
-                    <Button size="sm" onClick={() => rotateMutation.mutate(r.id)}>
+                    <Button
+                      size="sm"
+                      loading={rotateMutation.isPending}
+                      onClick={() => rotateMutation.mutate(r.id)}
+                    >
                       Rotate
                     </Button>
                   )}
                   {r.status === "active" && (
-                    <Button size="sm" variant="danger" onClick={() => revokeMutation.mutate(r.id)}>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={revokeMutation.isPending}
+                      onClick={() => revokeMutation.mutate(r.id)}
+                    >
                       Revoke
                     </Button>
                   )}
@@ -198,8 +189,7 @@ export default function KeyManager() {
         onClose={() => setPubKey(null)}
       >
         <p className="mb-3 text-sm text-slate-400">
-          The wrapped key is stored securely. Below is the public RSA signing key for
-          verification — store it if needed.
+          The public part of the new key pair (for verification):
         </p>
         <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-vault-950 p-4 text-xs text-neon-green">
           {pubKey}

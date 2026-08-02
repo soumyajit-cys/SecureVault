@@ -6,6 +6,7 @@ import type {
   GcResult,
   Key,
   KeyCreateResponse,
+  KeyRotateResponse,
   LoginResponse,
   Paginated,
   StoredFile,
