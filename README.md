@@ -35,6 +35,14 @@ immutable audit trail with RBAC-aware access control.
   - Full audit trail (`user.*`, `file.*`, `folder.*`, `key.*`, `admin.*`)
   - Global exception handling, request validation, max upload enforcement
 
+- **Operations & hardening**
+  - Liveness/readiness probes (`/health/live`, `/health/ready`) that verify DB
+  - Prometheus-format metrics endpoint (`/metrics`) with request counts,
+    latency and uptime
+  - Per-IP rate limiting with trusted-proxy aware `X-Forwarded-For` handling
+  - Security headers (CSP-style, HSTS, `nosniff`, frame/coop policies)
+  - Request tracing headers (`X-Request-ID`) + structured JSON request logs
+
 - **API**
   - `Auth` — register, login, refresh, logout, change password
   - `Encryption` — text encrypt / decrypt
@@ -97,6 +105,8 @@ python -m pytest tests/ -q --cov=app --cov-report=term
 ## API overview
 
 Base path: `/api/v1`
+
+- `GET  /health` · `GET /health/live` · `GET /health/ready` · `GET /metrics`
 
 - `POST /auth/register` · `POST /auth/login` · `POST /auth/refresh` · `POST /auth/logout` · `POST /auth/change-password`
 - `GET  /profile/me`

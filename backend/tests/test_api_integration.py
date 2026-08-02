@@ -116,6 +116,48 @@ def test_health(client):
     assert response.json()["status"] == "healthy"
 
 
+def test_liveness(client):
+
+    response = client.get(
+        "/api/v1/health/live"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        response.json()["status"]
+        == "healthy"
+    )
+
+
+def test_metrics(client):
+
+    response = client.get(
+        "/api/v1/metrics"
+    )
+
+    assert response.status_code == 200
+
+    assert (
+        "vault_requests_total"
+        in response.text
+    )
+
+
+def test_security_headers(client):
+
+    response = client.get(
+        "/api/v1/health"
+    )
+
+    assert (
+        response.headers.get(
+            "X-Content-Type-Options"
+        )
+        == "nosniff"
+    )
+
+
 def test_register_login_flow(client):
 
     r = client.post(
