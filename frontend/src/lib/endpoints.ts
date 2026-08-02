@@ -92,10 +92,8 @@ export const audit = {
 };
 
 export const admin = {
-  summary: () => api.get<StorageSummary>("/admin/storage/summary").then((r) => r.data),
-  usage: () => api.get<StorageUsage>("/admin/storage/usage").then((r) => r.data),
-  gc: () => api.post<GcResult>("/admin/storage/garbage-collect").then((r) => r.data),
-  gcPreview: () => api.get<GcResult>("/admin/storage/garbage-collect/preview").then((r) => r.data),
+  usage: () => api.get<StorageUsage>("/admin/storage").then((r) => r.data),
+  gc: () => api.post<GcResult>("/admin/garbage-collect").then((r) => r.data),
   users: (params: { page?: number; page_size?: number }) =>
     api.get<Paginated<User>>("/admin/users/", { params }).then((r) => r.data),
   deactivateUser: (id: string) =>

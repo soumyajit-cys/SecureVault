@@ -15,6 +15,7 @@ from app.api.dependencies.repositories import (
 )
 
 from app.api.dependencies.storage import (
+    get_audit_service,
     get_garbage_collector,
     get_storage_service,
 )
@@ -29,20 +30,12 @@ from app.schemas.user import (
     UserResponse,
 )
 
-from app.core.exceptions import (
-    NotFoundError,
-)
-
 from app.domain.constants.audit_events import (
     ADMIN_ACTION,
 )
 
 from app.services.audit_service import (
     AuditService,
-)
-
-from app.api.dependencies.audit import (
-    get_audit_service,
 )
 
 from app.services.storage.garbage_collector import (

@@ -8,7 +8,7 @@ import Modal from "@/components/ui/Modal";
 import Pagination from "@/components/ui/Pagination";
 import Table from "@/components/ui/Table";
 import { extractDetail } from "@/lib/api";
-import { admin } from "@/lib/endpoints";
+import { admin, files } from "@/lib/endpoints";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
 import { formatBytes } from "@/lib/format";
 import type { User } from "@/types";
@@ -21,8 +21,8 @@ export default function AdminPanel() {
   const [gcResult, setGcResult] = useState<string | null>(null);
 
   const { data: summary } = useQuery({
-    queryKey: ["admin", "summary"],
-    queryFn: () => admin.summary()
+    queryKey: ["files", "summary"],
+    queryFn: () => files.summary()
   });
 
   const { data: usage } = useQuery({
