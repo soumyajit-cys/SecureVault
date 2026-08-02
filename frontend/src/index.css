@@ -6,8 +6,23 @@
   color-scheme: light;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  @apply bg-slate-50 font-sans text-slate-700 antialiased;
+  @apply bg-surface-soft font-sans text-ink antialiased;
+  background-image: radial-gradient(
+      ellipse at top center,
+      rgb(99 102 241 / 0.07) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 85% -10%,
+      rgb(139 92 246 / 0.06) 0%,
+      transparent 45%
+    );
+  background-attachment: fixed;
 }
 
 ::-webkit-scrollbar {
@@ -18,12 +33,49 @@ body {
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply rounded bg-slate-300;
+  @apply rounded bg-brand-200;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400;
+  @apply bg-brand-300;
 }
 
 ::selection {
-  @apply bg-brand-100 text-brand-900;
+  @apply bg-brand-200 text-brand-900;
+}
+
+@layer components {
+  .surface {
+    @apply rounded-2xl border border-slate-200/70 bg-white shadow-card;
+  }
+
+  .surface-hover {
+    @apply transition duration-200 ease-in-out-soft hover:shadow-card-hover hover:border-brand-200;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-faint;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100;
+  }
+
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition-colors duration-200 hover:bg-slate-100 hover:text-ink;
+  }
+}
+
+.shimmer-bg {
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgb(255 255 255 / 0.5) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
 }

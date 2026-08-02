@@ -7,6 +7,7 @@ import { TextField } from "@/components/ui/Field";
 import { auth } from "@/lib/endpoints";
 import { extractDetail } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { IconShield } from "@/components/layout/Sidebar";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -45,33 +46,29 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 left-1/2 h-96 w-[800px] -translate-x-1/2 rounded-full bg-brand-200/40 blur-3xl" />
+        <div className="absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-brand-300/30 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md animate-fade-up">
         <div className="mb-8 text-center">
-          <span className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
-            <svg
-              className="h-6 w-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5" />
-            </svg>
+          <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-glow">
+            <IconShield />
           </span>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
             Create your account
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Provision a new vault workspace.
+            Provision a new encrypted vault workspace.
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-card"
+          className="space-y-4 rounded-3xl border border-slate-200/70 bg-white/80 p-7 shadow-modal backdrop-blur-xl"
         >
           <TextField
             label="Email"
@@ -95,7 +92,7 @@ export default function Register() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            hint="Min 12 characters"
+            hint="Min 12 characters, mixed case, a number and a symbol"
             placeholder="••••••••••••"
           />
           <TextField
@@ -108,19 +105,26 @@ export default function Register() {
           />
 
           {error && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="animate-fade-in rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
               {error}
-            </p>
+            </div>
           )}
 
-          <Button type="submit" className="w-full" loading={registration.isPending}>
+          <Button type="submit" className="w-full py-3" loading={registration.isPending}>
             {registration.isPending ? "Creating vault…" : "Create account"}
           </Button>
+
+          <p className="pt-1 text-center text-xs text-slate-400">
+            Passwords are hashed with Argon2id — never stored in plaintext.
+          </p>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-brand-600 hover:text-brand-700">
+          <Link
+            to="/login"
+            className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+          >
             Sign in
           </Link>
         </p>

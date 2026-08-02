@@ -73,13 +73,7 @@ export default function FileManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">File Manager</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Files are sealed with AES-256-GCM and never stored in plaintext.
-          </p>
-        </div>
+      <div className="flex items-center justify-end gap-4">
         <input
           ref={fileInput}
           type="file"

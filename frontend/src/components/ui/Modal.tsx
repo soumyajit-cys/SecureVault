@@ -13,17 +13,17 @@ export default function Modal({ open, title, onClose, children, footer }: ModalP
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-modal"
+        className="w-full max-w-lg animate-scale-in rounded-2xl border border-slate-200/80 bg-white shadow-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <header className="flex items-center justify-between border-b border-slate-200/80 px-5 py-4">
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
           <button
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             onClick={onClose}
             aria-label="Close"
           >
@@ -39,7 +39,7 @@ export default function Modal({ open, title, onClose, children, footer }: ModalP
         </header>
         <div className="max-h-[70vh] overflow-y-auto p-5">{children}</div>
         {footer && (
-          <footer className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
+          <footer className="flex justify-end gap-2 border-t border-slate-200/80 px-5 py-4">
             {footer}
           </footer>
         )}

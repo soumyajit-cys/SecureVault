@@ -60,13 +60,6 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Settings</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Change your credentials and manage your session.
-        </p>
-      </div>
-
       <Card title="Change password">
         <form onSubmit={handleChangePassword} className="space-y-4">
           <TextField

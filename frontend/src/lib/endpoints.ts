@@ -99,7 +99,7 @@ export const keys = {
 
 export const audit = {
   list: (params: { page?: number; page_size?: number; action?: string }) =>
-    api.get<Paginated<AuditLog>>("/audit/", { params }).then((r) => r.data)
+    api.get<Paginated<AuditLog>>("/audit/logs", { params }).then((r) => r.data)
 };
 
 export const admin = {

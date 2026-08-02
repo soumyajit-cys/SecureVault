@@ -80,13 +80,6 @@ export default function AdminPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Admin Panel</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Platform-wide storage and user management.
-        </p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((s) => (
           <Card key={s.label}>

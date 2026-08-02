@@ -46,12 +46,6 @@ export default function AuditLogs() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Audit Logs</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Every security-relevant action is immutably logged.
-          </p>
-        </div>
         <SelectField
           value={action}
           onChange={(e) => {

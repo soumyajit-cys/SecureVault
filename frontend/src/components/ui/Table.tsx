@@ -28,14 +28,23 @@ export default function Table<T>({
   }
 
   if (rows.length === 0) {
-    return <p className="py-10 text-center text-sm text-slate-500">{emptyMessage}</p>;
+    return (
+      <div className="py-12 text-center">
+        <div className="mx-auto mb-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-400">
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+          </svg>
+        </div>
+        <p className="text-sm font-medium text-slate-500">{emptyMessage}</p>
+      </div>
+    );
   }
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-xs font-semibold tracking-wide text-slate-500">
+          <tr className="border-b border-slate-200/80 bg-slate-50/50 text-xs font-semibold uppercase tracking-wider text-slate-500">
             {columns.map((col) => (
               <th key={col.key} className="px-4 py-3">
                 {col.header}
@@ -45,7 +54,7 @@ export default function Table<T>({
         </thead>
         <tbody className="divide-y divide-slate-100">
           {rows.map((row, i) => (
-            <tr key={i} className="text-slate-700 transition-colors hover:bg-slate-50">
+            <tr key={i} className="text-slate-700 transition-colors hover:bg-brand-50/40">
               {columns.map((col) => (
                 <td key={col.key} className="px-4 py-3">
                   {col.render(row)}

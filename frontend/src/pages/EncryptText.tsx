@@ -35,13 +35,6 @@ export default function EncryptText() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Encrypt Text</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          AES-256-GCM with per-message nonce and authenticated encryption.
-        </p>
-      </div>
-
       <Card title="Plaintext">
         <div className="space-y-4">
           <TextArea

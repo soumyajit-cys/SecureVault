@@ -100,7 +100,7 @@ source ../.venv/bin/activate
 python -m pytest tests/ -q --cov=app --cov-report=term
 ```
 
-141 tests — 88% coverage across app modules.
+159 tests — 88% coverage across app modules.
 
 ## API overview
 
@@ -126,7 +126,9 @@ backend/app/
 ├── api/
 │   ├── dependencies/        # DB, auth, RBAC, storage DI
 │   └── routes/              # auth, profile, encryption, files, folders,
-│                            # keys, audit, admin, health
+│                            # keys, audit, admin, health, metrics
+├── core/                    # config, middleware (CORS, rate limit, tracing),
+│                            # logging, metrics registry
 ├── crypto/                  # low-level crypto services (AES-GCM, RSA, hashing)
 ├── domain/                  # models, repositories (ports), constants
 ├── infrastructure/          # SQLAlchemy repositories, storage layout

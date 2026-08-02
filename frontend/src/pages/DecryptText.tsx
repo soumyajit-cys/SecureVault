@@ -32,13 +32,6 @@ export default function DecryptText() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Decrypt Text</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Verify integrity and recover the plaintext.
-        </p>
-      </div>
-
       <Card title="Ciphertext">
         <div className="space-y-4">
           <TextArea
