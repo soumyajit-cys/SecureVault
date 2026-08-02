@@ -66,7 +66,7 @@ def _user_response(user) -> UserResponse:
         locked_until=user.locked_until,
         roles=[
             {
-                "id": ur.role.id,
+                "id": str(ur.role.id),
                 "name": ur.role.name,
             }
             for ur in user.roles
