@@ -16,7 +16,6 @@ from app.api.dependencies.current_user import (
 from app.api.dependencies.storage import (
     get_audit_service,
     get_download_service,
-    get_key_management_service,
     get_metadata_service,
     get_upload_service,
 )
@@ -29,12 +28,7 @@ from app.core.exceptions import (
 from app.domain.constants.audit_events import (
     FILE_DELETED,
     FILE_DOWNLOADED,
-    FILE_ENCRYPTED,
     FILE_UPLOADED,
-)
-
-from app.schemas.encryption import (
-    EncryptFileResponse,
 )
 
 from app.schemas.storage import (
@@ -87,7 +81,7 @@ def _file_response(
 
 @router.post(
     "/upload",
-    response_model=EncryptFileResponse,
+    response_model=StoredFileResponse,
     status_code=201,
 )
 async def upload_file(
@@ -141,15 +135,18 @@ async def upload_file(
     audit.log(
         current_user.id,
         FILE_UPLOADED,
-        f"file={stored_id(stored)} name={stored.original_filename}",
-        resource_type="file",
+        (
+            "file={} "
+            "name={}"
+        ).format(
+            stored.id,
+            stored.original_filename,
+        ),
+        resource_type="stored_file",
         resource_id=str(stored.id),
     )
 
     return _file_response(stored)
-
-
-import app.main  # noqa: F401
 
 
 @router.get(
@@ -253,41 +250,160 @@ def download_file(
             file.key_id,
         )
 
-        media_type = (
-            file.mime_type
-            or "application/octet-stream"
-        )
-
-        def packet():
-
-            sha256, chunks = (
-                downloads.stream_decrypted(
-                    file,
-                    key,
-                    (yield_through := BytesIOWriterChunk()),
-                )
-            )
-
     except (NotFoundError, KeyNotFoundError) as exc:
         raise HTTPException(
             status_code=404,
             detail=str(exc),
         ) from exc
 
+    import mimetypes
+
+    media_type = (
+        mimetypes.guess_type(
+            file.original_filename
+        )[0]
+        or "application/octet-stream"
+    )
+
+    def stream():
+
+        try:
+
+            yield from FileStreamer(
+                downloads,
+                file,
+                key,
+            )
+
+        except NotFoundError as exc:
+            raise RuntimeError(str(exc)) from exc
+
     return StreamingResponse(
-        output_stream(
-            downloads,
-            file,
-            key,
-        ),
+        stream(),
         media_type=media_type,
         headers={
             "Content-Disposition": (
                 f'attachment; filename="{file.original_filename}"'
             ),
             "X-SHA256": file.sha256,
+            "X-File-Id": str(file.id),
         },
     )
+
+
+class FileStreamer:
+    """
+    Generators chunks of decrypted plaintext for a stored file.
+    """
+
+    def __init__(
+        self,
+        downloads: DownloadService,
+        file,
+        key,
+    ) -> None:
+
+        self._downloads = downloads
+
+        self._file = file
+
+        self._key = key
+
+    def __iter__(self):
+
+        container = (
+            self._downloads.container_path(
+                self._file
+            )
+        )
+
+        if not container.is_file():
+            raise NotFoundError(
+                "Encrypted container missing on disk."
+            )
+
+        private_key = (
+            self._downloads._keys.unlock_private_key(
+                self._key
+            )
+        )
+
+        bucket = BytesIO()
+
+        with container.open("rb") as source:
+
+            serializer = (
+                self._downloads
+                ._file_decryptor
+                ._serializer
+            )
+
+            from app.crypto.rsa.hybrid_encryptor import (
+                HybridEncryptor,
+            )
+
+            hybrid = HybridEncryptor()
+
+            _, _, wrapped = (
+                serializer.read_header(source),
+                None,
+                None,
+            )
+
+            self._skip_wrapped_key(
+                serializer,
+                source,
+            )
+
+            session_key = hybrid.unwrap_key(
+                self._wrapped(source),
+                private_key,
+            )
+
+            from app.crypto.streams.decrypt_stream import (
+                DecryptStream,
+            )
+
+            decrypt = DecryptStream()
+
+            for payload in serializer.iter_chunks(source):
+
+                for plaintext in decrypt.decrypt(
+                    [payload],
+                    session_key,
+                ):
+
+                    yield plaintext
+
+    @staticmethod
+    def _skip_wrapped_key(
+        serializer,
+        source,
+    ) -> None:
+        from app.services.encryption.container_serializer import (
+            InvalidContainerError,
+        )
+
+        length_bytes = source.read(4)
+
+        if len(length_bytes) != 4:
+            raise InvalidContainerError(
+                "Corrupted container."
+            )
+
+        import struct
+
+        length = struct.unpack(
+            ">I", length_bytes
+        )[0]
+
+        source.read(length)
+
+    @staticmethod
+    def _read_wrapped(
+        source,
+    ) -> bytes:
+        return source.read()
 
 
 @router.delete(
