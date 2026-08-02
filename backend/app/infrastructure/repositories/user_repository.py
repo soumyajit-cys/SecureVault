@@ -30,3 +30,35 @@ class SQLAlchemyUserRepository(
             )
             .first()
         )
+
+    def list_all(
+        self,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[User], int]:
+
+        from sqlalchemy import func
+        from sqlalchemy import select
+
+        total = (
+            self.db.scalar(
+                select(func.count(User.id))
+            )
+            or 0
+        )
+
+        stmt = (
+            select(User)
+            .order_by(
+                User.created_at.desc(),
+                User.id.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+
+        items = list(
+            self.db.scalars(stmt).all()
+        )
+
+        return items, total
