@@ -198,6 +198,11 @@ class AuthService:
         if not user:
             raise InvalidCredentialsError()
 
+        if not user.is_active:
+            raise InvalidCredentialsError(
+                "Account is deactivated"
+            )
+
         if (
             user.locked_until
             and user.locked_until
