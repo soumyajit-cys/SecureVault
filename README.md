@@ -103,7 +103,7 @@ Base path: `/api/v1`
 - `POST /files/upload` · `GET /files` · `GET /files/summary` · `GET /files/{id}` · `GET /files/{id}/download` · `PATCH /files/{id}` · `DELETE /files/{id}`
 - `POST /folders/upload` · `GET /folders` · `POST /folders/{id}/restore`
 - `POST /keys` (generate) · `GET /keys` · `GET /keys/active` · `GET /keys/{id}` · `POST /keys/rotate` · `POST /keys/{id}/revoke`
-- `GET /audit/logs` · `GET /audit/export`
+- `GET /audit/logs` · `GET /audit/admin/logs`
 - `GET /admin/status` · `GET /admin/users` · `POST /admin/users/{id}/activate|deactivate` · `GET /admin/storage` · `POST /admin/garbage-collect`
 
 All endpoints except auth/health require `Authorization: Bearer <access_token>`.
@@ -155,17 +155,20 @@ Migrations live in `backend/alembic/versions/`.
 
 ## Configuration (`.env`)
 
-Key settings (see `backend/app/core/config.py`):
+Start from `.env.example`. Key settings (see `backend/app/core/config.py`):
 
-| Variable | Purpose |
-| -------- | ------- |
-| `DATABASE_URL` | SQLAlchemy DSN (PostgreSQL) |
-| `JWT_SECRET` | signing key for access/refresh tokens |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | access token lifetime |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | refresh token lifetime |
-| `MAX_LOGIN_ATTEMPTS` / `ACCOUNT_LOCK_MINUTES` | lockout policy |
-| `MAX_UPLOAD_SIZE_BYTES` | max upload size |
-| `VAULT_ADMIN_EMAIL` | seed admin account email |
+| Variable | Default | Purpose |
+| -------- | ------- | ------- |
+| `DATABASE_URL` | — | SQLAlchemy DSN (PostgreSQL) |
+| `SECRET_KEY` | — | JWT signing secret (rotate per deploy) |
+| `JWT_ALGORITHM` | `HS256` | token signing algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | access token lifetime |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | `7` | refresh token lifetime |
+| `MAX_LOGIN_ATTEMPTS` | `5` | lockout threshold |
+| `ACCOUNT_LOCK_MINUTES` | `15` | lockout duration |
+| `MAX_UPLOAD_SIZE_BYTES` | 4 GiB | max upload size |
+| `STORAGE_DIR` | `storage/` | vault container layout |
+| `GARBAGE_COLLECTION_ENABLED` | `true` | cleanup task toggle |
 
 ## Deployment (production)
 
@@ -174,7 +177,7 @@ Key settings (see `backend/app/core/config.py`):
 - Serve the API with `uvicorn app.main:app` behind a TLS proxy (nginx / Caddy).
 - Serve the built React app (`frontend/dist`) behind the same origin
   reverse proxy and forward `/api` to the API server.
-- Configure `DATABASE_URL` to a managed PostgreSQL instance, rotate `JWT_SECRET`
+- Configure `DATABASE_URL` to a managed PostgreSQL instance, rotate `SECRET_KEY`
   at deploy, and enable the background garbage-collection task via lifespan
   (default on).
 - Data-at-rest encryption for the vault directory (see `StorageService`) is
