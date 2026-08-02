@@ -14,18 +14,23 @@ const PAGE_SIZE = 15;
 
 const actionColors: Record<string, "green" | "red" | "amber" | "cyan" | "purple" | "slate"> =
   {
-    user_registered: "cyan",
-    user_logged_in: "green",
-    user_logged_out: "slate",
-    key_generated: "cyan",
-    key_rotated: "amber",
-    key_revoked: "red",
-    key_activated: "green",
-    file_uploaded: "green",
-    file_downloaded: "cyan",
-    file_deleted: "red",
-    folder_encrypted: "purple",
-    folder_restored: "green"
+    "user.registered": "cyan",
+    "user.login": "green",
+    "user.logout": "slate",
+    "user.password_changed": "amber",
+    "token.refreshed": "cyan",
+    "account.locked": "red",
+    "file.encrypted": "purple",
+    "file.decrypted": "green",
+    "file.uploaded": "purple",
+    "file.downloaded": "cyan",
+    "file.deleted": "red",
+    "folder.encrypted": "purple",
+    "folder.decrypted": "green",
+    "key.generated": "cyan",
+    "key.rotated": "amber",
+    "key.revoked": "red",
+    "admin.action": "slate"
   };
 
 export default function AuditLogs() {
