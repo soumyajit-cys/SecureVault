@@ -190,6 +190,23 @@ def list_files(
 
 
 @router.get(
+    "/summary",
+)
+def files_summary(
+    current_user=Depends(
+        get_current_user
+    ),
+    metadata: MetadataService = Depends(
+        get_metadata_service
+    ),
+):
+
+    return metadata.storage_summary(
+        current_user.id
+    )
+
+
+@router.get(
     "/{file_id}",
     response_model=StoredFileResponse,
 )
