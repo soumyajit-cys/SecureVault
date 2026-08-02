@@ -15,6 +15,7 @@ from app.api.dependencies.current_user import (
 from app.api.dependencies.storage import (
     get_audit_service,
     get_download_service,
+    get_key_management_service,
     get_metadata_service,
     get_upload_service,
 )
