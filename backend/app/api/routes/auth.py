@@ -4,6 +4,9 @@ from fastapi import Depends
 from app.api.dependencies.auth import (
     get_auth_service,
 )
+from app.api.dependencies.current_user import (
+    get_current_user,
+)
 
 from app.schemas.auth import (
     LoginRequest,
@@ -13,6 +16,10 @@ from app.schemas.auth import (
 from app.schemas.auth import (
     RefreshRequest,
     LogoutRequest,
+)
+
+from app.schemas.user import (
+    PasswordChangeRequest,
 )
 
 router = APIRouter(

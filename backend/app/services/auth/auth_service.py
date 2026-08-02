@@ -14,6 +14,7 @@ from app.core.exceptions import (
 )
 
 from app.domain.constants.audit_events import (
+    PASSWORD_CHANGED,
     USER_LOGIN,
     USER_LOGOUT,
     USER_REGISTERED,
@@ -147,6 +148,40 @@ class AuthService:
         )
 
         return user
+
+    def change_password(
+        self,
+        user,
+        current_password: str,
+        new_password: str,
+    ):
+
+        if not (
+            self.password_service
+            .verify_password(
+                current_password,
+                user.password_hash,
+            )
+        ):
+            raise InvalidCredentialsError(
+                "Current password is incorrect"
+            )
+
+        user.password_hash = (
+            self.password_service
+            .hash_password(
+                new_password
+            )
+        )
+
+        self.users.update(user)
+
+        self.audit_service.log(
+            user.id,
+            PASSWORD_CHANGED,
+        )
+
+        return True
 
     def login(
         self,
