@@ -23,6 +23,18 @@ class RefreshToken(BaseModel):
         index=True,
     )
 
+    token_family: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+    )
+
+    session_id: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+    )
+
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -32,6 +44,11 @@ class RefreshToken(BaseModel):
         Boolean,
         default=False,
         nullable=False,
+    )
+
+    replaced_by_token: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
     )
 
     user_id = mapped_column(

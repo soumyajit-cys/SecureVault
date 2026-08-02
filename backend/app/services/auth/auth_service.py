@@ -130,7 +130,14 @@ class AuthService:
         )
 
         if role:
-            user.roles.append(role)
+
+            from app.domain.models.user_role import (
+                UserRole,
+            )
+
+            user.roles.append(
+                UserRole(role=role)
+            )
 
         self.users.update(user)
 

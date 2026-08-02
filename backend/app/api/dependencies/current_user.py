@@ -23,15 +23,29 @@ def get_current_user(
     ),
 ):
 
+    from uuid import UUID
+
     jwt_service = JWTService()
 
     claims = jwt_service.decode_token(
         credentials.credentials
     )
 
+    try:
+
+        user_id = UUID(
+            claims.sub
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid subject identifier",
+        ) from exc
+
     user = (
         user_repository.get(
-            claims.sub
+            user_id
         )
     )
 

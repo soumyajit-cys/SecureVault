@@ -1,9 +1,16 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 from app.core.startup import (
     initialize_security_data,
+)
+from app.core.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    SecureVaultException,
 )
 from app.core.security_settings import (
     validate_security_settings
@@ -77,6 +84,37 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(
+    SecureVaultException
+)
+async def securevault_exception_handler(
+    request: Request,
+    exc: SecureVaultException,
+):
+
+    from app.crypto.exceptions import CryptoException
+
+    if isinstance(exc, AuthenticationError):
+        status_code = 401
+
+    elif isinstance(exc, AuthorizationError):
+        status_code = 403
+
+    elif isinstance(exc, CryptoException):
+        status_code = 400
+
+    else:
+        status_code = 400
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "detail": str(exc)
+        },
+    )
+
 
 app.include_router(
     api_router,
