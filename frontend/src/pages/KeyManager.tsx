@@ -145,7 +145,7 @@ export default function KeyManager() {
             {
               key: "status",
               header: "Status",
-              render: (r: Key) => <Badge color={statusColor(r.status)}>{r.status}</Badge>
+              render: (r: Key) => <Badge color={statusColor[r.status]}>{r.status}</Badge>
             },
             {
               key: "expires",

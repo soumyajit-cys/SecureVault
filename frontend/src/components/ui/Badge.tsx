@@ -1,9 +1,11 @@
+type BadgeColor = "green" | "red" | "amber" | "cyan" | "purple" | "slate";
+
 interface BadgeProps {
-  color?: "green" | "red" | "amber" | "cyan" | "purple" | "slate";
+  color?: BadgeColor;
   children: React.ReactNode;
 }
 
-const colors: Record<BadgeProps["color"], string> = {
+const colors: Record<BadgeColor, string> = {
   green: "bg-neon-green/15 text-neon-green border-neon-green/40",
   red: "bg-neon-red/15 text-neon-red border-neon-red/40",
   amber: "bg-neon-amber/15 text-neon-amber border-neon-amber/40",

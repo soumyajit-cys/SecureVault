@@ -16,7 +16,6 @@ const quickActions = [
 ];
 
 export default function Dashboard() {
-  const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
 
   const { data: me } = useQuery({
