@@ -50,7 +50,10 @@ export const files = {
     if (keyId) form.append("key_id", keyId);
     return api.post<StoredFile>("/files/upload", form).then((r) => r.data);
   },
-  download: (id: string) => api.get(`/files/${id}/download`).then((r) => r.data),
+  download: (id: string) =>
+    api
+      .get(`/files/${id}/download`, { responseType: "blob" })
+      .then((r) => r.data as Blob),
   delete: (id: string) => api.delete(`/files/${id}`).then((r) => r.data),
   summary: () => api.get<StorageSummary>("/files/summary").then((r) => r.data)
 };

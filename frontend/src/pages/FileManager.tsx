@@ -214,8 +214,8 @@ export default function FileManager() {
               </div>
             ))}
           </dl>
-        </Modal>
-      </div>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -4,6 +4,7 @@ type Variant = "primary" | "ghost" | "danger" | "success" | "outline";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
+  size?: "sm" | "md";
   loading?: boolean;
   children: ReactNode;
 }
@@ -21,6 +22,7 @@ const variants: Record<Variant, string> = {
 
 export default function Button({
   variant = "primary",
+  size = "md",
   loading = false,
   className = "",
   children,
@@ -29,7 +31,9 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${
+        size === "sm" ? "px-2.5 py-1 text-xs" : "px-4 py-2 text-sm"
+      } ${className}`}
       disabled={disabled || loading}
       {...props}
     >
