@@ -1,39 +1,58 @@
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes
+} from "react";
 
-interface FieldProps {
+interface BaseFieldProps {
+  label?: string;
+  variant?: string;
+  hint?: string;
+  defaultShow?: boolean;
+}
+
+type FieldProps<Element> = BaseFieldProps & Element;
+
+const baseField =
+  "w-full rounded border border-vault-600 bg-vault-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-colors focus:border-neon-cyan/70 focus:ring-1 focus:ring-neon-cyan/40";
+
+function fieldClass(hasError: boolean, extra = ""): string {
+  return `${baseField} ${hasError ? "border-neon-red" : ""} ${extra}`;
+}
+
+function fieldId(label?: string): string {
+  return label ? label.toLowerCase().trim().replace(/[^a-z0-9]/g, "-") : undefined;
+}
+
+function FieldShell({
+  label,
+  hint,
+  required = false,
+  error,
+  children
+}: {
   label?: string;
   hint?: string;
   required?: boolean;
   error?: string;
-}
-
-const baseField =
-  "w-full rounded-md border border-vault-600 bg-vault-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-colors focus:border-neon-cyan/70 focus:ring-1 focus:ring-neon-cyan/40";
-
-const labelClass =
-  "mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400";
-
-export function Label({ children }: { children: string }) {
-  return <span className={labelClass}>{children}</span>;
-}
-
-interface FieldShellProps extends InputProps {
-  id: string;
-  error?: string;
-}
-
-function FieldShell({ label, hint, required, error, children }: FieldShellProps & { children: React.ReactNode }) {
+  children: ReactNode;
+}) {
+  const id = fieldId(label);
   return (
     <div className="space-y-1">
       {label && (
-        <label htmlFor={label.toLowerCase().replace(/\s+/g, "-")} className={labelClass}>
+        <label
+          htmlFor={id}
+          className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400"
+        >
           {label}
           {required && <span className="text-neon-red"> *</span>}
         </label>
       )}
       {children}
       {error ? (
-        <p className="text-xs text-neon-red">{error}</p>
+        <p className="text-xs text-red-400">{error}</p>
       ) : hint ? (
         <p className="text-xs text-slate-500">{hint}</p>
       ) : null}
@@ -41,40 +60,82 @@ function FieldShell({ label, hint, required, error, children }: FieldShellProps 
   );
 }
 
-interface TextFieldProps extends InputProps, InputHTMLAttributes<HTMLInputElement> {}
+interface TextFieldProps
+  extends BaseFieldProps,
+    Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
+  error?: string;
+  required?: boolean;
+}
 
-export function TextField({ label, hint, required, error, className = "", ...props }: TextFieldProps) {
+export function TextField({
+  label,
+  hint,
+  error,
+  required = false,
+  className = "",
+  id,
+  ...props
+}: TextFieldProps) {
   return (
     <FieldShell label={label} hint={hint} required={required} error={error}>
-      <input className={`${baseField} ${error ? "border-neon-red" : ""} ${className}`} {...props} />
+      <input
+        id={id ?? fieldId(label)}
+        className={fieldClass(Boolean(error), className)}
+        required={required}
+        {...props}
+      />
     </FieldShell>
   );
 }
 
-interface TextAreaProps extends InputProps, TextareaHTMLAttributes<HTMLTextAreaElement> {}
+interface TextAreaProps extends BaseFieldProps, TextareaHTMLAttributes<HTMLTextAreaElement> {
+  error?: string;
+  required?: boolean;
+}
 
-export function TextArea({ label, hint, required, error, className = "", ...props }: TextAreaProps) {
+export function TextArea({
+  label,
+  hint,
+  error,
+  required = false,
+  className = "",
+  id,
+  ...props
+}: TextAreaProps) {
   return (
     <FieldShell label={label} hint={hint} required={required} error={error}>
-      <textarea className={`${baseField} min-h-[120px] resize-y ${className}`} {...props} />
+      <textarea
+        id={id ?? fieldId(label)}
+        className={`${fieldClass(Boolean(error), className)} min-h-[120px] resize-y`}
+        {...props}
+      />
     </FieldShell>
   );
 }
 
-interface SelectFieldProps extends InputProps, React.SelectHTMLAttributes<HTMLSelectElement> {}
+interface SelectFieldProps extends BaseFieldProps, SelectHTMLAttributes<HTMLSelectElement> {
+  error?: string;
+  required?: boolean;
+  children: ReactNode;
+}
 
 export function SelectField({
   label,
   hint,
-  required,
   error,
+  required = false,
   className = "",
+  id,
   children,
   ...props
 }: SelectFieldProps) {
   return (
     <FieldShell label={label} hint={hint} required={required} error={error}>
-      <select className={`${baseField} ${className}`} {...props}>
+      <select
+        id={id ?? fieldId(label)}
+        className={fieldClass(Boolean(error), className)}
+        {...props}
+      >
         {children}
       </select>
     </FieldShell>
