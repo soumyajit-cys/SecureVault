@@ -61,8 +61,10 @@ export default function Settings() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-slate-500">Change your credentials and session.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Settings</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Change your credentials and manage your session.
+        </p>
       </div>
 
       <Card title="Change password">
@@ -91,7 +93,7 @@ export default function Settings() {
           />
 
           {error && (
-            <p className="rounded border border-neon-red/40 bg-neon-red/10 px-3 py-2 text-sm text-neon-red">
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </p>
           )}
@@ -103,7 +105,7 @@ export default function Settings() {
       </Card>
 
       <Card title="Sessions">
-        <p className="mb-3 text-sm text-slate-400">
+        <p className="mb-3 text-sm text-slate-500">
           Sign out of this device only. Tokens are rotated on every login.
         </p>
         <Button variant="outline" onClick={handleLogout}>
