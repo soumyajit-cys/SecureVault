@@ -28,8 +28,20 @@ from app.api.routes.health import (
     router as health_router
 )
 
+from app.api.routes.health import (
+    liveness_router
+)
+
+from app.api.routes.health import (
+    readiness_router
+)
+
 from app.api.routes.keys import (
     router as keys_router
+)
+
+from app.api.routes.metrics import (
+    router as metrics_router
 )
 
 from app.api.routes.profile import (
@@ -67,7 +79,19 @@ api_router.include_router(
 )
 
 api_router.include_router(
+    liveness_router
+)
+
+api_router.include_router(
+    readiness_router
+)
+
+api_router.include_router(
     keys_router
+)
+
+api_router.include_router(
+    metrics_router
 )
 
 api_router.include_router(

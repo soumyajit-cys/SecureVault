@@ -47,6 +47,23 @@ class Settings(BaseSettings):
 
     MAX_UPLOAD_SIZE_BYTES: int = 4 * 1024 * 1024 * 1024
 
+    CORS_ALLOW_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+    ]
+
+    CORS_ALLOW_CREDENTIALS: bool = True
+
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_PER_MINUTE: int = 120
+    RATE_LIMIT_LOGIN_PER_MINUTE: int = 10
+
+    TRUSTED_PROXY_COUNT: int = 1
+
+    ENABLE_METRICS: bool = True
+    ENABLE_SECURITY_HEADERS: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,

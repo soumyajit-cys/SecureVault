@@ -2,6 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi import Request
+from fastapi.middleware.cors import (
+    CORSMiddleware,
+)
 from fastapi.responses import JSONResponse
 
 from app.core.startup import (
@@ -14,6 +17,12 @@ from app.core.exceptions import (
 )
 from app.core.security_settings import (
     validate_security_settings
+)
+from app.core.middleware import (
+    RateLimitMiddleware,
+    RequestIDMiddleware,
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
 )
 
 
@@ -83,6 +92,63 @@ app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
     lifespan=lifespan,
+    docs_url=(
+        "/docs"
+        if settings.APP_ENV != "production"
+        else None
+    ),
+    redoc_url=(
+        "/redoc"
+        if settings.APP_ENV != "production"
+        else None
+    ),
+    openapi_url=(
+        "/openapi.json"
+        if settings.APP_ENV != "production"
+        else None
+    ),
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=(
+        settings.CORS_ALLOW_ORIGINS
+    ),
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Request-ID",
+    ],
+)
+
+if settings.ENABLE_SECURITY_HEADERS:
+    app.add_middleware(
+        SecurityHeadersMiddleware
+    )
+
+if settings.RATE_LIMIT_ENABLED:
+    app.add_middleware(
+        RateLimitMiddleware,
+        general_limit=settings.RATE_LIMIT_PER_MINUTE,
+        login_limit=settings.RATE_LIMIT_LOGIN_PER_MINUTE,
+    )
+
+app.add_middleware(
+    RequestLoggingMiddleware
+)
+
+app.add_middleware(
+    RequestIDMiddleware
 )
 
 
