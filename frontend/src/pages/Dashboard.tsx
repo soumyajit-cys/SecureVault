@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import Card from "@/components/ui/Card";
 import { FullPageLoader } from "@/components/ui/Spinner";
-import { files, keys } from "@/lib/endpoints";
+import { files, keys, profile } from "@/lib/endpoints";
 import { useAuthStore } from "@/store/authStore";
 import type { Key } from "@/types";
 import { formatBytes } from "@/lib/format";
@@ -21,7 +21,7 @@ export default function Dashboard() {
   const { data: me } = useQuery({
     queryKey: ["profile", "me"],
     queryFn: async () => {
-      const r = await import("@/lib/endpoints").then((m) => m.profile.me());
+      const r = await profile.me();
       setUser(r);
       return r;
     }
