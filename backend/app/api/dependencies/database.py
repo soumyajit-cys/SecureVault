@@ -8,5 +8,9 @@ def get_db() -> Generator:
 
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

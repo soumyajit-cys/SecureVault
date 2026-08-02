@@ -1,4 +1,5 @@
 from datetime import timedelta
+import uuid
 
 from app.core.config import get_settings
 
@@ -61,6 +62,7 @@ class TokenService:
             "email": context.email,
             "session_id": context.session_id,
             "token_type": REFRESH_TOKEN,
+            "jti": uuid.uuid4().hex,
         }
 
         return (

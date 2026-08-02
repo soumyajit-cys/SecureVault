@@ -95,6 +95,7 @@ async def securevault_exception_handler(
 ):
 
     from app.crypto.exceptions import CryptoException
+    from app.core.exceptions import ConflictError
 
     if isinstance(exc, AuthenticationError):
         status_code = 401
@@ -104,6 +105,9 @@ async def securevault_exception_handler(
 
     elif isinstance(exc, CryptoException):
         status_code = 400
+
+    elif isinstance(exc, ConflictError):
+        status_code = 409
 
     else:
         status_code = 400

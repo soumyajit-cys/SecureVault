@@ -30,7 +30,11 @@ class InvalidTokenError(AuthenticationError):
     pass
 
 
-class PermissionDeniedError(AuthorizationError):
+class ConflictError(SecureVaultException):
+    pass
+
+
+class UserAlreadyExistsError(ConflictError):
     pass
 
 

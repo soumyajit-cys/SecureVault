@@ -107,6 +107,13 @@ class AuthService:
                 "Email already exists"
             )
 
+        if self.users.get_by_username(
+            username
+        ):
+            raise UserAlreadyExistsError(
+                "Username already exists"
+            )
+
         from app.domain.models.user import (
             User
         )

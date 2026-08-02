@@ -14,4 +14,6 @@ class TokenClaims(
 
     token_type: str
 
+    jti: str | None = None
+
     exp: datetime
