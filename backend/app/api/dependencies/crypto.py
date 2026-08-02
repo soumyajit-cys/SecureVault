@@ -1,7 +1,9 @@
-from app.services.crypto_service import (
-    CryptoService,
+from fastapi import Depends
+
+from app.api.dependencies.storage import (
+    get_crypto_service,
 )
 
-
-def get_crypto_service():
-    return CryptoService()
+__all__ = [
+    "get_crypto_service",
+]

@@ -8,6 +8,9 @@ from app.api.dependencies.database import (
 from app.infrastructure.repositories.audit_log_repository import (
     SQLAlchemyAuditLogRepository,
 )
+from app.infrastructure.repositories.crypto_key_repository import (
+    SQLAlchemyCryptoKeyRepository,
+)
 from app.infrastructure.repositories.permission_repository import (
     SQLAlchemyPermissionRepository,
 )
@@ -19,6 +22,9 @@ from app.infrastructure.repositories.role_repository import (
 )
 from app.infrastructure.repositories.session_repository import (
     SQLAlchemySessionRepository,
+)
+from app.infrastructure.repositories.stored_file_repository import (
+    SQLAlchemyStoredFileRepository,
 )
 from app.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
@@ -65,5 +71,21 @@ def get_audit_repository(
     db: Session = Depends(get_db),
 ):
     return SQLAlchemyAuditLogRepository(
+        db
+    )
+
+
+def get_crypto_key_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyCryptoKeyRepository(
+        db
+    )
+
+
+def get_stored_file_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyStoredFileRepository(
         db
     )
