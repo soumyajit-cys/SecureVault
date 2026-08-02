@@ -67,7 +67,8 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
 cd backend
 alembic upgrade head
-uvicorn app.main:app --reload     # startup seeds roles/permissions (Admin, User, Auditor)
+uvicorn app.main:app --reload     # startup seeds roles/permissions + role-permission links
+                                  # and creates the admin account (VAULT_ADMIN_*)
 ```
 
 Health check: http://localhost:8000/api/v1/health
@@ -166,6 +167,9 @@ Start from `.env.example`. Key settings (see `backend/app/core/config.py`):
 | `REFRESH_TOKEN_EXPIRE_DAYS` | `7` | refresh token lifetime |
 | `MAX_LOGIN_ATTEMPTS` | `5` | lockout threshold |
 | `ACCOUNT_LOCK_MINUTES` | `15` | lockout duration |
+| `VAULT_ADMIN_EMAIL` | — | bootstrap admin email (created on first startup) |
+| `VAULT_ADMIN_USERNAME` | — | bootstrap admin username (default `admin`) |
+| `VAULT_ADMIN_PASSWORD` | — | bootstrap admin password |
 | `MAX_UPLOAD_SIZE_BYTES` | 4 GiB | max upload size |
 | `STORAGE_DIR` | `storage/` | vault container layout |
 | `GARBAGE_COLLECTION_ENABLED` | `true` | cleanup task toggle |
