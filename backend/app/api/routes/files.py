@@ -1,4 +1,3 @@
-from io import BytesIO
 from uuid import UUID
 
 from fastapi import APIRouter
@@ -322,51 +321,42 @@ class FileStreamer:
                 "Encrypted container missing on disk."
             )
 
+        from app.crypto.rsa.hybrid_encryptor import (
+            HybridEncryptor,
+        )
+
+        from app.crypto.streams.decrypt_stream import (
+            DecryptStream,
+        )
+
+        from app.services.encryption.container_serializer import (
+            ContainerSerializer,
+        )
+
+        serializer = ContainerSerializer()
+
         private_key = (
             self._downloads._keys.unlock_private_key(
                 self._key
             )
         )
 
-        bucket = BytesIO()
+        hybrid = HybridEncryptor()
 
-        with container.open("rb") as source:
+        decrypt = DecryptStream()
 
-            serializer = (
-                self._downloads
-                ._file_decryptor
-                ._serializer
-            )
+        stream, _, wrapped_key = (
+            serializer.open_file(container)
+        )
 
-            from app.crypto.rsa.hybrid_encryptor import (
-                HybridEncryptor,
-            )
-
-            hybrid = HybridEncryptor()
-
-            _, _, wrapped = (
-                serializer.read_header(source),
-                None,
-                None,
-            )
-
-            self._skip_wrapped_key(
-                serializer,
-                source,
-            )
+        try:
 
             session_key = hybrid.unwrap_key(
-                self._wrapped(source),
+                wrapped_key,
                 private_key,
             )
 
-            from app.crypto.streams.decrypt_stream import (
-                DecryptStream,
-            )
-
-            decrypt = DecryptStream()
-
-            for payload in serializer.iter_chunks(source):
+            for payload in serializer.iter_chunks(stream):
 
                 for plaintext in decrypt.decrypt(
                     [payload],
@@ -375,35 +365,10 @@ class FileStreamer:
 
                     yield plaintext
 
-    @staticmethod
-    def _skip_wrapped_key(
-        serializer,
-        source,
-    ) -> None:
-        from app.services.encryption.container_serializer import (
-            InvalidContainerError,
-        )
+        finally:
 
-        length_bytes = source.read(4)
-
-        if len(length_bytes) != 4:
-            raise InvalidContainerError(
-                "Corrupted container."
-            )
-
-        import struct
-
-        length = struct.unpack(
-            ">I", length_bytes
-        )[0]
-
-        source.read(length)
-
-    @staticmethod
-    def _read_wrapped(
-        source,
-    ) -> bytes:
-        return source.read()
+            if not stream.closed:
+                stream.close()
 
 
 @router.delete(
