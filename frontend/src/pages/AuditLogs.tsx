@@ -38,8 +38,8 @@ export default function AuditLogs() {
   const [action, setAction] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["audit", { page, page_size: 10, action }],
-    queryFn: () => audit.list({ page, page_size: 10, action: action || undefined })
+    queryKey: ["audit", { page, page_size: PAGE_SIZE, action }],
+    queryFn: () => audit.list({ page, page_size: PAGE_SIZE, action: action || undefined })
   });
 
   return (
@@ -111,7 +111,7 @@ export default function AuditLogs() {
         />
         <Pagination
           page={page}
-          pageSize={10}
+          pageSize={PAGE_SIZE}
           total={data?.total ?? 0}
           onChange={setPage}
         />
