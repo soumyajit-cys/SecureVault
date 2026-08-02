@@ -8,6 +8,7 @@ import RequireRole from "@/components/guard/RequireRole";
 
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import EncryptText from "@/pages/EncryptText";
 import DecryptText from "@/pages/DecryptText";
@@ -66,6 +67,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
