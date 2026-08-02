@@ -109,7 +109,6 @@ export default function Settings() {
         <Button variant="outline" onClick={handleLogout}>
           Sign out of this device
         </Button>
-        <p className="mt-2 text-xs text-slate-500">{errorMessage ? " " : ""}</p>
       </Card>
     </div>
   );
