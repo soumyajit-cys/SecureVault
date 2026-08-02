@@ -71,19 +71,21 @@ export const folders = {
 };
 
 export const keys = {
-  list: (params: { page?: number; page_size?: number }) =>
+  list: (params: { page?: number; page_size?: number; status?: string }) =>
     api.get<Paginated<Key>>("/keys/", { params }).then((r) => r.data),
-  generate: (body: { name: string; algorithm: string; key_size: number; expires_in_days?: number }) =>
-    api.post<KeyCreateResponse>("/keys/generate", body).then((r) => r.data),
-  rotate: (id: string, body?: { reason?: string }) =>
-    api.post<KeyCreateResponse>(`/keys/${id}/rotate`, body ?? {}).then((r) => r.data),
-  revoke: (id: string, body?: { reason?: string }) =>
-    api.post<Key>(`/keys/${id}/revoke`, body ?? {}).then((r) => r.data),
-  setActive: (id: string) => api.post<Key>(`/keys/${id}/active`).then((r) => r.data),
-  publicKey: (id?: string) =>
-    api.get<{ key_id: string; public_key_pem: string }>("/keys/public", {
-      params: id ? { key_id: id } : {}
-    }).then((r) => r.data)
+  generate: (body: { name: string; validity_days?: number }) =>
+    api.post<KeyCreateResponse>("/keys/", body).then((r) => r.data),
+  rotate: (body: {
+    current_key_id: string;
+    name?: string;
+    validity_days?: number;
+  }) => api.post<KeyRotateResponse>("/keys/rotate", body).then((r) => r.data),
+  revoke: (id: string) =>
+    api
+      .post<{ key_id: string; revoked: boolean; revoked_at: string | null }>(
+        `/keys/${id}/revoke`
+      )
+      .then((r) => r.data)
 };
 
 export const audit = {

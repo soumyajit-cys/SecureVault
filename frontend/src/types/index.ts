@@ -35,6 +35,11 @@ export interface KeyCreateResponse extends Key {
   public_key_pem: string;
 }
 
+export interface KeyRotateResponse {
+  old_key: Key;
+  new_key: KeyCreateResponse;
+}
+
 export interface EncryptTextResponse {
   nonce: string;
   ciphertext: string;
