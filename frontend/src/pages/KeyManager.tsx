@@ -98,7 +98,7 @@ export default function KeyManager() {
           </div>
         </div>
         {genMutation.error && (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
             {extractDetail(genMutation.error)}
           </p>
         )}
@@ -112,8 +112,8 @@ export default function KeyManager() {
               header: "Key",
               render: (r: Key) => (
                 <div>
-                  <p className="font-medium text-slate-900">{r.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-medium text-ink">{r.name}</p>
+                  <p className="text-xs text-ink-faint">
                     {r.algorithm} · {r.key_size}-bit · {r.fingerprint?.slice(0, 12)}
                   </p>
                 </div>
@@ -128,14 +128,14 @@ export default function KeyManager() {
               key: "expires",
               header: "Expires",
               render: (r: Key) => (
-                <span className="text-xs text-slate-500">{formatDate(r.expires_at)}</span>
+                <span className="text-xs text-ink-faint">{formatDate(r.expires_at)}</span>
               )
             },
             {
               key: "created",
               header: "Created",
               render: (r: Key) => (
-                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-ink-faint">{formatDate(r.created_at)}</span>
               )
             },
             {
@@ -183,10 +183,10 @@ export default function KeyManager() {
         title="Key generated"
         onClose={() => setPubKey(null)}
       >
-        <p className="mb-3 text-sm text-slate-500">
+        <p className="mb-3 text-sm text-ink-faint">
           The public part of the new key pair (for verification):
         </p>
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-300">
+        <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-cyber-line bg-cyber p-4 text-xs text-emerald-300">
           {pubKey}
         </pre>
       </Modal>
