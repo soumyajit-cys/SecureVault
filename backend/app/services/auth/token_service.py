@@ -21,11 +21,12 @@ settings = get_settings()
 
 class TokenService:
 
-    def __init__(self):
+    def __init__(
+        self,
+        jwt_service: JWTService,
+    ):
 
-        self.jwt_service = (
-            JWTService()
-        )
+        self.jwt_service = jwt_service
 
     def create_access_token(
         self,

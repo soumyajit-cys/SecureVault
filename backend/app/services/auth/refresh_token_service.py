@@ -21,10 +21,13 @@ class RefreshTokenService:
     def __init__(
         self,
         token_repository: SQLAlchemyRefreshTokenRepository,
+        jwt_service: JWTService,
     ):
         self.repository = token_repository
-        self.jwt_service = JWTService()
-        self.token_service = TokenService()
+        self.jwt_service = jwt_service
+        self.token_service = TokenService(
+            jwt_service
+        )
 
     def issue_initial_refresh_token(
         self,

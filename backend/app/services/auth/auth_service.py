@@ -62,6 +62,7 @@ class AuthService:
         session_repository,
         refresh_repository,
         audit_repository,
+        jwt_service,
     ):
         self.users = user_repository
         self.roles = role_repository
@@ -72,7 +73,9 @@ class AuthService:
         )
 
         self.token_service = (
-            TokenService()
+            TokenService(
+                jwt_service
+            )
         )
 
         self.session_service = (
@@ -83,7 +86,8 @@ class AuthService:
 
         self.refresh_service = (
             RefreshTokenService(
-                refresh_repository
+                refresh_repository,
+                jwt_service,
             )
         )
 
