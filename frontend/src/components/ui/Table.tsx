@@ -21,8 +21,8 @@ export default function Table<T>({
 }: TableProps<T>) {
   if (loading) {
     return (
-      <div className="flex justify-center py-10 text-sm text-slate-400">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-brand-600" />
+      <div className="flex justify-center py-10">
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-cyber-line border-t-accent" />
       </div>
     );
   }
@@ -30,12 +30,12 @@ export default function Table<T>({
   if (rows.length === 0) {
     return (
       <div className="py-12 text-center">
-        <div className="mx-auto mb-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-400">
+        <div className="mx-auto mb-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-cyber-line bg-surface-muted/60 text-ink-faint">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
           </svg>
         </div>
-        <p className="text-sm font-medium text-slate-500">{emptyMessage}</p>
+        <p className="text-sm font-medium text-ink-faint">{emptyMessage}</p>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export default function Table<T>({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-slate-200/80 bg-slate-50/50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <tr className="border-b border-cyber-line text-xs font-semibold uppercase tracking-wider text-ink-faint">
             {columns.map((col) => (
               <th key={col.key} className="px-4 py-3">
                 {col.header}
@@ -52,9 +52,12 @@ export default function Table<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-cyber-line">
           {rows.map((row, i) => (
-            <tr key={i} className="text-slate-700 transition-colors hover:bg-brand-50/40">
+            <tr
+              key={i}
+              className="text-ink-soft transition-colors hover:bg-accent/5 hover:text-ink"
+            >
               {columns.map((col) => (
                 <td key={col.key} className="px-4 py-3">
                   {col.render(row)}
