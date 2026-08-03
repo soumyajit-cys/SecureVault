@@ -1,3 +1,5 @@
+from fastapi import Depends
+
 from app.api.dependencies.repositories import (
     get_jwt_signing_key_repository,
 )
