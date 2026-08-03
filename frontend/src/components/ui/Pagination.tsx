@@ -10,22 +10,25 @@ export default function Pagination({ page, pageSize, total, onChange }: Paginati
 
   if (pages <= 1) return null;
 
+  const btn =
+    "rounded-lg border border-cyber-line bg-surface-elevated/60 px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-accent/40 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-cyber-line disabled:hover:text-ink-soft";
+
   return (
-    <nav className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-      <p className="text-xs text-slate-500">
-        Page <span className="font-medium text-slate-700">{page}</span> of {pages} ·{" "}
+    <nav className="flex items-center justify-between border-t border-cyber-line px-4 py-3">
+      <p className="text-xs text-ink-faint">
+        Page <span className="font-medium text-ink">{page}</span> of {pages} ·{" "}
         {total} total
       </p>
       <div className="flex gap-2">
         <button
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className={btn}
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
         >
           Previous
         </button>
         <button
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className={btn}
           disabled={page >= pages}
           onClick={() => onChange(page + 1)}
         >
