@@ -21,22 +21,24 @@ export default function Card({
 }: CardProps) {
   return (
     <section
-      className={`${gradient ? "bg-brand-gradient text-white" : "border border-slate-200/70 bg-white"} rounded-2xl shadow-card ${
+      className={`${
+        gradient
+          ? "border border-brand-500/30 bg-brand-gradient shadow-glow-sm"
+          : "border border-cyber-line bg-surface-elevated/60 backdrop-blur-xl"
+      } rounded-2xl shadow-card ${
         elevated ? "shadow-card-hover" : ""
-      } hover:border-brand-200/70 ${className}`}
+      } hover:border-accent/30 ${className}`}
     >
       {(title || action) && (
         <header
-          className={`flex items-center justify-between gap-4 ${
-            gradient ? "border-white/10" : "border-slate-200/70"
-          } border-b px-5 py-4`}
+          className={`flex items-center justify-between gap-4 border-b ${
+            gradient ? "border-white/15" : "border-cyber-line"
+          } px-5 py-4`}
         >
           <div>
-            <h2 className={`text-sm font-semibold ${gradient ? "text-white" : "text-slate-900"}`}>
-              {title}
-            </h2>
+            <h2 className="text-sm font-semibold text-ink">{title}</h2>
             {subtitle && (
-              <p className={`mt-0.5 text-xs ${gradient ? "text-white/70" : "text-slate-500"}`}>
+              <p className={`mt-0.5 text-xs ${gradient ? "text-white/70" : "text-ink-faint"}`}>
                 {subtitle}
               </p>
             )}

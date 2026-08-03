@@ -13,13 +13,13 @@ interface BadgeProps {
 }
 
 const colors: Record<BadgeColor, string> = {
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-  red: "bg-red-50 text-red-700 ring-red-600/20",
-  amber: "bg-amber-50 text-amber-700 ring-amber-600/20",
-  cyan: "bg-cyan-50 text-cyan-700 ring-cyan-600/20",
-  purple: "bg-purple-50 text-purple-700 ring-purple-600/20",
-  indigo: "bg-brand-50 text-brand-700 ring-brand-600/20",
-  slate: "bg-slate-100 text-slate-600 ring-slate-500/20"
+  green: "bg-emerald-500/10 text-emerald-300 ring-emerald-400/30",
+  red: "bg-red-500/10 text-red-300 ring-red-400/30",
+  amber: "bg-amber-500/10 text-amber-300 ring-amber-400/30",
+  cyan: "bg-cyan-500/10 text-cyan-300 ring-cyan-400/30",
+  purple: "bg-purple-500/10 text-purple-300 ring-purple-400/30",
+  indigo: "bg-brand-500/10 text-brand-300 ring-brand-400/30",
+  slate: "bg-slate-500/10 text-slate-300 ring-slate-400/30"
 };
 
 export default function Badge({ children, color = "slate" }: BadgeProps) {
