@@ -11,6 +11,9 @@ from app.infrastructure.repositories.audit_log_repository import (
 from app.infrastructure.repositories.crypto_key_repository import (
     SQLAlchemyCryptoKeyRepository,
 )
+from app.infrastructure.repositories.jwt_signing_key_repository import (
+    SQLAlchemyJwtSigningKeyRepository,
+)
 from app.infrastructure.repositories.permission_repository import (
     SQLAlchemyPermissionRepository,
 )
@@ -87,5 +90,13 @@ def get_stored_file_repository(
     db: Session = Depends(get_db),
 ):
     return SQLAlchemyStoredFileRepository(
+        db
+    )
+
+
+def get_jwt_signing_key_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyJwtSigningKeyRepository(
         db
     )
