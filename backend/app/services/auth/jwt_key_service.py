@@ -98,7 +98,7 @@ class JwtKeyService:
         expires_delta: timedelta,
     ) -> str:
 
-        key = self.ensure_active_key()
+        key = self.rotate_if_due()
 
         payload = claims.copy()
 
