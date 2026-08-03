@@ -2,7 +2,6 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 import secrets
-import uuid
 
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -104,9 +103,11 @@ class JwtKeyService:
             + expires_delta
         )
 
-        private_key = serialization.load_pem_private_key(
-            key.private_key_pem.encode(),
-            password=None,
+        private_key = (
+            serialization.load_pem_private_key(
+                key.private_key_pem.encode(),
+                password=None,
+            )
         )
 
         return jwt.encode(
@@ -124,13 +125,6 @@ class JwtKeyService:
     ) -> dict:
 
         try:
-
-            unverified = jwt.decode(
-                token,
-                options={
-                    "verify_signature": False,
-                },
-            )
 
             kid = (
                 jwt.get_unverified_header(token)
@@ -178,8 +172,6 @@ class JwtKeyService:
                 "Invalid token"
             )
 
-        self._cache[kid] = signing
-
         return payload
 
     def _resolve_key(
@@ -200,9 +192,9 @@ class JwtKeyService:
                 self._cache[kid] = entry
                 return entry
 
-        return self.ensure_active_key()
+        return None
 
-    def _is_retired_graceful(
+    def _is_beyond_grace(
         self,
         retired_at: datetime | None,
     ) -> bool:
@@ -221,31 +213,29 @@ class JwtKeyService:
         self,
     ) -> JwtSigningKey:
 
-        key_id = self._generate_key_id()
+        key_id = (
+            f"sv-"
+            f"{secrets.token_urlsafe(6)}"
+        )
 
-        now = datetime.now(UTC)
+        private_pem, public_pem = (
+            self._mint_key_pair()
+        )
 
         entry = JwtSigningKey(
             key_id=key_id,
             algorithm="RS256",
             status="active",
-            private_key_pem=self._mint_private_key_pem(),
-            public_key_pem="",
-            created_at……,
+            private_key_pem=private_pem,
+            public_key_pem=public_pem,
         )
 
-        return entry
+        return self.repository.create(entry)
 
-    def _generate_key_id(self) -> str:
-        return (
-            f"sv-"
-            f"{secrets.token_urlsafe(6)}"
-        )
+    def _mint_key_pair(
+        self,
+    ) -> tuple[str, str]:
 
-    def _mint_private_key_pem(self) -> str:
-        raise NotImplementedError
-
-    def _mint_key_pair(self) -> tuple[str, str]:
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=4096,
@@ -273,7 +263,3 @@ class JwtKeyService:
             private_pem.decode(),
             public_pem.decode(),
         )
-
-    @staticmethod
-    def _utcnow() -> datetime:
-        return datetime.now(UTC)
