@@ -51,13 +51,13 @@ function PageHeader() {
   const meta = pageTitles[location.pathname];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-cyber-line bg-surface-elevated/60 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 lg:px-8">
         <div>
-          <h1 className="text-base font-bold tracking-tight text-slate-900">
+          <h1 className="text-base font-bold tracking-tight text-ink">
             {meta?.title ?? "SecureVault"}
           </h1>
-          <p className="text-xs text-slate-500">{meta?.tagline}</p>
+          <p className="text-xs text-ink-faint">{meta?.tagline}</p>
         </div>
         <TopbarRight />
       </div>
@@ -72,19 +72,22 @@ function TopbarRight() {
   return (
     <div className="flex items-center gap-3">
       <span className="chip hidden sm:inline-flex">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        </span>
         System online
       </span>
       {user && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-1.5 shadow-sm">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-xs font-bold text-white">
+        <div className="flex items-center gap-2.5 rounded-xl border border-cyber-line bg-surface-elevated/60 px-3 py-1.5 shadow-sm backdrop-blur">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-xs font-bold text-white shadow-glow-sm">
             {user.username?.slice(0, 2).toUpperCase()}
           </span>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold leading-tight text-slate-800">
+            <p className="text-sm font-semibold leading-tight text-ink">
               {user.username}
             </p>
-            <p className="text-[11px] leading-tight text-slate-400">{roles}</p>
+            <p className="text-[11px] leading-tight text-ink-faint">{roles}</p>
           </div>
         </div>
       )}
@@ -94,12 +97,13 @@ function TopbarRight() {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-soft">
+    <div className="flex h-screen overflow-hidden bg-cyber">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <PageHeader />
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl animate-fade-up p-6 lg:p-8">
+        <main className="relative flex-1 overflow-y-auto">
+          <div className="pointer-events-none absolute inset-0 cyber-bg" />
+          <div className="relative mx-auto max-w-6xl animate-fade-up p-6 lg:p-8">
             {children}
           </div>
         </main>
