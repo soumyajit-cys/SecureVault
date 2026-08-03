@@ -6,32 +6,39 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
-          950: "#1e1b4b"
+          50: "#eafff7",
+          100: "#ccfbf0",
+          200: "#9af0dc",
+          300: "#5fe3c4",
+          400: "#2fd4ab",
+          500: "#10b981",
+          600: "#0d9668",
+          700: "#0b7a55",
+          800: "#0b5c43",
+          900: "#0a4a38",
+          950: "#042f22"
         },
         accent: {
-          DEFAULT: "#6366f1",
-          light: "#818cf8",
-          soft: "#eef2ff"
+          DEFAULT: "#22d3ee",
+          light: "#67e8f9",
+          soft: "#164e63"
         },
         ink: {
-          DEFAULT: "#0f172a",
-          soft: "#475569",
-          faint: "#94a3b8"
+          DEFAULT: "#e2e8f0",
+          soft: "#94a3b8",
+          faint: "#64748b"
         },
         surface: {
-          DEFAULT: "#ffffff",
-          soft: "#f8fafc",
-          muted: "#eef1f7"
+          DEFAULT: "#0b1120",
+          soft: "#060a14",
+          muted: "#101a2e",
+          elevated: "#0f172a"
+        },
+        cyber: {
+          DEFAULT: "#05070d",
+          grid: "#14203a",
+          line: "#1e2b45",
+          glow: "#22d3ee"
         }
       },
       fontFamily: {
@@ -56,22 +63,31 @@ export default {
       },
       backgroundImage: {
         "brand-gradient":
-          "linear-gradient(135deg, #6366f1 0%, #4338ca 60%, #312e81 100%)",
+          "linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0e7490 100%)",
         "brand-gradient-soft":
-          "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
+          "linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(34,211,238,0.08) 100%)",
         "brand-gradient-warm":
-          "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+          "linear-gradient(135deg, #10b981 0%, #22d3ee 100%)",
+        "cyber-grid":
+          "linear-gradient(rgba(34,211,238,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.05) 1px, transparent 1px)",
+        "cyber-grid-bright":
+          "linear-gradient(rgba(34,211,238,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.09) 1px, transparent 1px)",
+        "glass-gradient":
+          "linear-gradient(160deg, rgba(148,163,184,0.10) 0%, rgba(15,23,42,0.55) 100%)",
         "radial-glow":
-          "radial-gradient(ellipse at top, #e0e7ff 0%, transparent 60%)"
+          "radial-gradient(ellipse at top, rgba(34,211,238,0.12) 0%, transparent 60%)"
       },
       boxShadow: {
-        card: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)",
+        card: "0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 1px 2px 0 rgb(0 0 0 / 0.5)",
         "card-hover":
-          "0 8px 24px -6px rgb(79 70 229 / 0.14), 0 4px 8px -2px rgb(15 23 42 / 0.06)",
-        modal: "0 20px 40px -12px rgb(15 23 42 / 0.25)",
-        glow: "0 0 0 1px rgb(99 102 241 / 0.16), 0 8px 32px -8px rgb(79 70 229 / 0.35)",
+          "0 0 0 1px rgb(34 211 238 / 0.22), 0 16px 40px -12px rgb(13 148 136 / 0.35), 0 1px 0 0 rgb(255 255 255 / 0.05) inset",
+        modal:
+          "0 0 0 1px rgb(255 255 255 / 0.08), 0 24px 64px -16px rgb(0 0 0 / 0.8), 0 0 64px -24px rgb(34 211 238 / 0.25)",
+        glow: "0 0 0 1px rgb(16 185 129 / 0.35), 0 0 24px -4px rgb(16 185 129 / 0.45), 0 8px 32px -8px rgb(13 148 136 / 0.5)",
         "glow-sm":
-          "0 0 0 1px rgb(99 102 241 / 0.12), 0 4px 16px -4px rgb(79 70 229 / 0.3)",
+          "0 0 0 1px rgb(16 185 129 / 0.25), 0 0 16px -4px rgb(16 185 129 / 0.35)",
+        "glow-cyan":
+          "0 0 0 1px rgb(34 211 238 / 0.3), 0 0 24px -4px rgb(34 211 238 / 0.4)",
         inset: "inset 0 1px 0 0 rgb(255 255 255 / 0.06)"
       },
       keyframes: {
@@ -98,6 +114,28 @@ export default {
         pulse: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.55" }
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" }
+        },
+        "scan-line": {
+          "0%": { top: "0%", opacity: "0" },
+          "10%": { opacity: "1" },
+          "90%": { opacity: "1" },
+          "100%": { top: "100%", opacity: "0" }
+        },
+        "grid-drift": {
+          "0%": { backgroundPosition: "0 0" },
+          "100%": { backgroundPosition: "0 48px" }
+        },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.8)", opacity: "0.6" },
+          "100%": { transform: "scale(1.6)", opacity: "0" }
+        },
+        blink: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0" }
         }
       },
       animation: {
@@ -107,7 +145,11 @@ export default {
         "slide-in-right":
           "slide-in-right 0.3s cubic-bezier(0.22, 1, 0.36, 1) both",
         shimmer: "shimmer 2s linear infinite",
-        "float-slow": "float 4s ease-in-out infinite"
+        "float-slow": "float 5s ease-in-out infinite",
+        "scan-line": "scan-line 4s linear infinite",
+        "grid-drift": "grid-drift 8s linear infinite",
+        "pulse-ring": "pulse-ring 2s cubic-bezier(0.22, 1, 0.36, 1) infinite",
+        blink: "blink 1.1s step-end infinite"
       },
       transitionTimingFunction: {
         "in-out-soft": "cubic-bezier(0.22, 1, 0.36, 1)"
