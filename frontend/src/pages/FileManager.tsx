@@ -96,7 +96,7 @@ export default function FileManager() {
         action={
           <div className="flex items-center gap-3">
             <input
-              className="w-56 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              className="w-56 rounded-lg border border-cyber-line bg-surface-elevated px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint outline-none transition-colors focus:border-accent/50 focus:ring-2 focus:ring-accent/20"
               placeholder="Search by filename…"
               value={search}
               onChange={(e) => {
@@ -128,7 +128,7 @@ export default function FileManager() {
               header: "Filename",
               render: (r: StoredFile) => (
                 <button
-                  className="text-left font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                  className="text-left font-medium text-brand-400 hover:text-brand-300 hover:underline"
                   onClick={() => setPreview(r)}
                 >
                   {r.original_filename}
@@ -139,7 +139,7 @@ export default function FileManager() {
               key: "size",
               header: "Size",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-ink-faint">
                   {formatBytes(r.original_size)}
                 </span>
               )
@@ -157,7 +157,7 @@ export default function FileManager() {
               key: "created",
               header: "Created",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-ink-faint">{formatDate(r.created_at)}</span>
               )
             },
             {
@@ -203,8 +203,8 @@ export default function FileManager() {
               ["Created", formatDate(preview.created_at)]
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4">
-                <dt className="text-slate-500">{k}</dt>
-                <dd className="max-w-xs truncate text-right font-mono text-slate-800">{v}</dd>
+                <dt className="text-ink-faint">{k}</dt>
+                <dd className="max-w-xs truncate text-right font-mono text-ink">{v}</dd>
               </div>
             ))}
           </dl>
