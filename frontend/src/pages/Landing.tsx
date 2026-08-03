@@ -18,23 +18,17 @@ const features = [
   {
     title: "AES-256-GCM encryption",
     desc: "Military-grade authenticated encryption with unique per-message nonces.",
-    icon: (
-      <path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5" />
-    )
+    icon: <path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5" />
   },
   {
     title: "Key lifecycle management",
     desc: "Generate, rotate and revoke keys with automatic expiry and rotation policies.",
-    icon: (
-      <path d="M21 2l-5 5m-2 2l-3-3-6 6a4 4 0 0 0 6 6l6-6-3-3m-3 0l3 3" />
-    )
+    icon: <path d="M21 2l-5 5m-2 2l-3-3-6 6a4 4 0 0 0 6 6l6-6-3-3m-3 0l3 3" />
   },
   {
     title: "Immutable audit trail",
     desc: "Every security-relevant action is logged, timestamped and queryable in real time.",
-    icon: (
-      <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
-    )
+    icon: <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
   },
   {
     title: "Zero plaintext at rest",
@@ -44,16 +38,12 @@ const features = [
   {
     title: "Folder archives",
     desc: "Encrypt a whole directory as a single AES-256-GCM archive and restore it later.",
-    icon: (
-      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-    )
+    icon: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
   },
   {
     title: "Role-based access",
     desc: "Fine-grained controls for Users, Auditors and Admins, enforced server-side.",
-    icon: (
-      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 10a8 8 0 0 1 16 0" />
-    )
+    icon: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 10a8 8 0 0 1 16 0" />
   }
 ];
 
@@ -66,7 +56,7 @@ const steps = [
   {
     n: "02",
     title: "Generate an encryption key",
-    desc: "Provision a key pair and share it across your encrypt and decrypt workflows."
+    desc: "Provision an RSA-4096 key pair and share it across your workflows."
   },
   {
     n: "03",
@@ -109,9 +99,9 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-soft">
+    <div className="min-h-screen bg-cyber">
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-cyber-line bg-surface-elevated/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow-sm">
@@ -127,19 +117,19 @@ export default function Landing() {
                 {shieldIcon}
               </svg>
             </span>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
+            <span className="text-lg font-bold tracking-tight text-ink">
               SecureVault
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a href="#features" className="transition-colors hover:text-brand-600">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-ink-soft md:flex">
+            <a href="#features" className="transition-colors hover:text-brand-300">
               Features
             </a>
-            <a href="#how" className="transition-colors hover:text-brand-600">
+            <a href="#how" className="transition-colors hover:text-brand-300">
               How it works
             </a>
-            <a href="#security" className="transition-colors hover:text-brand-600">
+            <a href="#security" className="transition-colors hover:text-brand-300">
               Security
             </a>
           </nav>
@@ -156,7 +146,7 @@ export default function Landing() {
               <>
                 <Link
                   to="/login"
-                  className="text-sm font-semibold text-slate-700 transition-colors hover:text-brand-600"
+                  className="text-sm font-semibold text-ink-soft transition-colors hover:text-brand-300"
                 >
                   Sign in
                 </Link>
@@ -174,36 +164,37 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 cyber-bg animate-grid-drift" />
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-brand-200/40 blur-3xl" />
-          <div className="absolute -right-24 top-20 h-72 w-72 rounded-full bg-brand-300/30 blur-3xl" />
-          <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl" />
+          <div className="absolute -top-32 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-brand-500/15 blur-3xl" />
+          <div className="absolute -right-24 top-20 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl" />
         </div>
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-6 pb-24 pt-16 lg:grid-cols-2 lg:pb-28 lg:pt-24">
           {/* Left: marketing copy */}
           <div className="text-center lg:text-left">
-            <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-brand-200 bg-white/60 px-3.5 py-1.5 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur">
+            <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 {shieldCheck}
               </svg>
               Enterprise-grade encryption
             </span>
 
-            <h1 className="mt-8 animate-fade-up text-4xl font-extrabold tracking-tight text-slate-900 [animation-delay:80ms] sm:text-5xl lg:text-6xl">
+            <h1 className="mt-8 animate-fade-up text-4xl font-extrabold tracking-tight text-ink [animation-delay:80ms] sm:text-5xl lg:text-6xl">
               Encrypt files, folders and text —{" "}
-              <span className="bg-brand-gradient bg-clip-text text-transparent">
+              <span className="bg-brand-gradient-warm bg-clip-text text-transparent text-glow">
                 by design, at rest.
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-xl animate-fade-up text-lg leading-relaxed text-slate-600 [animation-delay:160ms] lg:mx-0">
+            <p className="mx-auto mt-6 max-w-xl animate-fade-up text-lg leading-relaxed text-ink-soft [animation-delay:160ms] lg:mx-0">
               SecureVault seals your sensitive data with authenticated AES-256-GCM
-              encryption, manages your keys, and keeps a complete audit trail — from
+              encryption, manages your RS256 keys, and keeps a complete audit trail — from
               first upload to permanent deletion.
             </p>
 
-            <div className="mt-8 animate-fade-up text-slate-900 [animation-delay:240ms]">
+            <div className="mt-8 animate-fade-up text-ink [animation-delay:240ms]">
               {isAuthenticated ? (
                 <Link
                   to="/dashboard"
@@ -229,10 +220,10 @@ export default function Landing() {
                 ["Zero-copy", "sealed plaintext paths"]
               ].map(([k, v]) => (
                 <div key={k} className="text-center lg:text-left">
-                  <dt className="bg-brand-gradient bg-clip-text text-xl font-extrabold text-transparent">
+                  <dt className="bg-brand-gradient-warm bg-clip-text text-xl font-extrabold text-transparent">
                     {k}
                   </dt>
-                  <dd className="mt-1 text-xs text-slate-500">{v}</dd>
+                  <dd className="mt-1 text-xs text-ink-faint">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -241,14 +232,14 @@ export default function Landing() {
           {/* Right: embedded login */}
           {isAuthenticated ? (
             <div className="animate-fade-up mx-auto w-full max-w-md text-center lg:justify-self-end">
-              <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-8 shadow-modal backdrop-blur-xl">
+              <div className="rounded-3xl border border-cyber-line bg-surface-elevated/70 p-8 shadow-modal backdrop-blur-xl">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-glow">
                   <IconShield />
                 </div>
-                <h2 className="mt-5 text-xl font-extrabold tracking-tight text-slate-900">
+                <h2 className="mt-5 text-xl font-extrabold tracking-tight text-ink">
                   You&apos;re already signed in
                 </h2>
-                <p className="mt-1.5 text-sm text-slate-500">
+                <p className="mt-1.5 text-sm text-ink-faint">
                   Continue to your sealed workspace.
                 </p>
                 <Link
@@ -261,16 +252,18 @@ export default function Landing() {
             </div>
           ) : (
             <div className="animate-fade-up mx-auto w-full max-w-sm [animation-delay:120ms] lg:justify-self-end">
-              <div className="rounded-3xl border border-slate-200/70 bg-white/80 p-8 shadow-modal backdrop-blur-xl">
+              <div className="relative overflow-hidden rounded-3xl border border-cyber-line bg-surface-elevated/70 p-8 shadow-modal backdrop-blur-xl">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px animate-scan-line bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow-sm">
                     <IconShield />
                   </span>
                   <div>
-                    <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
+                    <p className="term-label">Identity gateway</p>
+                    <h2 className="text-lg font-extrabold tracking-tight text-ink">
                       Sign in
                     </h2>
-                    <p className="text-xs text-slate-500">Welcome back to the vault</p>
+                    <p className="text-xs text-ink-faint">Welcome back to the vault</p>
                   </div>
                 </div>
 
@@ -295,7 +288,7 @@ export default function Landing() {
                   />
 
                   {error && (
-                    <div className="animate-fade-in rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                    <div className="animate-fade-in rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300">
                       {error}
                     </div>
                   )}
@@ -309,11 +302,11 @@ export default function Landing() {
                   </Button>
                 </form>
 
-                <p className="mt-5 text-center text-sm text-slate-500">
+                <p className="mt-5 text-center text-sm text-ink-faint">
                   No account?{" "}
                   <Link
                     to="/register"
-                    className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                    className="font-semibold text-brand-400 transition-colors hover:text-brand-300"
                   >
                     Create one — it&apos;s free
                   </Link>
@@ -325,16 +318,14 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section id="features" className="border-t border-slate-200/60 bg-white">
+      <section id="features" className="relative border-t border-cyber-line bg-surface-elevated/30">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-brand-600">
-              Features
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            <p className="term-label">Features</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
               Everything you need to secure your data
             </h2>
-            <p className="mt-4 text-lg text-slate-600">
+            <p className="mt-4 text-lg text-ink-soft">
               A focused toolkit that makes strong crypto practical and auditable.
             </p>
           </div>
@@ -343,9 +334,9 @@ export default function Landing() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover"
+                className="group rounded-2xl border border-cyber-line bg-surface-elevated/60 p-6 shadow-card backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-card-hover"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors duration-200 group-hover:bg-brand-gradient group-hover:text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand-400/20 bg-brand-500/10 text-brand-300 transition-colors duration-200 group-hover:bg-brand-gradient group-hover:text-white group-hover:shadow-glow-sm">
                   <svg
                     className="h-5 w-5"
                     viewBox="0 0 24 24"
@@ -358,8 +349,8 @@ export default function Landing() {
                     {f.icon}
                   </svg>
                 </span>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.desc}</p>
+                <h3 className="mt-4 text-base font-semibold text-ink">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -367,13 +358,11 @@ export default function Landing() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="border-t border-slate-200/60 bg-surface-soft">
+      <section id="how" className="border-t border-cyber-line bg-cyber">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-brand-600">
-              How it works
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            <p className="term-label">How it works</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
               Three steps to a sealed vault
             </h2>
           </div>
@@ -382,15 +371,17 @@ export default function Landing() {
             {steps.map((s) => (
               <div
                 key={s.n}
-                className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card"
+                className="relative overflow-hidden rounded-2xl border border-cyber-line bg-surface-elevated/60 p-6 shadow-card backdrop-blur-xl"
               >
-                <span className="absolute -right-2 -top-3 text-6xl font-extrabold tracking-tight text-brand-50">
+                <span className="absolute -right-2 -top-3 text-6xl font-extrabold tracking-tight text-ink/10">
                   {s.n}
                 </span>
                 <div className="relative">
-                  <span className="text-sm font-bold tracking-wide text-brand-600">{s.n}</span>
-                  <h3 className="mt-2 text-base font-semibold text-slate-900">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{s.desc}</p>
+                  <span className="font-mono text-sm font-bold tracking-widest text-accent">
+                    {s.n}
+                  </span>
+                  <h3 className="mt-2 text-base font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">{s.desc}</p>
                 </div>
               </div>
             ))}
@@ -399,32 +390,31 @@ export default function Landing() {
       </section>
 
       {/* Security */}
-      <section id="security" className="relative overflow-hidden border-t border-slate-200/60 bg-slate-950">
+      <section id="security" className="relative overflow-hidden border-t border-cyber-line">
+        <div className="pointer-events-none absolute inset-0 cyber-bg opacity-60" />
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 right-1/4 h-80 w-80 rounded-full bg-brand-500/20 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl" />
+          <div className="absolute -top-20 right-1/4 h-80 w-80 rounded-full bg-brand-500/15 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
         </div>
 
         <div className="relative mx-auto grid max-w-6xl gap-14 px-6 py-24 lg:grid-cols-2 lg:items-center">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-brand-300">
-              Security
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <p className="term-label">Security</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
               Garbage in never stored.{" "}
-              <span className="bg-brand-gradient-warm bg-clip-text text-transparent">
+              <span className="bg-brand-gradient-warm bg-clip-text text-transparent text-glow">
                 Plaintext never rests.
               </span>
             </h2>
             <ul className="mt-8 space-y-4">
               {[
                 "AES-256-GCM with SHA-256 integrity verification on every container",
-                "Hybrid RSA + session-key key wrapping for each sealed payload",
+                "Rotating RS256 signing keys with kid-based verification",
                 "Rotation, revocation and expiry enforced at the key level",
                 "Lockout thresholds and slow Argon2id hashing against brute force"
               ].map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-brand-100">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600/40 text-white shadow-glow-sm">
+                <li key={item} className="flex items-start gap-3 text-sm text-ink-soft">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-brand-400/40 bg-brand-500/10 text-brand-300">
                     <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12l5 5L20 7" />
                     </svg>
@@ -435,12 +425,16 @@ export default function Landing() {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-slate-700/70 bg-slate-900/60 p-6 shadow-card backdrop-blur">
-            <p className="mb-5 flex items-center gap-2 font-sans text-sm font-semibold text-slate-300">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              Vault layout
+          <div className="relative overflow-hidden rounded-2xl border border-cyber-line bg-cyber/80 p-6 shadow-card backdrop-blur">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px animate-scan-line bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
+            <p className="mb-5 flex items-center gap-2 font-mono text-sm font-semibold text-ink-soft">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              vault layout
             </p>
-            <pre className="overflow-x-auto font-mono text-xs leading-7 text-slate-400">{`storage/
+            <pre className="overflow-x-auto font-mono text-xs leading-7 text-ink-faint">{`storage/
 ├── containers/   # sealed .svlt
 │   └── *.svlt    AES-256-GCM ciphertext only
 ├── temp/         # staging, purged by GC
@@ -450,8 +444,8 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden border-t border-slate-200/60 bg-brand-gradient">
-        <div className="pointer-events-none absolute inset-0 opacity-30">
+      <section className="relative overflow-hidden border-t border-cyber-line bg-brand-gradient">
+        <div className="pointer-events-none absolute inset-0 opacity-20">
           <div className="absolute -top-20 left-1/4 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-brand-200/30 blur-3xl" />
         </div>
@@ -459,7 +453,7 @@ export default function Landing() {
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Ready to lock down your data?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-brand-100/90">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
             Create your vault in under a minute and start encrypting text, files
             and folders — with full key control and audit logs.
           </p>
@@ -473,26 +467,26 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/60 bg-white">
+      <footer className="border-t border-cyber-line bg-surface-elevated/40">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-white shadow-glow-sm">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 {shieldIcon}
               </svg>
             </span>
-            <span className="text-sm font-bold tracking-tight text-slate-900">
+            <span className="text-sm font-bold tracking-tight text-ink">
               SecureVault
             </span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-ink-faint">
             Zero plaintext storage · AES-256-GCM · Full audit trail
           </p>
-          <div className="flex items-center gap-4 text-sm text-slate-500">
-            <Link to="/login" className="transition-colors hover:text-brand-600">
+          <div className="flex items-center gap-4 text-sm text-ink-soft">
+            <Link to="/login" className="transition-colors hover:text-brand-300">
               Sign in
             </Link>
-            <Link to="/register" className="transition-colors hover:text-brand-600">
+            <Link to="/register" className="transition-colors hover:text-brand-300">
               Register
             </Link>
           </div>
