@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean
 from sqlalchemy import DateTime
-from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
-from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
@@ -45,11 +42,6 @@ class JwtSigningKey(BaseModel):
         nullable=False,
         default="active",
         index=True,
-    )
-
-    created_at_override: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
     )
 
     retired_at: Mapped[datetime | None] = mapped_column(
