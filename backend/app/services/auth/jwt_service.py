@@ -1,18 +1,21 @@
-from datetime import UTC
-from datetime import datetime
 from datetime import timedelta
 
-import jwt
-
 from app.core.config import get_settings
-from app.core.exceptions import InvalidTokenError
-from app.core.exceptions import TokenExpiredError
 from app.schemas.token_claims import TokenClaims
+from app.services.auth.jwt_key_service import (
+    JwtKeyService,
+)
 
 settings = get_settings()
 
 
 class JWTService:
+
+    def __init__(
+        self,
+        key_service: JwtKeyService,
+    ):
+        self.key_service = key_service
 
     def create_token(
         self,
@@ -20,17 +23,12 @@ class JWTService:
         expires_delta: timedelta,
     ) -> str:
 
-        payload = claims.copy()
-
-        payload["exp"] = (
-            datetime.now(UTC)
-            + expires_delta
-        )
-
-        return jwt.encode(
-            payload,
-            settings.SECRET_KEY,
-            algorithm=settings.JWT_ALGORITHM,
+        return (
+            self.key_service
+            .sign(
+                claims,
+                expires_delta,
+            )
         )
 
     def decode_token(
@@ -38,26 +36,11 @@ class JWTService:
         token: str,
     ) -> TokenClaims:
 
-        try:
+        payload = (
+            self.key_service
+            .decode(token)
+        )
 
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=[
-                    settings.JWT_ALGORITHM
-                ],
-            )
-
-            return TokenClaims(
-                **payload
-            )
-
-        except jwt.ExpiredSignatureError:
-            raise TokenExpiredError(
-                "Token expired"
-            )
-
-        except jwt.InvalidTokenError:
-            raise InvalidTokenError(
-                "Invalid token"
-            )
+        return TokenClaims(
+            **payload
+        )
