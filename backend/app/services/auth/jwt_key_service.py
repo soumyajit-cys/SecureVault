@@ -73,10 +73,14 @@ class JwtKeyService:
         if active is None:
             return self.ensure_active_key()
 
-        age = now - (
-            active.created_at
-            or now
-        )
+        created_at = active.created_at
+
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(
+                tzinfo=UTC
+            )
+
+        age = now - created_at
 
         if (
             age
@@ -201,6 +205,11 @@ class JwtKeyService:
 
         if retired_at is None:
             return False
+
+        if retired_at.tzinfo is None:
+            retired_at = retired_at.replace(
+                tzinfo=UTC
+            )
 
         return (
             retired_at
