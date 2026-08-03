@@ -1,0 +1,279 @@
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
+import secrets
+import uuid
+
+import jwt
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+from app.core.config import get_settings
+from app.core.exceptions import InvalidTokenError
+from app.core.exceptions import TokenExpiredError
+from app.domain.models.jwt_signing_key import JwtSigningKey
+
+settings = get_settings()
+
+
+class JwtKeyService:
+
+    def __init__(
+        self,
+        repository,
+    ):
+        self.repository = repository
+        self._cache: dict[str, JwtSigningKey] = {}
+
+    def ensure_active_key(
+        self,
+    ) -> JwtSigningKey:
+        """
+        Return the current active signing key; create
+        one if none exists yet (first startup).
+        """
+
+        active = self.repository.get_active()
+
+        if active is None:
+            active = self._generate_and_store()
+
+        return active
+
+    def rotate(self) -> JwtSigningKey:
+        """
+        Retire the current active key and mint a fresh
+        one. Old keys stay available for verification
+        within the grace period so sessions do not break.
+        """
+
+        now = datetime.now(UTC)
+
+        active = self.repository.get_active()
+
+        if active is not None:
+            self.repository.retire(active, now)
+
+        self._cache.clear()
+
+        return self._generate_and_store()
+
+    def rotate_if_due(self) -> JwtSigningKey:
+        """
+        Rotate when the active key is older than the
+        configured interval. No-op if the key is fresh.
+        """
+
+        now = datetime.now(UTC)
+
+        active = (
+            self.repository
+            .get_active()
+        )
+
+        if active is None:
+            return self.ensure_active_key()
+
+        age = now - (
+            active.created_at
+            or now
+        )
+
+        if (
+            age
+            >= timedelta(
+                days=settings.JWT_KEY_ROTATION_DAYS
+            )
+        ):
+            return self.rotate()
+
+        return active
+
+    def sign(
+        self,
+        claims: dict,
+        expires_delta: timedelta,
+    ) -> str:
+
+        key = self.ensure_active_key()
+
+        payload = claims.copy()
+
+        payload["exp"] = (
+            datetime.now(UTC)
+            + expires_delta
+        )
+
+        private_key = serialization.load_pem_private_key(
+            key.private_key_pem.encode(),
+            password=None,
+        )
+
+        return jwt.encode(
+            payload,
+            private_key,
+            algorithm=key.algorithm,
+            headers={
+                "kid": key.key_id,
+            },
+        )
+
+    def decode(
+        self,
+        token: str,
+    ) -> dict:
+
+        try:
+
+            unverified = jwt.decode(
+                token,
+                options={
+                    "verify_signature": False,
+                },
+            )
+
+            kid = (
+                jwt.get_unverified_header(token)
+                .get("kid")
+            )
+
+        except jwt.InvalidTokenError:
+            raise InvalidTokenError(
+                "Invalid token"
+            )
+
+        key = self._resolve_key(kid)
+
+        if key is None:
+            raise InvalidTokenError(
+                "Signing key not found"
+            )
+
+        if (
+            key.status == "retired"
+            and self._is_beyond_grace(
+                key.retired_at
+            )
+        ):
+            raise InvalidTokenError(
+                "Signing key retired"
+            )
+
+        try:
+
+            payload = jwt.decode(
+                token,
+                key.public_key_pem.encode(),
+                algorithms=[key.algorithm],
+                leeway=settings.JWT_LEEWAY_SECONDS,
+            )
+
+        except jwt.ExpiredSignatureError:
+            raise TokenExpiredError(
+                "Token expired"
+            )
+
+        except jwt.InvalidTokenError:
+            raise InvalidTokenError(
+                "Invalid token"
+            )
+
+        self._cache[kid] = signing
+
+        return payload
+
+    def _resolve_key(
+        self,
+        kid: str | None,
+    ) -> JwtSigningKey | None:
+
+        if kid and kid in self._cache:
+            return self._cache[kid]
+
+        if kid:
+            entry = (
+                self.repository
+                .get_by_key_id(kid)
+            )
+
+            if entry is not None:
+                self._cache[kid] = entry
+                return entry
+
+        return self.ensure_active_key()
+
+    def _is_retired_graceful(
+        self,
+        retired_at: datetime | None,
+    ) -> bool:
+
+        if retired_at is None:
+            return False
+
+        return (
+            retired_at
+            + timedelta(
+                days=settings.JWT_RETIRED_KEY_GRACE_DAYS
+            )
+        ) < datetime.now(UTC)
+
+    def _generate_and_store(
+        self,
+    ) -> JwtSigningKey:
+
+        key_id = self._generate_key_id()
+
+        now = datetime.now(UTC)
+
+        entry = JwtSigningKey(
+            key_id=key_id,
+            algorithm="RS256",
+            status="active",
+            private_key_pem=self._mint_private_key_pem(),
+            public_key_pem="",
+            created_at……,
+        )
+
+        return entry
+
+    def _generate_key_id(self) -> str:
+        return (
+            f"sv-"
+            f"{secrets.token_urlsafe(6)}"
+        )
+
+    def _mint_private_key_pem(self) -> str:
+        raise NotImplementedError
+
+    def _mint_key_pair(self) -> tuple[str, str]:
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=4096,
+        )
+
+        private_pem = (
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=(
+                    serialization.NoEncryption()
+                ),
+            )
+        )
+
+        public_pem = (
+            private_key.public_key()
+            .public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        )
+
+        return (
+            private_pem.decode(),
+            public_pem.decode(),
+        )
+
+    @staticmethod
+    def _utcnow() -> datetime:
+        return datetime.now(UTC)
