@@ -3,12 +3,12 @@ from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.security import HTTPBearer
 
-from app.api.dependencies.repositories import (
-    get_user_repository,
+from app.api.dependencies.jwt import (
+    get_jwt_service,
 )
 
-from app.services.auth.jwt_service import (
-    JWTService,
+from app.api.dependencies.repositories import (
+    get_user_repository,
 )
 
 security = HTTPBearer()
@@ -18,14 +18,15 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(
         security
     ),
+    jwt_service=Depends(
+        get_jwt_service
+    ),
     user_repository=Depends(
         get_user_repository
     ),
 ):
 
     from uuid import UUID
-
-    jwt_service = JWTService()
 
     claims = jwt_service.decode_token(
         credentials.credentials

@@ -1,3 +1,5 @@
+from fastapi import Depends
+
 from app.services.auth.password_service import (
     Argon2PasswordService,
 )
