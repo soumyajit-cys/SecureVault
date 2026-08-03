@@ -17,8 +17,8 @@ export default function Profile() {
             ["User ID", me?.id ?? "—"]
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-4">
-              <dt className="text-slate-500">{k}</dt>
-              <dd className="font-mono text-sm text-slate-800">{v}</dd>
+              <dt className="text-ink-faint">{k}</dt>
+              <dd className="font-mono text-sm text-ink">{v}</dd>
             </div>
           ))}
         </dl>

@@ -71,7 +71,7 @@ export default function DecryptText() {
             Decrypt &amp; verify
           </Button>
           {decryptMutation.error && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
               {errorMessage(decryptMutation.error)}
             </p>
           )}
@@ -80,7 +80,7 @@ export default function DecryptText() {
 
       {plaintext !== null && (
         <Card title="Plaintext">
-          <pre className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+          <pre className="whitespace-pre-wrap rounded-lg border border-cyber-line bg-cyber p-4 text-sm text-ink">
             {plaintext}
           </pre>
         </Card>

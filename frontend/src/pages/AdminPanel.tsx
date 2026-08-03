@@ -60,13 +60,13 @@ export default function AdminPanel() {
       label: "Storage used",
       value: formatBytes(usage?.storage_bytes ?? 0),
       sub: `${usage?.stored_file_count ?? 0} stored · ${usage?.temp_file_count ?? 0} temp`,
-      tone: "text-brand-600"
+      tone: "text-brand-400"
     },
     {
       label: "Files vs folders",
       value: String(summary?.file_count ?? 0),
       sub: `files · ${summary?.folder_count ?? 0} folder archives`,
-      tone: "text-slate-900"
+      tone: "text-accent"
     },
     {
       label: "Deduplication saving",
@@ -74,7 +74,7 @@ export default function AdminPanel() {
         Math.max(0, (summary?.original_bytes ?? 0) - (summary?.encrypted_bytes ?? 0))
       ),
       sub: `original ${formatBytes(summary?.original_bytes ?? 0)}`,
-      tone: "text-slate-900"
+      tone: "text-ink"
     }
   ];
 
@@ -83,11 +83,11 @@ export default function AdminPanel() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((s) => (
           <Card key={s.label}>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
               {s.label}
             </p>
             <p className={`mt-2 text-2xl font-bold tracking-tight ${s.tone}`}>{s.value}</p>
-            <p className="mt-1 text-xs text-slate-500">{s.sub}</p>
+            <p className="mt-1 text-xs text-ink-faint">{s.sub}</p>
           </Card>
         ))}
       </div>
@@ -100,12 +100,12 @@ export default function AdminPanel() {
           </Button>
         }
       >
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-ink-faint">
           Purge soft-deleted files, orphaned container blobs, missing records and stray
           temporary files.
         </p>
         <Modal open={gcResult !== null} title="GC report" onClose={() => setGcResult(null)}>
-          <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-300">
+          <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-cyber-line bg-cyber p-4 text-xs text-emerald-300">
             {gcResult}
           </pre>
         </Modal>
@@ -119,8 +119,8 @@ export default function AdminPanel() {
               header: "User",
               render: (r: User) => (
                 <div>
-                  <p className="font-medium text-slate-900">{r.username}</p>
-                  <p className="text-xs text-slate-500">{r.email}</p>
+                  <p className="font-medium text-ink">{r.username}</p>
+                  <p className="text-xs text-ink-faint">{r.email}</p>
                 </div>
               )
             },

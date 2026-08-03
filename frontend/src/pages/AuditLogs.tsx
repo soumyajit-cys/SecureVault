@@ -77,7 +77,7 @@ export default function AuditLogs() {
               key: "resource",
               header: "Resource",
               render: (r: AuditLog) => (
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-ink-faint">
                   {r.resource_type ?? "—"}
                   {r.resource_id ? ` · ${r.resource_id.slice(0, 8)}…` : ""}
                 </div>
@@ -87,7 +87,7 @@ export default function AuditLogs() {
               key: "details",
               header: "Details",
               render: (r: AuditLog) => (
-                <span className="max-w-md truncate text-xs text-slate-500">
+                <span className="max-w-md truncate text-xs text-ink-faint">
                   {r.details ?? "—"}
                 </span>
               )
@@ -96,7 +96,7 @@ export default function AuditLogs() {
               key: "created",
               header: "Timestamp",
               render: (r: AuditLog) => (
-                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-ink-faint">{formatDate(r.created_at)}</span>
               )
             }
           ]}

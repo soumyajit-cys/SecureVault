@@ -75,7 +75,7 @@ export default function EncryptText() {
             Encrypt
           </Button>
           {encryptMutation.error && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
               {extractDetail(encryptMutation.error)}
             </p>
           )}
@@ -84,7 +84,7 @@ export default function EncryptText() {
 
       {result && (
         <Card title="Ciphertext result">
-          <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-300">
+          <pre className="overflow-x-auto rounded-lg border border-cyber-line bg-cyber p-4 text-xs text-emerald-300">
             {result}
           </pre>
         </Card>

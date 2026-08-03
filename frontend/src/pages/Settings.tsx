@@ -98,7 +98,7 @@ export default function Settings() {
       </Card>
 
       <Card title="Sessions">
-        <p className="mb-3 text-sm text-slate-500">
+        <p className="mb-3 text-sm text-ink-faint">
           Sign out of this device only. Tokens are rotated on every login.
         </p>
         <Button variant="outline" onClick={handleLogout}>

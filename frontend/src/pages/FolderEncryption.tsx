@@ -102,21 +102,21 @@ export default function FolderEncryption() {
               key: "name",
               header: "Archive",
               render: (r: StoredFile) => (
-                <span className="font-medium text-slate-900">{r.original_filename}</span>
+                <span className="font-medium text-ink">{r.original_filename}</span>
               )
             },
             {
               key: "files",
               header: "Files",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-500">{r.folder_file_count}</span>
+                <span className="text-xs text-ink-faint">{r.folder_file_count}</span>
               )
             },
             {
               key: "size",
               header: "Size",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-ink-faint">
                   {formatBytes(r.original_size)}
                 </span>
               )
@@ -134,7 +134,7 @@ export default function FolderEncryption() {
               key: "created",
               header: "Encrypted",
               render: (r: StoredFile) => (
-                <span className="text-xs text-slate-500">{formatDate(r.created_at)}</span>
+                <span className="text-xs text-ink-faint">{formatDate(r.created_at)}</span>
               )
             },
             {
@@ -169,17 +169,17 @@ export default function FolderEncryption() {
         title="Folder restored"
         onClose={() => setRestoreInfo(null)}
       >
-        <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
           The archive was decrypted and expanded successfully.
         </p>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Paths</dt>
-            <dd className="font-mono text-slate-800">{restoreInfo?.restoredPath}</dd>
+            <dt className="text-ink-faint">Paths</dt>
+            <dd className="font-mono text-ink">{restoreInfo?.restoredPath}</dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Files</dt>
-            <dd className="font-mono text-slate-800">{restoreInfo?.files}</dd>
+            <dt className="text-ink-faint">Files</dt>
+            <dd className="font-mono text-ink">{restoreInfo?.files}</dd>
           </div>
         </dl>
       </Modal>
