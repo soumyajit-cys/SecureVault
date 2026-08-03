@@ -8,6 +8,10 @@ from app.api.dependencies.repositories import (
     get_user_repository,
 )
 
+from app.api.dependencies.jwt import (
+    get_jwt_service,
+)
+
 from app.services.auth.auth_service import (
     AuthService,
 )
@@ -29,6 +33,9 @@ def get_auth_service(
     audit_repository=Depends(
         get_audit_repository
     ),
+    jwt_service=Depends(
+        get_jwt_service
+    ),
 ):
 
     return AuthService(
@@ -37,4 +44,5 @@ def get_auth_service(
         session_repository,
         refresh_repository,
         audit_repository,
+        jwt_service,
     )

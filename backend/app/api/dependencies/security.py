@@ -10,13 +10,22 @@ from app.infrastructure.repositories.refresh_token_repository import (
     SQLAlchemyRefreshTokenRepository,
 )
 
+from app.api.dependencies.jwt import (
+    get_jwt_service,
+)
+
 def get_password_service():
     return Argon2PasswordService()
 
+
 def get_refresh_token_service(
     repository: SQLAlchemyRefreshTokenRepository,
+    jwt_service=Depends(
+        get_jwt_service
+    ),
 ):
 
     return RefreshTokenService(
-        repository
+        repository,
+        jwt_service,
     )
