@@ -1,4 +1,3 @@
-from datetime import UTC
 from datetime import datetime
 
 from sqlalchemy import select
