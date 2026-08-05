@@ -21,6 +21,37 @@ from app.services.auth.mfa_service import (
     MfaService,
 )
 
+from app.services.auth.admin_user_service import (
+    AdminUserService,
+)
+
+
+def get_admin_user_service(
+    user_repository=Depends(
+        get_user_repository
+    ),
+    role_repository=Depends(
+        get_role_repository
+    ),
+    session_repository=Depends(
+        get_session_repository
+    ),
+    refresh_repository=Depends(
+        get_refresh_token_repository
+    ),
+    audit_repository=Depends(
+        get_audit_repository
+    ),
+):
+
+    return AdminUserService(
+        user_repository,
+        role_repository,
+        session_repository,
+        refresh_repository,
+        audit_repository,
+    )
+
 
 def get_mfa_service(
     user_repository=Depends(

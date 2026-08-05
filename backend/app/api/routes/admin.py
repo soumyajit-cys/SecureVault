@@ -17,10 +17,15 @@ from app.api.dependencies.repositories import (
 from app.api.dependencies.storage import (
     get_audit_service,
     get_garbage_collector,
+    get_quota_service,
     get_storage_service,
 )
 
 from app.schemas.admin import (
+    AdminUserCreateRequest,
+    AdminUserDetailResponse,
+    AdminUserRolesRequest,
+    AdminUserUpdateRequest,
     GarbageCollectionResult,
     PaginatedUsersResponse,
     StorageUsageResponse,
@@ -28,6 +33,11 @@ from app.schemas.admin import (
 
 from app.schemas.user import (
     UserResponse,
+)
+
+from app.core.exceptions import (
+    NotFoundError,
+    UserAlreadyExistsError,
 )
 
 from app.domain.constants.audit_events import (
@@ -38,8 +48,16 @@ from app.services.audit_service import (
     AuditService,
 )
 
+from app.services.auth.admin_user_service import (
+    AdminUserService,
+)
+
 from app.services.storage.garbage_collector import (
     GarbageCollector,
+)
+
+from app.services.storage.quota_service import (
+    QuotaService,
 )
 
 from app.services.storage.storage_service import (
