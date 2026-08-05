@@ -23,11 +23,9 @@ export default function Card({
     <section
       className={`${
         gradient
-          ? "border border-brand-500/30 bg-brand-gradient shadow-glow-sm"
-          : "border border-cyber-line bg-surface-elevated/60 backdrop-blur-xl"
-      } rounded-2xl shadow-card ${
-        elevated ? "shadow-card-hover" : ""
-      } hover:border-accent/30 ${className}`}
+          ? "border border-brand-600/20 bg-brand-gradient shadow-card"
+          : "border border-cyber-line bg-surface-elevated shadow-card"
+      } rounded-xl ${elevated ? "shadow-card-hover" : ""} ${className}`}
     >
       {(title || action) && (
         <header

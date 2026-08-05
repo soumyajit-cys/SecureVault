@@ -13,7 +13,7 @@ export default function Modal({ open, title, onClose, children, footer }: ModalP
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-cyber/80 p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 animate-fade-in"
       onClick={onClose}
     >
       <div

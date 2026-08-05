@@ -43,10 +43,9 @@ export function ToastHost() {
   const dismiss = useToastStore((s) => s.dismiss);
 
   const tones: Record<ToastType, string> = {
-    success:
-      "border-emerald-400/30 bg-emerald-950/80 text-emerald-200",
-    error: "border-red-400/30 bg-red-950/80 text-red-200",
-    info: "border-accent/30 bg-cyan-950/80 text-cyan-200"
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    error: "border-red-200 bg-red-50 text-red-800",
+    info: "border-brand-200 bg-brand-50 text-brand-800"
   };
 
   return (
@@ -55,7 +54,7 @@ export function ToastHost() {
         <div
           key={t.id}
           role="status"
-          className={`pointer-events-auto flex animate-slide-in-right items-start gap-2 rounded-lg border bg-surface-elevated/90 px-4 py-3 text-sm font-medium shadow-modal backdrop-blur-xl ring-1 ${tones[t.type]}`}
+          className={`pointer-events-auto flex animate-slide-in-right items-start gap-2 rounded-lg border px-4 py-3 text-sm font-medium shadow-modal ring-1 ${tones[t.type]}`}
           onClick={() => dismiss(t.id)}
         >
           <span aria-hidden="true">
