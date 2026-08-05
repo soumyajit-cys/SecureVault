@@ -114,7 +114,7 @@ class JwtKeyService:
 
         private_key = (
             serialization.load_pem_private_key(
-                key.private_key_pem.encode(),
+                self._private_key_pem(key).encode(),
                 password=None,
             )
         )
