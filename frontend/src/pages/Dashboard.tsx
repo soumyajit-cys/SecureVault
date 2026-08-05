@@ -120,18 +120,14 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8 animate-fade-up">
-      {/* Hero strip */}
-      <div className="relative overflow-hidden rounded-3xl border border-cyber-line bg-surface-elevated/70 p-8 shadow-card backdrop-blur-xl lg:p-10">
-        <div className="pointer-events-none absolute inset-0 cyber-bg opacity-60" />
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -right-16 h-72 w-72 rounded-full bg-brand-500/20 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-accent/10 blur-3xl" />
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px animate-scan-line bg-gradient-to-r from-transparent via-accent/70 to-transparent" />
-        <div className="relative z-10 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
+    <div className="space-y-6 animate-fade-up">
+      {/* Welcome strip */}
+      <div className="rounded-xl border border-cyber-line bg-surface-elevated p-6 shadow-card lg:p-8">
+        <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
           <div>
-            <p className="term-label">Welcome back</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              Welcome back
+            </p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-ink lg:text-3xl">
               {me.username}
             </h1>
@@ -145,12 +141,12 @@ export default function Dashboard() {
               <span className="flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </span>
                 System online
               </span>
             </Badge>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyber-line bg-surface-muted/60 px-3 py-1 font-mono text-xs font-medium text-ink-soft backdrop-blur">
+            <span className="inline-flex items-center rounded-md border border-cyber-line bg-surface-muted px-2.5 py-1 font-mono text-xs font-medium text-ink-soft">
               {me.roles?.map((r) => r.name).join(", ") || "User"}
             </span>
           </div>
@@ -168,7 +164,7 @@ export default function Dashboard() {
               <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
                 {s.label}
               </p>
-              <span className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${s.accent} text-white shadow-glow-sm`}>
+              <span className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${s.accent} text-white`}>
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   {s.icon}
                 </svg>
@@ -194,9 +190,9 @@ export default function Dashboard() {
                 <Link
                   key={a.label}
                   to={a.to}
-                  className="group flex items-start gap-3.5 rounded-2xl border border-cyber-line bg-surface-elevated/60 p-4 shadow-sm backdrop-blur-xl transition-all duration-200 ease-in-out-soft hover:border-accent/30 hover:shadow-card-hover active:scale-[0.99]"
+                  className="group flex items-start gap-3.5 rounded-lg border border-cyber-line bg-surface-elevated p-4 shadow-sm transition-all duration-200 hover:border-brand-300 hover:shadow-card-hover"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand-400/20 bg-brand-500/10 text-brand-300 transition-colors duration-200 group-hover:bg-brand-gradient group-hover:text-white group-hover:shadow-glow-sm">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-brand-100 bg-brand-50 text-brand-600 transition-colors duration-200 group-hover:bg-brand-gradient group-hover:text-white">
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       {a.icon}
                     </svg>
@@ -215,7 +211,7 @@ export default function Dashboard() {
           title="Activity feed"
           subtitle="Latest security events"
           action={
-            <Link to="/audit" className="text-xs font-semibold text-brand-400 hover:text-brand-300">
+            <Link to="/audit" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
               View all
             </Link>
           }
@@ -229,8 +225,8 @@ export default function Dashboard() {
               <p className="py-6 text-center text-sm text-ink-faint">No activity yet.</p>
             ) : (
               (activityPage?.items ?? []).slice(0, 6).map((log) => (
-                <div key={log.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-muted/60">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-brand-400/20 bg-brand-500/10 text-brand-300">
+                <div key={log.id} className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-surface-muted">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-brand-100 bg-brand-50 text-brand-600">
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
                     </svg>
@@ -254,7 +250,7 @@ export default function Dashboard() {
           title="Recent keys"
           className="lg:col-span-2"
           action={
-            <Link to="/keys" className="text-xs font-semibold text-brand-400 hover:text-brand-300">
+            <Link to="/keys" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
               View all
             </Link>
           }
@@ -293,27 +289,27 @@ export default function Dashboard() {
                     {formatBytes(storageUsage.storage_bytes)}
                   </p>
                 </div>
-                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/20">
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/25">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-brand-300 to-accent shadow-glow transition-all duration-700"
+                    className="h-full rounded-full bg-white transition-all duration-700"
                     style={{ width: `${storagePercent}%` }}
                   />
                 </div>
-                <p className="mt-2 text-xs text-white/70">
+                <p className="mt-2 text-xs text-white/80">
                   {storageUsage.stored_file_count} stored files
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-white/10 p-3 backdrop-blur">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-white/60">
+                <div className="rounded-lg bg-white/10 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-white/70">
                     File records
                   </p>
                   <p className="mt-1 font-mono text-xl font-bold text-white">
                     {storageUsage.stored_file_count}
                   </p>
                 </div>
-                <div className="rounded-xl bg-white/10 p-3 backdrop-blur">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-white/60">
+                <div className="rounded-lg bg-white/10 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-white/70">
                     Temp files
                   </p>
                   <p className="mt-1 font-mono text-xl font-bold text-white">
