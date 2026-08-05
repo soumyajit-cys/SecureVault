@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from sqlalchemy import BigInteger
 from sqlalchemy import Boolean
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -58,6 +59,29 @@ class User(BaseModel):
         nullable=True,
     )
 
+    # Two-factor authentication (TOTP)
+    totp_secret: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+    )
+
+    totp_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    totp_enabled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    # Storage quota in bytes; None means unlimited.
+    storage_quota_bytes: Mapped[int | None] = mapped_column(
+        BigInteger,
+        nullable=True,
+    )
+
     roles = relationship(
         "UserRole",
         back_populates="user",
@@ -79,4 +103,16 @@ class User(BaseModel):
     audit_logs = relationship(
         "AuditLog",
         back_populates="user",
+    )
+
+    password_reset_tokens = relationship(
+        "PasswordResetToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    mfa_recovery_codes = relationship(
+        "MfaRecoveryCode",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
