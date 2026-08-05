@@ -247,6 +247,7 @@ class AuthService:
         email: str,
         password: str,
         client_ip: str | None = None,
+        user_agent: str | None = None,
     ):
 
         self.rate_limiter.check(
@@ -328,13 +329,18 @@ class AuthService:
                 ),
             }
 
-        return self._issue_tokens(user)
+        return self._issue_tokens(
+            user,
+            ip_address=client_ip,
+            user_agent=user_agent,
+        )
 
     def complete_login_with_mfa(
         self,
         mfa_token: str,
         code: str,
         client_ip: str | None = None,
+        user_agent: str | None = None,
     ):
 
         claims = (
