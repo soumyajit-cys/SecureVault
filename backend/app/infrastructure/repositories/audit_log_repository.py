@@ -109,3 +109,37 @@ class SQLAlchemyAuditLogRepository(
         )
 
         return items, total
+
+    def list_all_unpaginated(
+        self,
+        action: str | None = None,
+        user_id: UUID | None = None,
+    ) -> list[AuditLog]:
+        """
+        Unpaginated global audit trail, used for CSV export.
+        """
+
+        filters = []
+
+        if action:
+            filters.append(
+                AuditLog.action == action
+            )
+
+        if user_id:
+            filters.append(
+                AuditLog.user_id == user_id
+            )
+
+        stmt = (
+            select(AuditLog)
+            .where(*filters)
+            .order_by(
+                AuditLog.created_at.asc(),
+                AuditLog.id.asc(),
+            )
+        )
+
+        return list(
+            self.db.scalars(stmt).all()
+        )
