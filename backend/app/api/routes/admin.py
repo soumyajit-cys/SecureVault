@@ -292,3 +292,247 @@ def garbage_collect(
         purged_deleted=summary["purged_deleted"],
         temp_files=summary["temp_files"],
     )
+
+
+# -------------------------------------------------
+# User management
+# -------------------------------------------------
+
+@router.get(
+    "/users/{user_id}",
+    response_model=AdminUserDetailResponse,
+)
+def get_user(
+    user_id: UUID,
+    user=Depends(
+        require_role(
+            "Admin"
+        )
+    ),
+    users=Depends(
+        get_user_repository
+    ),
+    quota: QuotaService = Depends(
+        get_quota_service
+    ),
+):
+
+    target = users.get(user_id)
+
+    if not target:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    return _user_detail_response(
+        target,
+        quota,
+    )
+
+
+@router.post(
+    "/users",
+    response_model=UserResponse,
+    status_code=201,
+)
+def create_user(
+    payload: AdminUserCreateRequest,
+    current=Depends(
+        get_current_user
+    ),
+    admin_service: AdminUserService = Depends(
+        get_admin_user_service
+    ),
+):
+
+    try:
+        target = admin_service.create_user(
+            current,
+            payload.email,
+            payload.username,
+            payload.password,
+            payload.roles,
+            payload.storage_quota_bytes,
+        )
+    except UserAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+
+    return _user_response(target)
+
+
+@router.patch(
+    "/users/{user_id}",
+    response_model=AdminUserDetailResponse,
+)
+def update_user(
+    user_id: UUID,
+    payload: AdminUserUpdateRequest,
+    current=Depends(
+        get_current_user
+    ),
+    admin_service: AdminUserService = Depends(
+        get_admin_user_service
+    ),
+    users=Depends(
+        get_user_repository
+    ),
+    quota: QuotaService = Depends(
+        get_quota_service
+    ),
+):
+
+    target = users.get(user_id)
+
+    if not target:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    if (
+        user_id == current.id
+        and payload.is_active is False
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot deactivate your own account",
+        )
+
+    try:
+        target = admin_service.update_user(
+            current,
+            target,
+            username=payload.username,
+            is_active=payload.is_active,
+            storage_quota_bytes=(
+                payload.storage_quota_bytes
+            ),
+            quota_updated=(
+                "storage_quota_bytes"
+                in payload.model_dump(
+                    exclude_unset=True
+                )
+            ),
+        )
+    except UserAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+
+    return _user_detail_response(
+        target,
+        quota,
+    )
+
+
+@router.delete(
+    "/users/{user_id}",
+)
+def delete_user(
+    user_id: UUID,
+    current=Depends(
+        get_current_user
+    ),
+    admin_service: AdminUserService = Depends(
+        get_admin_user_service
+    ),
+    users=Depends(
+        get_user_repository
+    ),
+):
+
+    if user_id == current.id:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot delete your own account",
+        )
+
+    target = users.get(user_id)
+
+    if not target:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    admin_service.delete_user(
+        current,
+        target,
+    )
+
+    return {"message": "User deleted"}
+
+
+@router.post(
+    "/users/{user_id}/roles",
+    response_model=UserResponse,
+)
+def set_user_roles(
+    user_id: UUID,
+    payload: AdminUserRolesRequest,
+    current=Depends(
+        get_current_user
+    ),
+    admin_service: AdminUserService = Depends(
+        get_admin_user_service
+    ),
+    users=Depends(
+        get_user_repository
+    ),
+):
+
+    target = users.get(user_id)
+
+    if not target:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    try:
+        target = admin_service.set_roles(
+            current,
+            target,
+            payload.roles,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+    return _user_response(target)
+
+
+def _user_detail_response(
+    target,
+    quota: QuotaService,
+) -> AdminUserDetailResponse:
+
+    usage = quota.usage(target.id)
+
+    return AdminUserDetailResponse(
+        id=target.id,
+        created_at=target.created_at,
+        updated_at=target.updated_at,
+        email=target.email,
+        username=target.username,
+        is_active=target.is_active,
+        is_verified=target.is_verified,
+        failed_login_attempts=target.failed_login_attempts,
+        locked_until=target.locked_until,
+        roles=[
+            {
+                "id": str(ur.role.id),
+                "name": ur.role.name,
+            }
+            for ur in target.roles
+        ],
+        storage_quota_bytes=target.storage_quota_bytes,
+        storage_usage_bytes=usage,
+    )
