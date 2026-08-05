@@ -1,6 +1,7 @@
 from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
+from uuid import UUID
 
 from app.services.auth.token_utils import (
     hash_token,
@@ -10,11 +11,16 @@ from app.core.config import get_settings
 from app.core.exceptions import (
     AccountLockedError,
     InvalidCredentialsError,
+    InvalidTokenError,
+    MfaRequiredError,
+    NotFoundError,
     UserAlreadyExistsError,
 )
 
 from app.domain.constants.audit_events import (
     PASSWORD_CHANGED,
+    SESSION_REVOKED,
+    SESSION_REVOKED_ALL,
     USER_LOGIN,
     USER_LOGOUT,
     USER_REGISTERED,
@@ -22,6 +28,10 @@ from app.domain.constants.audit_events import (
 
 from app.domain.constants.auth import (
     DEFAULT_ROLE,
+)
+
+from app.domain.constants.token_types import (
+    MFA_CHALLENGE,
 )
 
 from app.domain.models.session import Session
@@ -34,8 +44,20 @@ from app.services.audit_service import (
     AuditService,
 )
 
+from app.services.auth.login_rate_limiter import (
+    LoginRateLimiter,
+)
+
 from app.services.auth.password_service import (
     Argon2PasswordService,
+)
+
+from app.services.auth.password_policy import (
+    PasswordPolicy,
+)
+
+from app.services.auth.pwned_service import (
+    PwnedPasswordChecker,
 )
 
 from app.services.auth.refresh_token_service import (
@@ -97,12 +119,28 @@ class AuthService:
             )
         )
 
+        self.rate_limiter = (
+            LoginRateLimiter()
+        )
+
+        self.pwned = (
+            PwnedPasswordChecker()
+        )
+
+    # -------------------------------------------------
+    # Registration & password changes
+    # -------------------------------------------------
+
     def register(
         self,
         email: str,
         username: str,
         password: str,
     ):
+
+        self._validate_new_password(
+            password
+        )
 
         if self.users.get_by_email(
             email
@@ -178,6 +216,10 @@ class AuthService:
                 "Current password is incorrect"
             )
 
+        self._validate_new_password(
+            new_password
+        )
+
         user.password_hash = (
             self.password_service
             .hash_password(
@@ -194,11 +236,23 @@ class AuthService:
 
         return True
 
+    # -------------------------------------------------
+    # Login (password step + MFA step)
+    # -------------------------------------------------
+
     def login(
         self,
         email: str,
         password: str,
+        client_ip: str | None = None,
     ):
+
+        self.rate_limiter.check(
+            LoginRateLimiter.key(
+                client_ip,
+                email,
+            )
+        )
 
         user = (
             self.users.get_by_email(
@@ -252,6 +306,115 @@ class AuthService:
 
         self.users.update(user)
 
+        if user.totp_enabled:
+
+            context = AuthContext(
+                user_id=user.id,
+                email=user.email,
+                session_id="",
+                roles=[],
+                permissions=[],
+            )
+
+            return {
+                "mfa_required": True,
+                "mfa_token": (
+                    self.token_service
+                    .create_mfa_challenge(
+                        context
+                    )
+                ),
+            }
+
+        return self._issue_tokens(user)
+
+    def complete_login_with_mfa(
+        self,
+        mfa_token: str,
+        code: str,
+        client_ip: str | None = None,
+    ):
+
+        claims = (
+            self.token_service
+            .jwt_service
+            .decode_token(
+                mfa_token
+            )
+        )
+
+        if claims.token_type != MFA_CHALLENGE:
+            raise InvalidTokenError(
+                "Invalid MFA challenge"
+            )
+
+        user = (
+            self.users.get(
+                UUID(claims.sub)
+            )
+        )
+
+        if not user or not user.totp_enabled:
+            raise InvalidTokenError(
+                "Invalid MFA challenge"
+            )
+
+        self.rate_limiter.check(
+            LoginRateLimiter.key(
+                client_ip,
+                user.email,
+            )
+        )
+
+        from app.services.auth.mfa_service import (
+            MfaService,
+        )
+
+        if not MfaService(
+            self.users,
+            None,
+            None,
+        ).verify_login_code(
+            user,
+            code,
+        ):
+
+            user.failed_login_attempts += 1
+
+            if (
+                user.failed_login_attempts
+                >= settings.MAX_LOGIN_ATTEMPTS
+            ):
+                user.locked_until = (
+                    datetime.now(UTC)
+                    + timedelta(
+                        minutes=settings.ACCOUNT_LOCK_MINUTES
+                    )
+                )
+
+            self.users.update(user)
+
+            from app.domain.constants.audit_events import (
+                MFA_VERIFY_FAILED,
+            )
+
+            self.audit_service.log(
+                user.id,
+                MFA_VERIFY_FAILED,
+            )
+
+            raise InvalidCredentialsError(
+                "Invalid MFA code"
+            )
+
+        user.failed_login_attempts = 0
+
+        self.users.update(user)
+
+        return self._issue_tokens(user)
+
+    def _issue_tokens(self, user):
+
         session_identifier = (
             self.session_service
             .create_session_identifier()
@@ -265,6 +428,7 @@ class AuthService:
                     days=settings.REFRESH_TOKEN_EXPIRE_DAYS
                 )
             ),
+            last_seen_at=datetime.now(UTC),
             user_id=user.id,
         )
 
@@ -304,6 +468,10 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
+
+    # -------------------------------------------------
+    # Logout / refresh
+    # -------------------------------------------------
 
     def logout(
         self,
@@ -386,9 +554,160 @@ class AuthService:
             )
         )
 
+        self._touch_session(
+            claims.session_id
+        )
+
         return {
             "access_token": access,
             "refresh_token": new_refresh,
         }
 
+    def _touch_session(
+        self,
+        session_identifier: str,
+    ):
 
+        session = (
+            self.sessions
+            .get_active_by_identifier(
+                session_identifier
+            )
+        )
+
+        if session:
+            self.sessions.mark_seen(
+                session,
+                datetime.now(UTC),
+            )
+
+    # -------------------------------------------------
+    # Session management
+    # -------------------------------------------------
+
+    def list_sessions(
+        self,
+        user,
+    ):
+
+        return (
+            self.sessions.list_for_user(
+                user.id
+            )
+        )
+
+    def revoke_session(
+        self,
+        user,
+        session_id: UUID,
+    ):
+
+        session = (
+            self.sessions.get_for_user(
+                user.id,
+                session_id,
+            )
+        )
+
+        if not session:
+            raise NotFoundError(
+                "Session not found"
+            )
+
+        if session.revoked:
+            raise NotFoundError(
+                "Session not found"
+            )
+
+        session.revoked = True
+
+        self.sessions.update(session)
+
+        self.refresh_service.repository.revoke_by_session_id(
+            session.id
+        )
+
+        self.audit_service.log(
+            user.id,
+            SESSION_REVOKED,
+            (
+                f"revoked session "
+                f"session_id={session.id}"
+            ),
+            resource_type="session",
+            resource_id=str(session.id),
+        )
+
+        return session
+
+    def revoke_all_sessions(
+        self,
+        user,
+        exclude_session_identifier: str | None = None,
+    ):
+
+        sessions = (
+            self.sessions.list_for_user(
+                user.id,
+                include_revoked=True,
+            )
+        )
+
+        revoked_count = 0
+
+        for session in sessions:
+
+            if (
+                exclude_session_identifier
+                and session.session_identifier
+                == exclude_session_identifier
+            ):
+                continue
+
+            if session.revoked:
+                continue
+
+            session.revoked = True
+
+            self.sessions.update(session)
+
+            self.refresh_service.repository.revoke_by_session_id(
+                session.id
+            )
+
+            revoked_count += 1
+
+        self.audit_service.log(
+            user.id,
+            SESSION_REVOKED_ALL,
+            f"revoked {revoked_count} sessions",
+        )
+
+        return revoked_count
+
+    # -------------------------------------------------
+    # Password validation helpers
+    # -------------------------------------------------
+
+    def _validate_new_password(
+        self,
+        password: str,
+    ):
+
+        result = PasswordPolicy.validate(
+            password
+        )
+
+        if not result.valid:
+
+            from app.core.exceptions import (
+                WeakPasswordError,
+            )
+
+            raise WeakPasswordError(
+                result.message
+            )
+
+        self.pwned.assert_not_pwned(
+            password
+        )
