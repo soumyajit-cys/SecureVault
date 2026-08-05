@@ -12,7 +12,6 @@ from app.core.exceptions import (
     AccountLockedError,
     InvalidCredentialsError,
     InvalidTokenError,
-    MfaRequiredError,
     NotFoundError,
     UserAlreadyExistsError,
 )
@@ -369,17 +368,12 @@ class AuthService:
             )
         )
 
-        from app.services.auth.mfa_service import (
-            MfaService,
-        )
-
-        if not MfaService(
-            self.users,
-            None,
-            None,
-        ).verify_login_code(
-            user,
-            code,
+        if (
+            not self.mfa_service
+            or not self.mfa_service.verify_login_code(
+                user,
+                code,
+            )
         ):
 
             user.failed_login_attempts += 1
