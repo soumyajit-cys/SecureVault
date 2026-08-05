@@ -1,20 +1,33 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Request
 
 from app.api.dependencies.auth import (
     get_auth_service,
+    get_mfa_service,
 )
 from app.api.dependencies.current_user import (
     get_current_user,
 )
-
-from app.schemas.auth import (
-    LoginRequest,
-    RegisterRequest,
+from app.api.dependencies.jwt import (
+    get_jwt_service,
+)
+from app.api.dependencies.storage import (
+    get_password_reset_service,
 )
 
 from app.schemas.auth import (
+    LoginRequest,
+    MfaDisableRequest,
+    MfaEnableRequest,
+    MfaVerifyRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
     RefreshRequest,
+    RegisterRequest,
     LogoutRequest,
 )
 
@@ -22,10 +35,35 @@ from app.schemas.user import (
     PasswordChangeRequest,
 )
 
+from app.core.exceptions import (
+    NotFoundError,
+)
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
 )
+
+
+def _client_ip(request: Request) -> str | None:
+
+    forward_for = (
+        request.headers.get(
+            "X-Forwarded-For"
+        )
+    )
+
+    if forward_for:
+        return (
+            forward_for.split(",")[0]
+            .strip()
+        )
+
+    return (
+        request.client.host
+        if request.client
+        else None
+    )
 
 
 @router.post("/register")
@@ -45,6 +83,7 @@ def register(
 @router.post("/login")
 def login(
     payload: LoginRequest,
+    request: Request,
     auth_service=Depends(
         get_auth_service
     ),
@@ -52,7 +91,24 @@ def login(
     return auth_service.login(
         payload.email,
         payload.password,
+        _client_ip(request),
     )
+
+
+@router.post("/mfa/verify")
+def verify_mfa_login(
+    payload: MfaVerifyRequest,
+    request: Request,
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    return auth_service.complete_login_with_mfa(
+        payload.mfa_token,
+        payload.code,
+        _client_ip(request),
+    )
+
 
 @router.post("/refresh")
 def refresh(
@@ -65,6 +121,7 @@ def refresh(
         payload.refresh_token
     )
 
+
 @router.post("/logout")
 def logout(
     payload: LogoutRequest,
@@ -75,6 +132,7 @@ def logout(
     return auth_service.logout(
         payload.refresh_token
     )
+
 
 @router.post("/change-password")
 def change_password(
@@ -93,4 +151,246 @@ def change_password(
             payload.current_password,
             payload.new_password,
         ),
+    }
+
+
+# -------------------------------------------------
+# MFA
+# -------------------------------------------------
+
+@router.get("/mfa/status")
+def mfa_status(
+    current_user=Depends(
+        get_current_user
+    ),
+):
+    return {
+        "enabled": bool(
+            current_user.totp_enabled
+        ),
+        "enabled_at": current_user.totp_enabled_at,
+    }
+
+
+@router.post("/mfa/setup")
+def mfa_setup(
+    current_user=Depends(
+        get_current_user
+    ),
+    mfa_service=Depends(
+        get_mfa_service
+    ),
+):
+    if current_user.totp_enabled:
+        raise HTTPException(
+            status_code=409,
+            detail="MFA is already enabled",
+        )
+
+    return mfa_service.start_setup(
+        current_user
+    )
+
+
+@router.post("/mfa/enable")
+def mfa_enable(
+    payload: MfaEnableRequest,
+    current_user=Depends(
+        get_current_user
+    ),
+    mfa_service=Depends(
+        get_mfa_service
+    ),
+):
+    if current_user.totp_enabled:
+        raise HTTPException(
+            status_code=409,
+            detail="MFA is already enabled",
+        )
+
+    return mfa_service.confirm_setup(
+        current_user,
+        payload.code,
+        payload.secret,
+    )
+
+
+@router.post("/mfa/disable")
+def mfa_disable(
+    payload: MfaDisableRequest,
+    current_user=Depends(
+        get_current_user
+    ),
+    mfa_service=Depends(
+        get_mfa_service
+    ),
+):
+    if not current_user.totp_enabled:
+        raise HTTPException(
+            status_code=409,
+            detail="MFA is not enabled",
+        )
+
+    mfa_service.disable(
+        current_user,
+        payload.code,
+    )
+
+    return {"message": "MFA disabled"}
+
+
+# -------------------------------------------------
+# Password reset
+# -------------------------------------------------
+
+@router.post("/password-reset/request")
+def password_reset_request(
+    payload: PasswordResetRequest,
+    reset_service=Depends(
+        get_password_reset_service
+    ),
+):
+    reset_service.request_reset(
+        payload.email
+    )
+
+    return {
+        "message": (
+            "If that email exists, a reset link "
+            "has been sent."
+        )
+    }
+
+
+@router.post("/password-reset/confirm")
+def password_reset_confirm(
+    payload: PasswordResetConfirmRequest,
+    reset_service=Depends(
+        get_password_reset_service
+    ),
+):
+    reset_service.reset_password(
+        payload.token,
+        payload.new_password,
+    )
+
+    return {
+        "message": (
+            "Password reset. Please sign in "
+            "with your new password."
+        )
+    }
+
+
+# -------------------------------------------------
+# Session management
+# -------------------------------------------------
+
+@router.get("/sessions")
+def list_sessions(
+    current_user=Depends(
+        get_current_user
+    ),
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    from app.schemas.session import (
+        SessionResponse,
+    )
+
+    sessions = (
+        auth_service.list_sessions(
+            current_user
+        )
+    )
+
+    return [
+        SessionResponse(
+            id=s.id,
+            created_at=s.created_at,
+            updated_at=s.updated_at,
+            session_identifier=(
+                s.session_identifier
+            ),
+            device_name=s.device_name,
+            ip_address=s.ip_address,
+            user_agent=s.user_agent,
+            revoked=s.revoked,
+            expires_at=s.expires_at,
+            last_seen_at=s.last_seen_at,
+        )
+        for s in sessions
+    ]
+
+
+@router.delete("/sessions/{session_id}")
+def revoke_session(
+    session_id: UUID,
+    current_user=Depends(
+        get_current_user
+    ),
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    try:
+        auth_service.revoke_session(
+            current_user,
+            session_id,
+        )
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+    return {"message": "Session revoked"}
+
+
+@router.post("/sessions/revoke-all")
+def revoke_all_sessions(
+    request: Request,
+    current_user=Depends(
+        get_current_user
+    ),
+    auth_service=Depends(
+        get_auth_service
+    ),
+    jwt_service=Depends(
+        get_jwt_service
+    ),
+):
+    current_identifier = None
+
+    auth_header = (
+        request.headers.get(
+            "Authorization"
+        )
+    )
+
+    if auth_header and auth_header.startswith(
+        "Bearer "
+    ):
+        try:
+            claims = jwt_service.decode_token(
+                auth_header[7:]
+            )
+            current_identifier = (
+                claims.session_id
+            )
+        except Exception:
+            current_identifier = None
+
+    count = auth_service.revoke_all_sessions(
+        current_user,
+        exclude_session_identifier=(
+            current_identifier
+        ),
+    )
+
+    return {
+        "message": (
+            f"{count} other session(s) revoked"
+        )
     }
