@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from uuid import UUID
+
 from app.schemas.common import (
     TimestampSchema
 )
@@ -8,6 +10,8 @@ from app.schemas.common import (
 class SessionResponse(
     TimestampSchema
 ):
+    id: UUID
+
     session_identifier: str
 
     device_name: str | None = None
@@ -19,6 +23,8 @@ class SessionResponse(
     revoked: bool
 
     expires_at: datetime
+
+    last_seen_at: datetime | None = None
 
 
     

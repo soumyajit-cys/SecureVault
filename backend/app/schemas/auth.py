@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from pydantic import EmailStr
+from pydantic import Field
 
 
 class RegisterRequest(BaseModel):
@@ -19,3 +20,39 @@ class RefreshRequest(BaseModel):
 
 class LogoutRequest(BaseModel):
     refresh_token: str
+
+
+class MfaSetupRequest(BaseModel):
+    pass
+
+
+class MfaEnableRequest(BaseModel):
+    secret: str
+    code: str = Field(
+        min_length=6,
+        max_length=6,
+    )
+
+
+class MfaDisableRequest(BaseModel):
+    code: str
+
+
+class MfaVerifyRequest(BaseModel):
+    mfa_token: str
+    code: str = Field(
+        min_length=6,
+        max_length=24,
+    )
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str
+    new_password: str = Field(
+        min_length=8,
+        max_length=128,
+    )
