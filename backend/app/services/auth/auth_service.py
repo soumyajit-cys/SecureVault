@@ -414,9 +414,18 @@ class AuthService:
 
         self.users.update(user)
 
-        return self._issue_tokens(user)
+        return self._issue_tokens(
+            user,
+            ip_address=client_ip,
+            user_agent=user_agent,
+        )
 
-    def _issue_tokens(self, user):
+    def _issue_tokens(
+        self,
+        user,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ):
 
         session_identifier = (
             self.session_service
@@ -432,6 +441,8 @@ class AuthService:
                 )
             ),
             last_seen_at=datetime.now(UTC),
+            ip_address=ip_address,
+            user_agent=user_agent,
             user_id=user.id,
         )
 

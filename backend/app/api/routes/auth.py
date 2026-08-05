@@ -92,6 +92,7 @@ def login(
         payload.email,
         payload.password,
         _client_ip(request),
+        request.headers.get("User-Agent"),
     )
 
 
@@ -107,6 +108,7 @@ def verify_mfa_login(
         payload.mfa_token,
         payload.code,
         _client_ip(request),
+        request.headers.get("User-Agent"),
     )
 
 
