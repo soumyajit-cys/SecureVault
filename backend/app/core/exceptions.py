@@ -50,3 +50,39 @@ class WeakPasswordError(
     AuthenticationError
 ):
     pass
+
+
+class PwnedPasswordError(
+    WeakPasswordError
+):
+    pass
+
+
+class MfaRequiredError(
+    AuthenticationError
+):
+    pass
+
+
+class MfaVerificationFailedError(
+    AuthenticationError
+):
+    pass
+
+
+class PasswordResetTokenInvalidError(
+    AuthenticationError
+):
+    pass
+
+
+class QuotaExceededError(
+    SecureVaultException
+):
+    pass
+
+
+class LoginRateLimitedError(
+    AuthenticationError
+):
+    pass
