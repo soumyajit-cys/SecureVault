@@ -55,12 +55,6 @@ class Session(BaseModel):
         nullable=True,
     )
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=sa.func.now(),
-        nullable=False,
-    )
-
     user_id = mapped_column(
         ForeignKey(
             "users.id",
