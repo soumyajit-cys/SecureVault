@@ -169,7 +169,7 @@ export default function FolderEncryption() {
         title="Folder restored"
         onClose={() => setRestoreInfo(null)}
       >
-        <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+        <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           The archive was decrypted and expanded successfully.
         </p>
         <dl className="space-y-2 text-sm">

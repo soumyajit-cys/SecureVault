@@ -128,7 +128,7 @@ export default function FileManager() {
               header: "Filename",
               render: (r: StoredFile) => (
                 <button
-                  className="text-left font-medium text-brand-400 hover:text-brand-300 hover:underline"
+                  className="text-left font-medium text-brand-600 hover:text-brand-700 hover:underline"
                   onClick={() => setPreview(r)}
                 >
                   {r.original_filename}

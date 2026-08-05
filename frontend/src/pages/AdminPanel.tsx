@@ -60,13 +60,13 @@ export default function AdminPanel() {
       label: "Storage used",
       value: formatBytes(usage?.storage_bytes ?? 0),
       sub: `${usage?.stored_file_count ?? 0} stored · ${usage?.temp_file_count ?? 0} temp`,
-      tone: "text-brand-400"
+      tone: "text-brand-600"
     },
     {
       label: "Files vs folders",
       value: String(summary?.file_count ?? 0),
       sub: `files · ${summary?.folder_count ?? 0} folder archives`,
-      tone: "text-accent"
+      tone: "text-brand-700"
     },
     {
       label: "Deduplication saving",
