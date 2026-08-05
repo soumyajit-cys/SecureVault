@@ -71,9 +71,9 @@ def encrypt_secret(
         )
 
         return EncryptedSecret(
-            ciphertext=_b64(payload.ciphertext),
-            nonce=_b64(payload.nonce),
-            tag=_b64(payload.tag),
+            ciphertext=payload.ciphertext,
+            nonce=payload.nonce,
+            tag=payload.tag,
             salt=_b64(salt),
         )
 
@@ -108,9 +108,9 @@ def decrypt_secret(
         )
 
         payload = EncryptedPayload(
-            nonce=_unb64(secret.nonce),
-            ciphertext=_unb64(secret.ciphertext),
-            tag=_unb64(secret.tag),
+            nonce=secret.nonce,
+            ciphertext=secret.ciphertext,
+            tag=secret.tag,
         )
 
         return AESGCMCipher().decrypt(
