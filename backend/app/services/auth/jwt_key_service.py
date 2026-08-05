@@ -223,6 +223,39 @@ class JwtKeyService:
             )
         ) < datetime.now(UTC)
 
+    def _private_key_pem(
+        self,
+        key: JwtSigningKey,
+    ) -> str:
+        """
+        Return the signing private key in PEM form.
+
+        New keys carry the private material as an AES-256-GCM
+        envelope at rest; legacy rows created before encryption
+        keep a plaintext PEM that is still readable.
+        """
+
+        if key.has_encrypted_private_key:
+
+            secret = EncryptedSecret(
+                ciphertext=key.encrypted_private_key_pem,
+                nonce=key.private_key_nonce,
+                tag=key.private_key_tag,
+                salt=key.private_key_salt,
+            )
+
+            return (
+                decrypt_secret(secret)
+                .decode()
+            )
+
+        if key.private_key_pem:
+            return key.private_key_pem
+
+        raise InvalidTokenError(
+            "Signing key material is missing"
+        )
+
     def _generate_and_store(
         self,
     ) -> JwtSigningKey:
@@ -236,11 +269,21 @@ class JwtKeyService:
             self._mint_key_pair()
         )
 
+        envelope = encrypt_secret(
+            private_pem.encode()
+        )
+
         entry = JwtSigningKey(
             key_id=key_id,
             algorithm="RS256",
             status="active",
-            private_key_pem=private_pem,
+            private_key_pem=None,
+            encrypted_private_key_pem=(
+                envelope.ciphertext
+            ),
+            private_key_nonce=envelope.nonce,
+            private_key_tag=envelope.tag,
+            private_key_salt=envelope.salt,
             public_key_pem=public_pem,
         )
 
