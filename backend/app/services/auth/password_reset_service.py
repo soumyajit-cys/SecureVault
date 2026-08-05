@@ -263,15 +263,6 @@ class PasswordResetService:
                 include_revoked=True,
             )
         ):
-            if not session.revoked:
-                self.sessions.mark_seen(session)
-
-        for session in (
-            self.sessions.list_for_user(
-                user.id,
-                include_revoked=True,
-            )
-        ):
             session.revoked = True
             self.sessions.update(session)
 
