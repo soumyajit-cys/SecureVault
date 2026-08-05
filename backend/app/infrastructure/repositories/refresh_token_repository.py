@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.domain.models.refresh_token import (
     RefreshToken,
 )
@@ -143,6 +145,47 @@ class SQLAlchemyRefreshTokenRepository(
         return self.db.scalar(
             stmt
         )
-    
 
-    
+    def revoke_by_session_id(
+        self,
+        session_id: UUID,
+    ) -> None:
+
+        tokens = (
+            self.db.query(
+                RefreshToken
+            )
+            .filter(
+                RefreshToken.session_id
+                == session_id
+            )
+            .all()
+        )
+
+        for token in tokens:
+            token.revoked = True
+
+        self.db.flush()
+
+    def revoke_all_for_user(
+        self,
+        user_id: UUID,
+    ) -> None:
+
+        tokens = (
+            self.db.query(
+                RefreshToken
+            )
+            .filter(
+                RefreshToken.user_id
+                == user_id,
+                RefreshToken.revoked.is_(False),
+            )
+            .all()
+        )
+
+        for token in tokens:
+            token.revoked = True
+
+        self.db.flush()
+
