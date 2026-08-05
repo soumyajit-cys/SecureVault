@@ -85,10 +85,13 @@ class AuthService:
         refresh_repository,
         audit_repository,
         jwt_service,
+        mfa_service=None,
     ):
         self.users = user_repository
         self.roles = role_repository
         self.sessions = session_repository
+
+        self.mfa_service = mfa_service
 
         self.password_service = (
             Argon2PasswordService()
@@ -624,7 +627,7 @@ class AuthService:
         self.sessions.update(session)
 
         self.refresh_service.repository.revoke_by_session_id(
-            session.id
+            session.session_identifier
         )
 
         self.audit_service.log(
@@ -672,7 +675,7 @@ class AuthService:
             self.sessions.update(session)
 
             self.refresh_service.repository.revoke_by_session_id(
-                session.id
+                session.session_identifier
             )
 
             revoked_count += 1
