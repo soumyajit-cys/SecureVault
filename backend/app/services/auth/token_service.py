@@ -75,3 +75,31 @@ class TokenService:
                 ),
             )
         )
+
+    def create_mfa_challenge(
+        self,
+        context: AuthContext,
+    ) -> str:
+        """
+        Short-lived token proving the password step
+        succeeded; exchanged for real tokens once the
+        TOTP/recovery code is verified.
+        """
+
+        claims = {
+            "sub": str(
+                context.user_id
+            ),
+            "email": context.email,
+            "token_type": MFA_CHALLENGE,
+            "jti": uuid.uuid4().hex,
+        }
+
+        return (
+            self.jwt_service.create_token(
+                claims,
+                timedelta(
+                    minutes=settings.MFA_TOKEN_EXPIRE_MINUTES
+                ),
+            )
+        )
