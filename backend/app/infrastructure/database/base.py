@@ -2,6 +2,8 @@ from app.core.database import Base
 
 from app.domain.models import (
     AuditLog,
+    MfaRecoveryCode,
+    PasswordResetToken,
     Permission,
     RefreshToken,
     Role,
@@ -21,4 +23,6 @@ __all__ = [
     "RefreshToken",
     "Session",
     "AuditLog",
+    "MfaRecoveryCode",
+    "PasswordResetToken",
 ]

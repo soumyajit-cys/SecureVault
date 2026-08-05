@@ -173,3 +173,29 @@ class SQLAlchemyStoredFileRepository(
         )
 
         return self.db.scalar(stmt) or 0
+
+    def sum_active_size_for_user(
+        self,
+        user_id: UUID,
+    ) -> int:
+        """
+        Total encrypted bytes currently stored for a user
+        (active files only). Used for quota accounting.
+        """
+
+        stmt = (
+            select(
+                func.coalesce(
+                    func.sum(
+                        self.model.encrypted_size
+                    ),
+                    0,
+                )
+            )
+            .where(
+                self.model.user_id == user_id,
+                self.model.status == "active",
+            )
+        )
+
+        return int(self.db.scalar(stmt) or 0)
