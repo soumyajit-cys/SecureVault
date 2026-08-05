@@ -1,6 +1,12 @@
 from app.infrastructure.repositories.audit_log_repository import (
     SQLAlchemyAuditLogRepository,
 )
+from app.infrastructure.repositories.mfa_recovery_code_repository import (
+    SQLAlchemyMfaRecoveryCodeRepository,
+)
+from app.infrastructure.repositories.password_reset_token_repository import (
+    SQLAlchemyPasswordResetTokenRepository,
+)
 from app.infrastructure.repositories.permission_repository import (
     SQLAlchemyPermissionRepository,
 )
@@ -24,4 +30,6 @@ __all__ = [
     "SQLAlchemyRefreshTokenRepository",
     "SQLAlchemySessionRepository",
     "SQLAlchemyAuditLogRepository",
+    "SQLAlchemyPasswordResetTokenRepository",
+    "SQLAlchemyMfaRecoveryCodeRepository",
 ]
