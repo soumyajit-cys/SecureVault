@@ -5,6 +5,7 @@ from app.core.config import get_settings
 
 from app.domain.constants.token_types import (
     ACCESS_TOKEN,
+    MFA_CHALLENGE,
     REFRESH_TOKEN,
 )
 
