@@ -46,21 +46,15 @@ export default function Register() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cyber px-4 py-12">
-      {/* Cyber grid + glow */}
-      <div className="pointer-events-none absolute inset-0 cyber-bg" />
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 left-1/2 h-96 w-[800px] -translate-x-1/2 rounded-full bg-brand-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-      </div>
-
-      <div className="relative w-full max-w-md animate-fade-up">
+    <div className="flex min-h-screen items-center justify-center bg-surface-soft px-4 py-12">
+      <div className="w-full max-w-md animate-fade-up">
         <div className="mb-8 text-center">
-          <span className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-glow">
+          <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-card">
             <IconShield />
-            <span className="absolute inset-0 animate-pulse-ring rounded-2xl border border-brand-400/50" />
           </span>
-          <p className="term-label">Provision workspace</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
+            Provision workspace
+          </p>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink">
             Create your account
           </h1>
@@ -71,7 +65,7 @@ export default function Register() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-3xl border border-cyber-line bg-surface-elevated/70 p-7 shadow-modal backdrop-blur-xl"
+          className="space-y-4 rounded-2xl border border-cyber-line bg-surface-elevated p-7 shadow-modal"
         >
           <TextField
             label="Email"
@@ -108,7 +102,7 @@ export default function Register() {
           />
 
           {error && (
-            <div className="animate-fade-in rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-300">
+            <div className="animate-fade-in rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -126,7 +120,7 @@ export default function Register() {
           Already have an account?{" "}
           <Link
             to="/login"
-            className="font-semibold text-brand-400 transition-colors hover:text-brand-300"
+            className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
           >
             Sign in
           </Link>
