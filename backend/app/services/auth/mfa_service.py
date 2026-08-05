@@ -5,7 +5,6 @@ from datetime import timezone
 from app.core.config import get_settings
 
 from app.core.exceptions import (
-    InvalidCredentialsError,
     MfaVerificationFailedError,
 )
 
@@ -301,17 +300,3 @@ class MfaService:
                 chars[8:12],
             ]
         )
-
-
-def validate_pending_setup(
-    user: User,
-    secret: str,
-) -> None:
-    """Attach the pending secret for the next step."""
-
-    if user.totp_enabled:
-        raise InvalidCredentialsError(
-            "MFA is already enabled"
-        )
-
-    user._pending_totp_secret = secret
