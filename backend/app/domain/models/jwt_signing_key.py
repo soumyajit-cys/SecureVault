@@ -32,10 +32,37 @@ class JwtSigningKey(BaseModel):
         nullable=False,
     )
 
-    private_key_pem: Mapped[str] = mapped_column(
+    # At-rest envelope (base64 ciphertext/nonce/tag/salt) produced by
+    # ``app.core.at_rest.encrypt_secret``. ``private_key_pem`` remains
+    # for pre-encryption rows only and is NULL for new keys.
+    private_key_pem: Mapped[str | None] = mapped_column(
         Text,
-        nullable=False,
+        nullable=True,
     )
+
+    encrypted_private_key_pem: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    private_key_nonce: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+    )
+
+    private_key_tag: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+    )
+
+    private_key_salt: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+    )
+
+    @property
+    def has_encrypted_private_key(self) -> bool:
+        return bool(self.encrypted_private_key_pem)
 
     status: Mapped[str] = mapped_column(
         String(20),

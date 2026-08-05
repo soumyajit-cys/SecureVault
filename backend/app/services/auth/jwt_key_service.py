@@ -7,6 +7,11 @@ import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from app.core.at_rest import (
+    EncryptedSecret,
+    decrypt_secret,
+    encrypt_secret,
+)
 from app.core.config import get_settings
 from app.core.exceptions import InvalidTokenError
 from app.core.exceptions import TokenExpiredError
