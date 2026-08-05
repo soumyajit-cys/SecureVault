@@ -14,6 +14,12 @@ from app.infrastructure.repositories.crypto_key_repository import (
 from app.infrastructure.repositories.jwt_signing_key_repository import (
     SQLAlchemyJwtSigningKeyRepository,
 )
+from app.infrastructure.repositories.mfa_recovery_code_repository import (
+    SQLAlchemyMfaRecoveryCodeRepository,
+)
+from app.infrastructure.repositories.password_reset_token_repository import (
+    SQLAlchemyPasswordResetTokenRepository,
+)
 from app.infrastructure.repositories.permission_repository import (
     SQLAlchemyPermissionRepository,
 )
@@ -98,5 +104,21 @@ def get_jwt_signing_key_repository(
     db: Session = Depends(get_db),
 ):
     return SQLAlchemyJwtSigningKeyRepository(
+        db
+    )
+
+
+def get_password_reset_token_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyPasswordResetTokenRepository(
+        db
+    )
+
+
+def get_mfa_recovery_code_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyMfaRecoveryCodeRepository(
         db
     )
