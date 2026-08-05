@@ -162,8 +162,24 @@ async def securevault_exception_handler(
 
     from app.crypto.exceptions import CryptoException
     from app.core.exceptions import ConflictError
+    from app.core.exceptions import (
+        LoginRateLimitedError,
+        QuotaExceededError,
+    )
 
-    if isinstance(exc, AuthenticationError):
+    if isinstance(
+        exc,
+        LoginRateLimitedError,
+    ):
+        status_code = 429
+
+    elif isinstance(
+        exc,
+        QuotaExceededError,
+    ):
+        status_code = 413
+
+    elif isinstance(exc, AuthenticationError):
         status_code = 401
 
     elif isinstance(exc, AuthorizationError):
