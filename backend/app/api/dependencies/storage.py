@@ -8,11 +8,28 @@ from app.api.dependencies.database import (
 from app.api.dependencies.repositories import (
     get_audit_repository,
     get_crypto_key_repository,
+    get_mfa_recovery_code_repository,
+    get_password_reset_token_repository,
+    get_refresh_token_repository,
+    get_session_repository,
     get_stored_file_repository,
+    get_user_repository,
 )
 
 from app.services.audit_service import (
     AuditService,
+)
+
+from app.services.auth.email_service import (
+    EmailService,
+)
+
+from app.services.auth.password_reset_service import (
+    PasswordResetService,
+)
+
+from app.services.auth.pwned_service import (
+    PwnedPasswordChecker,
 )
 
 from app.services.crypto_service import (
@@ -33,6 +50,10 @@ from app.services.storage.garbage_collector import (
 
 from app.services.storage.metadata_service import (
     MetadataService,
+)
+
+from app.services.storage.quota_service import (
+    QuotaService,
 )
 
 from app.services.storage.storage_service import (
@@ -80,12 +101,72 @@ def get_upload_service(
     keys=Depends(
         get_key_management_service
     ),
+    quota_service=Depends(
+        get_quota_service
+    ),
 ) -> UploadService:
 
     return UploadService(
         storage,
         stored_files,
         keys,
+        quota_service=quota_service,
+    )
+
+
+def get_quota_service(
+    stored_files=Depends(
+        get_stored_file_repository
+    ),
+) -> QuotaService:
+
+    return QuotaService(
+        stored_files
+    )
+
+
+def get_email_service() -> EmailService:
+
+    return EmailService()
+
+
+def get_pwned_checker() -> PwnedPasswordChecker:
+
+    return PwnedPasswordChecker()
+
+
+def get_password_reset_service(
+    user_repository=Depends(
+        get_user_repository
+    ),
+    token_repository=Depends(
+        get_password_reset_token_repository
+    ),
+    session_repository=Depends(
+        get_session_repository
+    ),
+    refresh_repository=Depends(
+        get_refresh_token_repository
+    ),
+    audit_repository=Depends(
+        get_audit_repository
+    ),
+    email_service=Depends(
+        get_email_service
+    ),
+    pwned=Depends(
+        get_pwned_checker
+    ),
+) -> PasswordResetService:
+
+    return PasswordResetService(
+        user_repository,
+        token_repository,
+        session_repository,
+        refresh_repository,
+        audit_repository,
+        email_service,
+        pwned,
     )
 
 
