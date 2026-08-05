@@ -67,9 +67,9 @@ const links = [
 ];
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `group relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ease-in-out-soft ${
+  `group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
     isActive
-      ? "bg-brand-gradient text-white shadow-glow-sm"
+      ? "bg-brand-50 text-brand-700"
       : "text-ink-soft hover:bg-surface-muted hover:text-ink"
   }`;
 
@@ -78,15 +78,14 @@ export default function Sidebar() {
   const logout = useAuthStore((s) => s.logout);
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-cyber-line bg-surface-elevated/50 backdrop-blur-xl">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-cyber-line bg-surface-elevated">
       <div className="flex items-center gap-3 px-5 pb-4 pt-5">
-        <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-glow">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-gradient text-white">
           <IconShield />
-          <span className="absolute inset-0 animate-pulse-ring rounded-xl border border-brand-400/50" />
         </span>
         <div>
           <p className="text-sm font-bold tracking-tight text-ink">SecureVault</p>
-          <p className="term-label">Enterprise Vault</p>
+          <p className="text-xs text-ink-faint">Enterprise Vault</p>
         </div>
       </div>
 
@@ -128,7 +127,7 @@ export default function Sidebar() {
               "M12 3l9 5v6c0 4-3.5 6.5-9 8-5.5-1.5-9-4-9-8V8l9-5zm-3 9 2 2 4-4"
             )}
             Admin Panel
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-brand-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-300">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700">
               Admin
             </span>
           </NavLink>
@@ -138,7 +137,7 @@ export default function Sidebar() {
       <div className="border-t border-cyber-line px-4 py-4">
         {user && (
           <div className="mb-3 flex items-center gap-2.5 px-1">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold text-white shadow-glow-sm">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold text-white">
               {user.username?.slice(0, 2).toUpperCase()}
             </span>
             <div className="truncate">
@@ -151,7 +150,7 @@ export default function Sidebar() {
         )}
         <button
           onClick={() => logout()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyber-line bg-surface-elevated/60 px-3 py-2 text-sm font-medium text-ink-soft transition-all duration-200 hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300 active:scale-[0.98]"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyber-line bg-surface-elevated px-3 py-2 text-sm font-medium text-ink-soft transition-colors duration-150 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
         >
           {icon("M15 12H3m0 0 4-4m-4 4 4 4M12 20h7a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-7")}
           Sign out
