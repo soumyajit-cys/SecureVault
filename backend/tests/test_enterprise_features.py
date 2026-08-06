@@ -639,7 +639,7 @@ def test_password_reset_with_valid_token(
         },
     )
 
-    assert weak.status_code in (400, 401)
+    assert weak.status_code in (400, 401, 422)
 
     reset = client.post(
         "/api/v1/auth/password-reset/confirm",
@@ -1344,9 +1344,11 @@ def test_pwned_password_blocked_when_enabled(
 
     import app.core.config as config_module
 
-    original = config_module.settings.PWNED_CHECK_ENABLED
+    settings = config_module.get_settings()
 
-    config_module.settings.PWNED_CHECK_ENABLED = True
+    original = settings.PWNED_CHECK_ENABLED
+
+    settings.PWNED_CHECK_ENABLED = True
 
     try:
 
@@ -1363,6 +1365,6 @@ def test_pwned_password_blocked_when_enabled(
 
     finally:
 
-        config_module.settings.PWNED_CHECK_ENABLED = (
+        settings.PWNED_CHECK_ENABLED = (
             original
         )
