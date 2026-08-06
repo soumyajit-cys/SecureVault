@@ -196,7 +196,7 @@ class PasswordResetService:
             )
 
         if (
-            record.expires_at
+            self._as_utc(record.expires_at)
             < datetime.now(timezone.utc)
         ):
             raise PasswordResetTokenInvalidError(
@@ -281,3 +281,17 @@ class PasswordResetService:
         return hashlib.sha256(
             token.encode("utf-8")
         ).hexdigest()
+
+    @staticmethod
+    def _as_utc(value: datetime) -> datetime:
+        """
+        SQLite returns naive datetimes; normalise to
+        timezone-aware UTC for comparisons.
+        """
+
+        if value.tzinfo is None:
+            return value.replace(
+                tzinfo=timezone.utc
+            )
+
+        return value
