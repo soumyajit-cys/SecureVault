@@ -112,6 +112,9 @@ async def upload_file(
             upload.file,
             filename=upload.filename,
             mime_type=upload.content_type,
+            quota_bytes=(
+                current_user.storage_quota_bytes
+            ),
         )
 
     except KeyNotFoundError as exc:
