@@ -73,11 +73,20 @@ def register(
         get_auth_service
     ),
 ):
-    return auth_service.register(
+    user = auth_service.register(
         payload.email,
         payload.username,
         payload.password,
     )
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "username": user.username,
+        "message": (
+            "Account created. Please sign in."
+        ),
+    }
 
 
 @router.post("/login")
