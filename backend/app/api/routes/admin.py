@@ -4,6 +4,9 @@ from fastapi import HTTPException
 from fastapi import Query
 from uuid import UUID
 
+from app.api.dependencies.auth import (
+    get_admin_user_service,
+)
 from app.api.dependencies.current_user import (
     get_current_user,
 )
