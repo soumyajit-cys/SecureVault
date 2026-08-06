@@ -23,6 +23,7 @@ from app.api.dependencies.storage import (
 from app.core.exceptions import (
     FileTooLargeError,
     NotFoundError,
+    QuotaExceededError,
 )
 
 from app.domain.constants.audit_events import (
@@ -124,6 +125,12 @@ async def upload_file(
         ) from exc
 
     except FileTooLargeError as exc:
+        raise HTTPException(
+            status_code=413,
+            detail=str(exc),
+        ) from exc
+
+    except QuotaExceededError as exc:
         raise HTTPException(
             status_code=413,
             detail=str(exc),
