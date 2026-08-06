@@ -228,6 +228,18 @@ class RateLimitMiddleware(
             str, list[float]
         ] = {}
 
+        _instances.append(self)
+
+    @classmethod
+    def reset_all(cls) -> None:
+        """
+        Reset the state of every live instance
+        (used by the test suite for isolation).
+        """
+
+        for instance in _instances:
+            instance.reset()
+
     async def dispatch(
         self,
         request,

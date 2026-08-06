@@ -82,6 +82,10 @@ def client(
 
     get_login_rate_limiter().clear()
 
+    from app.main import reset_rate_limiter
+
+    reset_rate_limiter()
+
     app.dependency_overrides.clear()
 
 
