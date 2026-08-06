@@ -1004,7 +1004,7 @@ def test_admin_create_requires_valid_password(
         json={
             "email": "weak@example.com",
             "username": "weakuser",
-            "password": "password",
+            "password": "Passwordpassword1",
             "roles": [],
         },
     )

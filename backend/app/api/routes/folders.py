@@ -21,6 +21,7 @@ from app.api.dependencies.storage import (
 )
 
 from app.core.exceptions import NotFoundError
+from app.core.exceptions import QuotaExceededError
 from app.domain.constants.audit_events import (
     FOLDER_DECRYPTED,
     FOLDER_ENCRYPTED,
