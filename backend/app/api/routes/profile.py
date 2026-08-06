@@ -4,6 +4,12 @@ from fastapi import Depends
 from app.api.dependencies.current_user import (
     get_current_user,
 )
+from app.api.dependencies.storage import (
+    get_quota_service,
+)
+from app.services.storage.quota_service import (
+    QuotaService,
+)
 
 router = APIRouter(
     prefix="/profile",
@@ -23,4 +29,36 @@ def me(
         ),
         "email": current_user.email,
         "username": current_user.username,
+        "mfa_enabled": bool(
+            current_user.totp_enabled
+        ),
+    }
+
+
+@router.get("/quota")
+def my_quota(
+    current_user=Depends(
+        get_current_user
+    ),
+    quota: QuotaService = Depends(
+        get_quota_service
+    ),
+):
+
+    usage = quota.usage(
+        current_user.id
+    )
+
+    limit = (
+        current_user.storage_quota_bytes
+    )
+
+    return {
+        "storage_quota_bytes": limit,
+        "storage_usage_bytes": usage,
+        "remaining_bytes": (
+            max(limit - usage, 0)
+            if limit is not None
+            else None
+        ),
     }
