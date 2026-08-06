@@ -90,6 +90,17 @@ def get_crypto_service(
     )
 
 
+def get_quota_service(
+    stored_files=Depends(
+        get_stored_file_repository
+    ),
+) -> QuotaService:
+
+    return QuotaService(
+        stored_files
+    )
+
+
 def get_upload_service(
     storage=Depends(
         get_storage_service
@@ -110,17 +121,6 @@ def get_upload_service(
         stored_files,
         keys,
         quota_service=quota_service,
-    )
-
-
-def get_quota_service(
-    stored_files=Depends(
-        get_stored_file_repository
-    ),
-) -> QuotaService:
-
-    return QuotaService(
-        stored_files
     )
 
 
