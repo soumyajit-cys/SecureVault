@@ -78,3 +78,16 @@ class LoginRateLimiter:
     ) -> str:
 
         return f"{(client_ip or 'unknown')}:{email.lower()}"
+
+
+_shared_limiter = LoginRateLimiter()
+
+
+def get_login_rate_limiter() -> LoginRateLimiter:
+    """
+    Module-level singleton so limits survive across
+    requests (AuthService itself is rebuilt per
+    request by the DI container).
+    """
+
+    return _shared_limiter
