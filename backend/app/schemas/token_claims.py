@@ -10,7 +10,7 @@ class TokenClaims(
 
     email: str
 
-    session_id: str
+    session_id: str | None = None
 
     token_type: str
 
