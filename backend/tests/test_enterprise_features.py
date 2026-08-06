@@ -293,23 +293,17 @@ def test_mfa_login_flow_with_totp(client):
 
     assert "access_token" not in body
 
-    secret = ""
-
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-
+    # Second setup attempt is rejected while enabled.
     setup = client.post(
         "/api/v1/auth/mfa/setup",
-        headers=headers,
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
     )
 
     assert setup.status_code == 409
 
-    # Re-setup is blocked; recover the secret from a
-    # fresh setup attempt is impossible, so verify with
-    # a recovery code instead, then re-run the TOTP
-    # path with the code from the earlier enablement.
+    # Verify with a recovery code.
     recovery = client.post(
         "/api/v1/auth/mfa/verify",
         json={
@@ -342,27 +336,6 @@ def test_mfa_totp_verification(client):
     )
 
     mfa_token = login.json()["mfa_token"]
-
-    from app.domain.models.user import User
-
-    user = (
-        next(
-            u
-            for u in client.app.state
-            if False
-        )
-        if False
-        else None
-    )
-
-    # Pull the secret from the database to produce a
-    # real TOTP code.
-    import os
-
-    # The secret is not exposed via the API after
-    # enablement, so derive it from a controlled
-    # second enablement on another user.
-    assert mfa_token
 
     wrong = client.post(
         "/api/v1/auth/mfa/verify",
@@ -539,21 +512,6 @@ def test_password_reset_flow(client):
     )
 
     assert requested.status_code == 200
-
-    from app.domain.models.password_reset_token import (
-        PasswordResetToken,
-    )
-
-    import hashlib
-
-    from app.api.dependencies.database import SessionLocal
-
-    # The raw token is never exposed; simulate the
-    # emailed link by checking the stored digest can
-    # be produced from a known token format.
-    record = (
-        db_session
-    )  # placeholder, real check below
 
     assert requested.json()["message"]
 
