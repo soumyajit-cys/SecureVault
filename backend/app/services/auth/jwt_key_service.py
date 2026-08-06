@@ -250,11 +250,55 @@ class JwtKeyService:
             )
 
         if key.private_key_pem:
-            return key.private_key_pem
+            return self._upgrade_legacy_key(key)
 
         raise InvalidTokenError(
             "Signing key material is missing"
         )
+
+    def _upgrade_legacy_key(
+        self,
+        key: JwtSigningKey,
+    ) -> str:
+        """
+        Lazy at-rest upgrade for rows created before
+        key encryption: wrap the plaintext in an
+        AES-256-GCM envelope and drop the plaintext
+        column, so signing keys never stay exposed.
+        """
+
+        plaintext = key.private_key_pem
+
+        envelope = encrypt_secret(
+            plaintext.encode()
+        )
+
+        key.encrypted_private_key_pem = (
+            envelope.ciphertext
+        )
+
+        key.private_key_nonce = (
+            envelope.nonce
+        )
+
+        key.private_key_tag = (
+            envelope.tag
+        )
+
+        key.private_key_salt = (
+            envelope.salt
+        )
+
+        key.private_key_pem = None
+
+        self.repository.update(key)
+
+        self._cache.pop(
+            key.key_id,
+            None,
+        )
+
+        return plaintext
 
     def _generate_and_store(
         self,
