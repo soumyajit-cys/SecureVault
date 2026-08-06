@@ -23,6 +23,8 @@ from app.core.metrics import (
 
 logger = get_logger(__name__)
 
+_instances: list["RateLimitMiddleware"] = []
+
 
 class RequestIDMiddleware(
     BaseHTTPMiddleware

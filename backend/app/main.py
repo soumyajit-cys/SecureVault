@@ -44,8 +44,6 @@ settings = get_settings()
 
 _cleanup_task: CleanupTask | None = None
 
-_rate_limit_middleware = None
-
 
 def reset_rate_limiter() -> None:
     """
@@ -53,10 +51,7 @@ def reset_rate_limiter() -> None:
     scenarios do not interfere with one another.
     """
 
-    global _rate_limit_middleware
-
-    if _rate_limit_middleware is not None:
-        _rate_limit_middleware.reset()
+    RateLimitMiddleware.reset_all()
 
 
 @asynccontextmanager
@@ -151,14 +146,6 @@ if settings.ENABLE_SECURITY_HEADERS:
     )
 
 if settings.RATE_LIMIT_ENABLED:
-
-    global _rate_limit_middleware
-
-    _rate_limit_middleware = RateLimitMiddleware(
-        app,
-        general_limit=settings.RATE_LIMIT_PER_MINUTE,
-        login_limit=settings.RATE_LIMIT_LOGIN_PER_MINUTE,
-    )
 
     app.add_middleware(
         RateLimitMiddleware,
