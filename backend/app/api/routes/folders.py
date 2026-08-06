@@ -183,6 +183,9 @@ async def upload_folder(
             current_user.id,
             key,
             extract_dir,
+            quota_bytes=(
+                current_user.storage_quota_bytes
+            ),
         )
 
     except KeyNotFoundError as exc:
