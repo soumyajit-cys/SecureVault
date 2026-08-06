@@ -272,12 +272,20 @@ class AuthService:
                 "Account is deactivated"
             )
 
-        if (
-            user.locked_until
-            and user.locked_until
-            > datetime.now(UTC)
-        ):
-            raise AccountLockedError()
+        locked_until = user.locked_until
+
+        if locked_until is not None:
+
+            if locked_until.tzinfo is None:
+                locked_until = (
+                    locked_until.replace(tzinfo=UTC)
+                )
+
+            if (
+                locked_until
+                > datetime.now(UTC)
+            ):
+                raise AccountLockedError()
 
         if not (
             self.password_service

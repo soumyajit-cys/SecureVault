@@ -140,8 +140,8 @@ def _token(
 
 
 def _make_admin(
-    db_session,
     client,
+    db_session,
     email: str = "boss@example.com",
     username: str = "boss",
 ) -> str:
