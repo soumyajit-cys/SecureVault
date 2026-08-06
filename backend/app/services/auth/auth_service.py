@@ -45,6 +45,7 @@ from app.services.audit_service import (
 
 from app.services.auth.login_rate_limiter import (
     LoginRateLimiter,
+    get_login_rate_limiter,
 )
 
 from app.services.auth.password_service import (
@@ -122,7 +123,7 @@ class AuthService:
         )
 
         self.rate_limiter = (
-            LoginRateLimiter()
+            get_login_rate_limiter()
         )
 
         self.pwned = (
