@@ -11,11 +11,11 @@ from app.api.dependencies.repositories import (
     get_user_repository,
 )
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(
+    credentials: HTTPAuthorizationCredentials | None = Depends(
         security
     ),
     jwt_service=Depends(
@@ -25,6 +25,18 @@ def get_current_user(
         get_user_repository
     ),
 ):
+
+    if (
+        credentials is None
+        or not credentials.credentials
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={
+                "WWW-Authenticate": "Bearer"
+            },
+        )
 
     from uuid import UUID
 
