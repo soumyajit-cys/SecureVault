@@ -120,3 +120,84 @@ def all_audit_logs(
         page=page,
         page_size=page_size,
     )
+
+
+@router.get(
+    "/admin/export",
+)
+def export_audit_logs(
+    action: str | None = Query(None),
+    current_user=Depends(
+        require_role("Admin")
+    ),
+    audit: AuditService = Depends(
+        get_audit_service
+    ),
+):
+    """
+    Full CSV export of the global audit trail.
+    """
+
+    items = audit.repository.list_all_unpaginated(
+        action=action
+    )
+
+    from app.domain.constants.audit_events import (
+        AUDIT_EXPORTED,
+    )
+
+    audit.log(
+        current_user.id,
+        AUDIT_EXPORTED,
+        (
+            f"exported {len(items)} audit records "
+            f"action={action or 'all'}"
+        ),
+    )
+
+    def rows():
+
+        yield (
+            "id,created_at,user_id,action,"
+            "resource_type,resource_id,details\n"
+        )
+
+        for item in items:
+
+            user_id = (
+                str(item.user_id)
+                if item.user_id
+                else ""
+            )
+
+            resource_id = (
+                str(item.resource_id)
+                if item.resource_id
+                else ""
+            )
+
+            details = (
+                (item.details or "")
+                .replace('"', '""')
+            )
+
+            yield (
+                f"{item.id},"
+                f"{item.created_at.isoformat()},"
+                f"{user_id},"
+                f"{item.action},"
+                f"{item.resource_type or ''},"
+                f"{resource_id},"
+                f'"{details}"\n'
+            )
+
+    return StreamingResponse(
+        rows(),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": (
+                'attachment; '
+                'filename="audit-log.csv"'
+            )
+        },
+    )
