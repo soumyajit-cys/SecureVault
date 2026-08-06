@@ -194,6 +194,12 @@ async def upload_folder(
             detail=str(exc),
         ) from exc
 
+    except QuotaExceededError as exc:
+        raise HTTPException(
+            status_code=413,
+            detail=str(exc),
+        ) from exc
+
     except Exception as exc:
         raise HTTPException(
             status_code=400,
