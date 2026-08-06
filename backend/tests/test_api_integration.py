@@ -73,6 +73,12 @@ def client(
     with TestClient(app) as test_client:
         yield test_client
 
+    from app.services.auth.login_rate_limiter import (
+        get_login_rate_limiter,
+    )
+
+    get_login_rate_limiter().clear()
+
     app.dependency_overrides.clear()
 
 

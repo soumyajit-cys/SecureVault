@@ -79,6 +79,10 @@ class LoginRateLimiter:
 
         return f"{(client_ip or 'unknown')}:{email.lower()}"
 
+    def clear(self) -> None:
+
+        self._hits.clear()
+
 
 _shared_limiter = LoginRateLimiter()
 
