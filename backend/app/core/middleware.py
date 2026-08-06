@@ -331,3 +331,11 @@ class RateLimitMiddleware(
         self._requests[key] = hits
 
         return True
+
+    def reset(self) -> None:
+        """
+        Drop all recorded request timestamps. Used by
+        tests for isolation between scenarios.
+        """
+
+        self._requests.clear()

@@ -44,6 +44,20 @@ settings = get_settings()
 
 _cleanup_task: CleanupTask | None = None
 
+_rate_limit_middleware = None
+
+
+def reset_rate_limiter() -> None:
+    """
+    Test helper: clear the in-memory rate limiter so
+    scenarios do not interfere with one another.
+    """
+
+    global _rate_limit_middleware
+
+    if _rate_limit_middleware is not None:
+        _rate_limit_middleware.reset()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -137,6 +151,15 @@ if settings.ENABLE_SECURITY_HEADERS:
     )
 
 if settings.RATE_LIMIT_ENABLED:
+
+    global _rate_limit_middleware
+
+    _rate_limit_middleware = RateLimitMiddleware(
+        app,
+        general_limit=settings.RATE_LIMIT_PER_MINUTE,
+        login_limit=settings.RATE_LIMIT_LOGIN_PER_MINUTE,
+    )
+
     app.add_middleware(
         RateLimitMiddleware,
         general_limit=settings.RATE_LIMIT_PER_MINUTE,
