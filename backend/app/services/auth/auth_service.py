@@ -272,6 +272,18 @@ class AuthService:
                 "Account is deactivated"
             )
 
+        if (
+            settings.EMAIL_VERIFICATION_REQUIRED
+            and not user.is_verified
+        ):
+            from app.core.exceptions import (
+                EmailNotVerifiedError,
+            )
+
+            raise EmailNotVerifiedError(
+                "Email verification required"
+            )
+
         locked_until = user.locked_until
 
         if locked_until is not None:
