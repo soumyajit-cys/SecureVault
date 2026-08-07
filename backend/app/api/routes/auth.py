@@ -16,6 +16,9 @@ from app.api.dependencies.current_user import (
 from app.api.dependencies.jwt import (
     get_jwt_service,
 )
+from app.api.dependencies.repositories import (
+    get_user_repository,
+)
 from app.api.dependencies.storage import (
     get_password_reset_service,
 )
