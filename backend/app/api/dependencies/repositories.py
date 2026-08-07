@@ -4,12 +4,16 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.database import (
     get_db,
 )
-
 from app.infrastructure.repositories.audit_log_repository import (
     SQLAlchemyAuditLogRepository,
 )
+
 from app.infrastructure.repositories.crypto_key_repository import (
     SQLAlchemyCryptoKeyRepository,
+)
+
+from app.infrastructure.repositories.email_verification_token_repository import (
+    SQLAlchemyEmailVerificationTokenRepository,
 )
 from app.infrastructure.repositories.jwt_signing_key_repository import (
     SQLAlchemyJwtSigningKeyRepository,
