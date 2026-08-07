@@ -109,6 +109,23 @@ class PasswordResetService:
             Argon2PasswordService()
         )
 
+        # Per-account throttle for reset requests and
+        # token redemptions, on top of the per-IP
+        # middleware bucket.
+        self.request_limiter = (
+            LoginRateLimiter(
+                key_prefix="reset:req",
+                max_attempts=3,
+            )
+        )
+
+        self.confirm_limiter = (
+            LoginRateLimiter(
+                key_prefix="reset:confirm",
+                max_attempts=10,
+            )
+        )
+
     def request_reset(
         self,
         email: str,
@@ -118,6 +135,13 @@ class PasswordResetService:
         Always returns silently for non-existent
         accounts to avoid user enumeration.
         """
+
+        self.request_limiter.check(
+            LoginRateLimiter.key(
+                None,
+                email,
+            )
+        )
 
         user = (
             self.users.get_by_email(email)
@@ -193,6 +217,17 @@ class PasswordResetService:
                 token_hash
             )
         )
+
+        if record:
+
+            self.confirm_limiter.check(
+                LoginRateLimiter.key(
+                    None,
+                    record.user.email
+                    if record.user
+                    else "",
+                )
+            )
 
         if not record or record.is_used:
             raise PasswordResetTokenInvalidError(
