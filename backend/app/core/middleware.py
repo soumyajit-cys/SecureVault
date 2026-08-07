@@ -203,8 +203,21 @@ class RateLimitMiddleware(
     BaseHTTPMiddleware
 ):
     """
-    Sliding-window in-memory rate limiter keyed by IP.
+    Sliding-window rate limiter.
+
+    - A general bucket per IP for mutating requests.
+    - A stricter bucket per IP for authentication
+      endpoints (login / MFA / password reset), an
+      anti-brute-force layer on top of the per-account
+      limiter in AuthService.
     """
+
+    LOGIN_PATHS = {
+        "/api/v1/auth/login",
+        "/api/v1/auth/mfa/verify",
+        "/api/v1/auth/password-reset/request",
+        "/api/v1/auth/password-reset/confirm",
+    }
 
     def __init__(
         self,
@@ -212,6 +225,7 @@ class RateLimitMiddleware(
         general_limit: int,
         login_limit: int,
         window_seconds: int = 60,
+        backend: RateLimitBackend | None = None,
     ):
 
         super().__init__(app)
@@ -228,21 +242,11 @@ class RateLimitMiddleware(
             window_seconds
         )
 
-        self._requests: dict[
-            str, list[float]
-        ] = {}
+        self.backend = (
+            backend or build_rate_limit_backend()
+        )
 
         _instances.append(self)
-
-    @classmethod
-    def reset_all(cls) -> None:
-        """
-        Reset the state of every live instance
-        (used by the test suite for isolation).
-        """
-
-        for instance in _instances:
-            instance.reset()
 
     async def dispatch(
         self,
@@ -256,7 +260,7 @@ class RateLimitMiddleware(
             )
         )
 
-        if (
+        is_mutating = (
             request.method
             in {
                 "POST",
@@ -264,26 +268,80 @@ class RateLimitMiddleware(
                 "PATCH",
                 "DELETE",
             }
-            and not self._allows(
-                client_ip,
-                limit=self.general_limit,
-            )
-        ):
+        )
 
-            return JSONResponse(
-                status_code=429,
-                content={
-                    "detail": (
-                        "Rate limit exceeded. "
-                        "Please slow down."
-                    )
-                },
-                headers={
-                    "Retry-After": str(
-                        self.window_seconds
-                    )
-                },
+        is_login_path = (
+            request.url.path
+            in self.LOGIN_PATHS
+        )
+
+        bucket_key: str | None = None
+
+        bucket_limit: int | None = None
+
+        if is_mutating:
+            bucket_key = f"ip:{client_ip}"
+            bucket_limit = self.general_limit
+
+        if (
+            is_login_path
+            and request.method == "POST"
+        ):
+            bucket_key = (
+                f"auth:{client_ip}"
             )
+            bucket_limit = self.login_limit
+
+        if bucket_key is not None:
+
+            allowed = (
+                self.backend.allow(
+                    bucket_key,
+                    bucket_limit,
+                    self.window_seconds,
+                )
+            )
+
+            if not allowed:
+
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "detail": (
+                            "Rate limit exceeded. "
+                            "Please slow down."
+                        )
+                    },
+                    headers={
+                        "Retry-After": str(
+                            self.window_seconds
+                        ),
+                        "X-RateLimit-Limit": str(
+                            bucket_limit
+                        ),
+                        "X-RateLimit-Remaining": "0",
+                    },
+                )
+
+            response = await call_next(
+                request
+            )
+
+            response.headers[
+                "X-RateLimit-Limit"
+            ] = str(bucket_limit)
+
+            response.headers[
+                "X-RateLimit-Remaining"
+            ] = str(
+                self.backend.remaining(
+                    bucket_key,
+                    bucket_limit,
+                    self.window_seconds,
+                )
+            )
+
+            return response
 
         return await call_next(
             request
