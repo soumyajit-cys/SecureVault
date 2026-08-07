@@ -28,17 +28,23 @@ class LoginRateLimiter:
     def __init__(
         self,
         backend: RateLimitBackend | None = None,
+        key_prefix: str = "login",
+        max_attempts: int | None = None,
+        window_seconds: int = 60,
     ) -> None:
 
         self.backend = (
             backend or build_rate_limit_backend()
         )
 
+        self.key_prefix = key_prefix
+
         self.max_attempts = (
-            settings.RATE_LIMIT_LOGIN_PER_MINUTE
+            max_attempts
+            or settings.RATE_LIMIT_LOGIN_PER_MINUTE
         )
 
-        self.window_seconds = 60
+        self.window_seconds = window_seconds
 
     def check(
         self,
@@ -54,12 +60,12 @@ class LoginRateLimiter:
             return
 
         if not self.backend.allow(
-            f"{self.KEY_PREFIX}:{key}",
+            f"{self.key_prefix}:{key}",
             self.max_attempts,
             self.window_seconds,
         ):
             raise LoginRateLimitedError(
-                "Too many login attempts. "
+                "Too many attempts. "
                 "Please try again later."
             )
 

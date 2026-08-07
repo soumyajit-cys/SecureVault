@@ -43,6 +43,10 @@ from app.services.auth.email_service import (
     EmailService,
 )
 
+from app.services.auth.login_rate_limiter import (
+    LoginRateLimiter,
+)
+
 from app.services.auth.password_service import (
     Argon2PasswordService,
 )
