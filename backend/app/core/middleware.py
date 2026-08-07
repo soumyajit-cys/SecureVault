@@ -378,40 +378,12 @@ class RateLimitMiddleware(
             else "unknown"
         )
 
-    def _allows(
-        self,
-        key: str,
-        limit: int,
-    ) -> bool:
-
-        now = time.monotonic()
-
-        window_start = (
-            now - self.window_seconds
-        )
-
-        hits = [
-            ts
-            for ts in self._requests.get(
-                key, []
-            )
-            if ts > window_start
-        ]
-
-        if len(hits) >= limit:
-            self._requests[key] = hits
-            return False
-
-        hits.append(now)
-
-        self._requests[key] = hits
-
-        return True
-
-    def reset(self) -> None:
+    @classmethod
+    def reset_all(cls) -> None:
         """
-        Drop all recorded request timestamps. Used by
-        tests for isolation between scenarios.
+        Reset the state of every live instance
+        (used by the test suite for isolation).
         """
 
-        self._requests.clear()
+        for instance in _instances:
+            instance.backend.clear_all()
