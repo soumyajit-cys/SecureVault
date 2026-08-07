@@ -139,6 +139,13 @@ class RedisRateLimitBackend:
 
         pipeline.zcard(redis_key)
 
+        removed, count = (
+            pipeline.execute()
+        )
+
+        if count >= limit:
+            return False
+
         pipeline.zadd(
             redis_key,
             {str(now): now},
@@ -149,10 +156,7 @@ class RedisRateLimitBackend:
             window_seconds * 2,
         )
 
-        *_, count = pipeline.execute()
-
-        if count >= limit:
-            return False
+        pipeline.execute()
 
         return True
 
