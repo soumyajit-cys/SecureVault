@@ -2,6 +2,7 @@ from fastapi import Depends
 
 from app.api.dependencies.repositories import (
     get_audit_repository,
+    get_email_verification_token_repository,
     get_mfa_recovery_code_repository,
     get_refresh_token_repository,
     get_role_repository,
@@ -23,6 +24,10 @@ from app.services.auth.mfa_service import (
 
 from app.services.auth.admin_user_service import (
     AdminUserService,
+)
+
+from app.services.auth.email_verification_service import (
+    EmailVerificationService,
 )
 
 
