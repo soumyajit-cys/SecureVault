@@ -1,10 +1,12 @@
-import time
-from collections import defaultdict
-
 from app.core.config import get_settings
 
 from app.core.exceptions import (
     LoginRateLimitedError,
+)
+
+from app.core.rate_limit_backend import (
+    RateLimitBackend,
+    build_rate_limit_backend,
 )
 
 settings = get_settings()
@@ -12,27 +14,31 @@ settings = get_settings()
 
 class LoginRateLimiter:
     """
-    Sliding-window in-memory limiter keyed by
-    ``ip:email`` for login and MFA verification
-    endpoints.
+    Sliding-window limiter keyed by ``ip:email`` for
+    login and MFA verification endpoints.
+
+    State lives in the shared rate-limit backend
+    (Redis in multi-worker deployments, in-memory
+    otherwise), so the limiter works across workers
+    and survives per-request service re-creation.
     """
+
+    KEY_PREFIX = "login"
 
     def __init__(
         self,
-        max_attempts: int | None = None,
-        window_seconds: int = 60,
+        backend: RateLimitBackend | None = None,
     ) -> None:
 
-        self.max_attempts = (
-            max_attempts
-            or settings.RATE_LIMIT_LOGIN_PER_MINUTE
+        self.backend = (
+            backend or build_rate_limit_backend()
         )
 
-        self.window_seconds = window_seconds
+        self.max_attempts = (
+            settings.RATE_LIMIT_LOGIN_PER_MINUTE
+        )
 
-        self._hits: defaultdict[
-            str, list[float]
-        ] = defaultdict(list)
+        self.window_seconds = 60
 
     def check(
         self,
@@ -47,29 +53,19 @@ class LoginRateLimiter:
         if not settings.RATE_LIMIT_ENABLED:
             return
 
-        now = time.monotonic()
-
-        window_start = (
-            now - self.window_seconds
-        )
-
-        hits = [
-            ts
-            for ts in self._hits[key]
-            if ts > window_start
-        ]
-
-        if len(hits) >= self.max_attempts:
-            self._hits[key] = hits
-
+        if not self.backend.allow(
+            f"{self.KEY_PREFIX}:{key}",
+            self.max_attempts,
+            self.window_seconds,
+        ):
             raise LoginRateLimitedError(
                 "Too many login attempts. "
                 "Please try again later."
             )
 
-        hits.append(now)
+    def clear(self) -> None:
 
-        self._hits[key] = hits
+        self.backend.clear_all()
 
     @staticmethod
     def key(
@@ -78,10 +74,6 @@ class LoginRateLimiter:
     ) -> str:
 
         return f"{(client_ip or 'unknown')}:{email.lower()}"
-
-    def clear(self) -> None:
-
-        self._hits.clear()
 
 
 _shared_limiter = LoginRateLimiter()
