@@ -126,6 +126,9 @@ class AdminUserService:
             storage_quota_bytes=(
                 storage_quota_bytes
             ),
+            # Admins vouch for the identity; the
+            # account starts verified.
+            is_verified=True,
         )
 
         self.users.create(user)
