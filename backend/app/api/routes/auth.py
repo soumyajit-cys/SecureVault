@@ -7,6 +7,7 @@ from fastapi import Request
 
 from app.api.dependencies.auth import (
     get_auth_service,
+    get_email_verification_service,
     get_mfa_service,
 )
 from app.api.dependencies.current_user import (
@@ -20,6 +21,7 @@ from app.api.dependencies.storage import (
 )
 
 from app.schemas.auth import (
+    EmailVerificationRequest,
     LoginRequest,
     MfaDisableRequest,
     MfaEnableRequest,
