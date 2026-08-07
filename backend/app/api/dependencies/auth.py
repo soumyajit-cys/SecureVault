@@ -14,6 +14,10 @@ from app.api.dependencies.jwt import (
     get_jwt_service,
 )
 
+from app.api.dependencies.storage import (
+    get_email_service,
+)
+
 from app.services.auth.auth_service import (
     AuthService,
 )
