@@ -296,6 +296,65 @@ def password_reset_confirm(
 
 
 # -------------------------------------------------
+# Email verification
+# -------------------------------------------------
+
+@router.post("/verify-email")
+def verify_email(
+    payload: EmailVerificationRequest,
+    verification_service=Depends(
+        get_email_verification_service
+    ),
+):
+    verification_service.verify(
+        payload.token
+    )
+
+    return {
+        "message": (
+            "Email verified. You can now sign in."
+        )
+    }
+
+
+@router.post("/resend-verification")
+def resend_verification(
+    payload: EmailVerificationRequest,
+    request: Request,
+    user_repository=Depends(
+        get_user_repository
+    ),
+    verification_service=Depends(
+        get_email_verification_service
+    ),
+):
+    # Resend only makes sense before sign-in, so it
+    # is keyed by the (rate-limited) email address
+    # rather than an authenticated session.
+    user = (
+        user_repository.get_by_email(
+            payload.email
+        )
+    )
+
+    if (
+        user
+        and not user.is_verified
+        and user.is_active
+    ):
+        verification_service.issue_for(
+            user
+        )
+
+    return {
+        "message": (
+            "If that account is pending "
+            "verification, a new link has been sent."
+        )
+    }
+
+
+# -------------------------------------------------
 # Session management
 # -------------------------------------------------
 
