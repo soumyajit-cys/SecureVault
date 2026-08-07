@@ -319,8 +319,7 @@ def verify_email(
 
 @router.post("/resend-verification")
 def resend_verification(
-    payload: EmailVerificationRequest,
-    request: Request,
+    payload: PasswordResetRequest,
     user_repository=Depends(
         get_user_repository
     ),
