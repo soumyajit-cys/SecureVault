@@ -218,13 +218,24 @@ def _build_local_backend() -> LocalRateLimitBackend:
     return LocalRateLimitBackend()
 
 
+_local_default = _build_local_backend()
+
+_cached_backend: RateLimitBackend | None = None
+
+
 def build_rate_limit_backend() -> RateLimitBackend:
     """
-    Build the configured backend. Falls back to the
-    in-memory backend when Redis is configured but
-    unreachable, so a Redis outage never turns into
-    an auth outage.
+    Build the configured backend once per process
+    (subsequent calls return the cached instance).
+    Falls back to the in-memory backend when Redis is
+    configured but unreachable, so a Redis outage
+    never turns into an auth outage.
     """
+
+    global _cached_backend
+
+    if _cached_backend is not None:
+        return _cached_backend
 
     settings = get_settings()
 
@@ -252,9 +263,11 @@ def build_rate_limit_backend() -> RateLimitBackend:
                 url=settings.REDIS_URL.split("@")[-1],
             )
 
-            return RedisRateLimitBackend(
-                client
+            _cached_backend = (
+                RedisRateLimitBackend(client)
             )
+
+            return _cached_backend
 
         except Exception as exc:
 
@@ -263,10 +276,9 @@ def build_rate_limit_backend() -> RateLimitBackend:
                 error=str(exc),
             )
 
-    return _build_local_backend()
+    _cached_backend = _local_default
 
-
-_local_default = _build_local_backend()
+    return _cached_backend
 
 
 def get_local_rate_limit_backend() -> LocalRateLimitBackend:
