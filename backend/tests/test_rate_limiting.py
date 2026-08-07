@@ -145,11 +145,12 @@ def test_login_rate_limiter_shared_redis_state():
     try:
 
         first.check(key)
+        second.check(key)
 
         with pytest.raises(
             LoginRateLimitedError
         ):
-            second.check(key)
+            first.check(key)
 
     finally:
 
