@@ -86,12 +86,17 @@ class AuthService:
         audit_repository,
         jwt_service,
         mfa_service=None,
+        verification_service=None,
     ):
         self.users = user_repository
         self.roles = role_repository
         self.sessions = session_repository
 
         self.mfa_service = mfa_service
+
+        self.verification_service = (
+            verification_service
+        )
 
         self.password_service = (
             Argon2PasswordService()
@@ -198,6 +203,14 @@ class AuthService:
             user.id,
             USER_REGISTERED,
         )
+
+        if (
+            settings.EMAIL_VERIFICATION_REQUIRED
+            and self.verification_service
+        ):
+            self.verification_service.issue_for(
+                user
+            )
 
         return user
 
