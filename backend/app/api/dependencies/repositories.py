@@ -116,6 +116,14 @@ def get_password_reset_token_repository(
     )
 
 
+def get_email_verification_token_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyEmailVerificationTokenRepository(
+        db
+    )
+
+
 def get_mfa_recovery_code_repository(
     db: Session = Depends(get_db),
 ):
