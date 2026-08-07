@@ -56,6 +56,14 @@ PASSWORD_RESET_COMPLETED = (
     "password.reset_completed"
 )
 
+VERIFICATION_SENT = (
+    "verification.sent"
+)
+
+EMAIL_VERIFIED = (
+    "verification.completed"
+)
+
 SESSION_REVOKED = "session.revoked"
 
 SESSION_REVOKED_ALL = "session.revoked_all"

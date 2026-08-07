@@ -76,6 +76,18 @@ class PasswordResetTokenInvalidError(
     pass
 
 
+class EmailVerificationTokenInvalidError(
+    AuthenticationError
+):
+    pass
+
+
+class EmailNotVerifiedError(
+    AuthenticationError
+):
+    pass
+
+
 class QuotaExceededError(
     SecureVaultException
 ):
