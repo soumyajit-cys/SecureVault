@@ -72,6 +72,25 @@ def get_mfa_service(
     )
 
 
+def get_email_verification_service(
+    token_repository=Depends(
+        get_email_verification_token_repository
+    ),
+    audit_repository=Depends(
+        get_audit_repository
+    ),
+    email_service=Depends(
+        get_email_service
+    ),
+):
+
+    return EmailVerificationService(
+        token_repository,
+        audit_repository,
+        email_service,
+    )
+
+
 def get_auth_service(
     user_repository=Depends(
         get_user_repository
@@ -94,6 +113,9 @@ def get_auth_service(
     mfa_service=Depends(
         get_mfa_service
     ),
+    verification_service=Depends(
+        get_email_verification_service
+    ),
 ):
 
     return AuthService(
@@ -104,4 +126,5 @@ def get_auth_service(
         audit_repository,
         jwt_service,
         mfa_service,
+        verification_service,
     )
