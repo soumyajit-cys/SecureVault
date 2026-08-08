@@ -38,12 +38,20 @@ from app.schemas.auth import (
     LogoutRequest,
 )
 
+from app.schemas.webauthn import (
+    PasskeyLoginBeginRequest,
+    PasskeyLoginCompleteRequest,
+    PasskeyRegistrationCompleteRequest,
+    PasskeyRemoveRequest,
+)
+
 from app.schemas.user import (
     PasswordChangeRequest,
 )
 
 from app.core.exceptions import (
     NotFoundError,
+    WebAuthnVerificationFailedError,
 )
 
 router = APIRouter(
