@@ -2,6 +2,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.security import HTTPBearer
+from starlette.requests import Request
 
 from app.api.dependencies.jwt import (
     get_jwt_service,
@@ -46,6 +47,7 @@ def get_current_session_id(
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(
         security
     ),
@@ -110,6 +112,7 @@ def get_current_user(
             "session_id",
             None,
         ),
+        request=request,
     )
 
     return user

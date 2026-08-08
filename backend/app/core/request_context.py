@@ -12,10 +12,16 @@ request_actor: ContextVar[dict] = ContextVar(
 def bind_actor(
     user_id=None,
     session_id=None,
+    request=None,
 ) -> None:
     """
     Record the authenticated identity for the
     duration of the request.
+
+    The context var covers logs emitted while the
+    dependency runs; the request state covers the
+    middleware, which observes the request from a
+    different task context.
     """
 
     actor = {}
@@ -27,6 +33,9 @@ def bind_actor(
         actor["session_id"] = str(session_id)
 
     request_actor.set(actor)
+
+    if request is not None:
+        request.state.actor = actor
 
 
 def current_actor() -> dict:
