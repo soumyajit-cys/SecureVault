@@ -143,8 +143,8 @@ def make_registration_response(
 
     attestation_object = cbor2.dumps(
         {
-            1: "none",
-            3: auth,
+            "fmt": "none",
+            "authData": auth,
         }
     )
 
