@@ -146,6 +146,8 @@ class RequestLoggingMiddleware(
             "n/a",
         )
 
+        actor = current_actor()
+
         started = time.perf_counter()
 
         try:
@@ -169,6 +171,7 @@ class RequestLoggingMiddleware(
                 elapsed_ms=(
                     f"{elapsed_ms:.2f}"
                 ),
+                **actor,
             )
 
             raise
@@ -191,9 +194,10 @@ class RequestLoggingMiddleware(
             method=request.method,
             path=request.url.path,
             status=response.status_code,
-            duration_ms=(
+            elapsed_ms=(
                 f"{elapsed_ms:.2f}"
             ),
+            **actor,
         )
 
         return response
