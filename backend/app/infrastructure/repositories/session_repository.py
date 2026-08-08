@@ -19,6 +19,33 @@ class SQLAlchemySessionRepository(
 ):
     model = Session
 
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete sessions that are no longer usable:
+        revoked, or expired long enough that the
+        refresh-token grace has passed.
+        """
+
+        stmt = (
+            delete(Session)
+            .where(
+                or_(
+                    Session.revoked.is_(True),
+                    Session.expires_at < cutoff,
+                ),
+                Session.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
+
     def list_for_user(
         self,
         user_id: UUID,
