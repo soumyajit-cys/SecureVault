@@ -37,11 +37,14 @@ class GarbageCollector:
         self,
         storage: StorageService,
         stored_files: StoredFileRepository,
+        retention_service=None,
     ) -> None:
 
         self._storage = storage
 
         self._files = stored_files
+
+        self._retention = retention_service
 
     def run_all(
         self,
@@ -89,6 +92,24 @@ class GarbageCollector:
             "purged_deleted": purged,
             "temp_files": temps,
         }
+
+        if self._retention is not None:
+
+            retained = (
+                self._retention.run(
+                    retention_days=(
+                        retention_days
+                        or settings.DATA_RETENTION_DAYS
+                    )
+                )
+            )
+
+            summary["retention"] = retained
+
+            logger.info(
+                "Retention purge completed: %s",
+                retained,
+            )
 
         logger.info(
             "Garbage collection completed: %s",

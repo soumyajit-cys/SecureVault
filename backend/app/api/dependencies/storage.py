@@ -214,6 +214,37 @@ def get_audit_service(
     )
 
 
+def get_data_retention_service(
+    audit_repository=Depends(
+        get_audit_repository
+    ),
+    session_repository=Depends(
+        get_session_repository
+    ),
+    refresh_repository=Depends(
+        get_refresh_token_repository
+    ),
+    reset_repository=Depends(
+        get_password_reset_token_repository
+    ),
+    verification_repository=Depends(
+        get_email_verification_token_repository
+    ),
+):
+
+    from app.services.data_retention_service import (
+        DataRetentionService,
+    )
+
+    return DataRetentionService(
+        audit_repository,
+        session_repository,
+        refresh_repository,
+        reset_repository,
+        verification_repository,
+    )
+
+
 def get_garbage_collector(
     storage=Depends(
         get_storage_service
@@ -221,11 +252,15 @@ def get_garbage_collector(
     stored_files=Depends(
         get_stored_file_repository
     ),
+    retention=Depends(
+        get_data_retention_service
+    ),
 ) -> GarbageCollector:
 
     return GarbageCollector(
         storage,
         stored_files,
+        retention_service=retention,
     )
 
 
