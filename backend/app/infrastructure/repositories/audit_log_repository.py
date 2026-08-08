@@ -1,6 +1,7 @@
 from typing import TypeVar
 from uuid import UUID
 
+from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import select
 
@@ -16,6 +17,24 @@ class SQLAlchemyAuditLogRepository(
     SQLAlchemyRepository[AuditLog]
 ):
     model = AuditLog
+
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+
+        stmt = (
+            delete(AuditLog)
+            .where(
+                AuditLog.created_at < cutoff
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
 
     def last(
         self,

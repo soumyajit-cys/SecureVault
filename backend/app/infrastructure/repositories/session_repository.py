@@ -2,7 +2,9 @@ from datetime import datetime
 from datetime import timezone
 from uuid import UUID
 
+from sqlalchemy import delete
 from sqlalchemy import select
+from sqlalchemy import or_
 
 from app.domain.models.session import Session
 from app.infrastructure.repositories.base_repository import (
