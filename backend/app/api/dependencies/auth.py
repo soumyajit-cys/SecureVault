@@ -106,6 +106,25 @@ def get_email_verification_service(
     )
 
 
+def get_webauthn_service(
+    credential_repository=Depends(
+        get_webauthn_credential_repository
+    ),
+    setting_repository=Depends(
+        get_app_setting_repository
+    ),
+    audit_repository=Depends(
+        get_audit_repository
+    ),
+):
+
+    return WebAuthnService(
+        credential_repository,
+        setting_repository,
+        audit_repository,
+    )
+
+
 def get_auth_service(
     user_repository=Depends(
         get_user_repository
