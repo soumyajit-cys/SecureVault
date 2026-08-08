@@ -676,3 +676,102 @@ def test_folder_archive_flow(client, user_token, tmp_path):
     assert (restored_root / "readme.txt").exists()
 
     assert (restored_root / "nested" / "config.toml").exists()
+
+def test_change_password_revokes_other_sessions(
+    client,
+    user_token,
+):
+    """
+    Changing the password signs out every other
+    session/device while keeping the calling one
+    alive.
+    """
+
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    login_one = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "api@example.com",
+            "username": "apiuser",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert login_one.status_code == 200
+
+    login_two = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "api@example.com",
+            "username": "apiuser",
+            "password": "SecureVault#2026",
+        },
+    )
+
+    assert login_two.status_code == 200
+
+    changed = client.post(
+        "/api/v1/auth/change-password",
+        headers=headers,
+        json={
+            "current_password": "SecureVault#2026",
+            "new_password": "SecureVault#2028",
+        },
+    )
+
+    assert changed.status_code == 200
+
+    # Refresh tokens from the other two sessions are
+    # now revoked; the calling session is not.
+    for login in (login_one, login_two):
+
+        stale = client.post(
+            "/api/v1/auth/refresh",
+            json={
+                "refresh_token": (
+                    login.json()["refresh_token"]
+                ),
+            },
+        )
+
+        assert stale.status_code == 401
+
+    from app.domain.models.session import (
+        Session,
+    )
+
+    from app.domain.models.refresh_token import (
+        RefreshToken,
+    )
+
+    db = db_session  # noqa: F821
+
+    from sqlalchemy import select
+
+    user = db.scalar(
+        select(User)
+        .where(
+            User.email == "api@example.com"
+        )
+    )
+
+    active_sessions = db.scalars(
+        select(Session).where(
+            Session.user_id == user.id,
+            Session.revoked.is_(False),
+        )
+    ).all()
+
+    active_refreshes = db.scalars(
+        select(RefreshToken).where(
+            RefreshToken.user_id == user.id,
+            RefreshToken.revoked.is_(False),
+        )
+    ).all()
+
+    assert len(active_sessions) == 1
+
+    assert len(active_refreshes) == 1
