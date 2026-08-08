@@ -358,6 +358,104 @@ def test_file_upload_download_roundtrip(client, user_token, tmp_path):
     assert delete.status_code == 204
 
 
+def test_idempotent_upload_replay(client, user_token):
+    """
+    Replaying an upload with the same idempotency
+    key returns the existing record (200) instead of
+    storing a duplicate.
+    """
+
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    client.post(
+        "/api/v1/keys",
+        headers=headers,
+        json={"name": "primary"},
+    )
+
+    payload = {
+        "files": {
+            "upload": (
+                "idem.txt",
+                b"same bytes every time",
+                "text/plain",
+            )
+        },
+    }
+
+    first = client.post(
+        "/api/v1/files/upload",
+        headers={
+            **headers,
+            "X-Idempotency-Key": (
+                "replay-key-0001"
+            ),
+        },
+        **payload,
+    )
+
+    assert first.status_code == 201
+
+    replay = client.post(
+        "/api/v1/files/upload",
+        headers={
+            **headers,
+            "X-Idempotency-Key": (
+                "replay-key-0001"
+            ),
+        },
+        **payload,
+    )
+
+    assert replay.status_code == 200
+
+    assert (
+        replay.json()["id"]
+        == first.json()["id"]
+    )
+
+    # A fresh key stores a second file.
+    other = client.post(
+        "/api/v1/files/upload",
+        headers={
+            **headers,
+            "X-Idempotency-Key": (
+                "replay-key-0002"
+            ),
+        },
+        **payload,
+    )
+
+    assert other.status_code == 201
+
+    assert (
+        other.json()["id"]
+        != first.json()["id"]
+    )
+
+    listing = client.get(
+        "/api/v1/files",
+        headers=headers,
+    )
+
+    assert listing.json()["total"] == 2
+
+    # Malformed keys are rejected instead of being
+    # silently ignored.
+    malformed = client.post(
+        "/api/v1/files/upload",
+        headers={
+            **headers,
+            "X-Idempotency-Key": "short",
+        },
+        **payload,
+    )
+
+    assert malformed.status_code == 422
+
+
 def test_audit_logs(client, user_token):
     headers = {
         "Authorization": f"Bearer {user_token}"
