@@ -680,6 +680,7 @@ def test_folder_archive_flow(client, user_token, tmp_path):
 def test_change_password_revokes_other_sessions(
     client,
     user_token,
+    db_session,
 ):
     """
     Changing the password signs out every other
@@ -739,6 +740,8 @@ def test_change_password_revokes_other_sessions(
 
         assert stale.status_code == 401
 
+    from sqlalchemy import select
+
     from app.domain.models.session import (
         Session,
     )
@@ -747,25 +750,21 @@ def test_change_password_revokes_other_sessions(
         RefreshToken,
     )
 
-    db = db_session  # noqa: F821
-
-    from sqlalchemy import select
-
-    user = db.scalar(
+    user = db_session.scalar(
         select(User)
         .where(
             User.email == "api@example.com"
         )
     )
 
-    active_sessions = db.scalars(
+    active_sessions = db_session.scalars(
         select(Session).where(
             Session.user_id == user.id,
             Session.revoked.is_(False),
         )
     ).all()
 
-    active_refreshes = db.scalars(
+    active_refreshes = db_session.scalars(
         select(RefreshToken).where(
             RefreshToken.user_id == user.id,
             RefreshToken.revoked.is_(False),
