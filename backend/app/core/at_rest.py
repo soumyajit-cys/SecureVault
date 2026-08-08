@@ -16,6 +16,10 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from app.core.config import get_settings
+from app.core.key_material import (
+    PURPOSE_AT_REST,
+    derive_key_material,
+)
 from app.crypto.aes.aes_gcm import AESGCMCipher
 from app.crypto.exceptions import (
     DecryptionError,
@@ -134,16 +138,18 @@ def _derive_master_key(
     salt: bytes,
     info_label: bytes,
 ) -> bytes:
+    """
+    HKDF-SHA256 over the root key material with a
+    per-object salt and the purpose info label.
 
-    hkdf = HKDF(
-        algorithm=hashes.SHA256(),
-        length=32,
+    ``secret`` is accepted for backwards compatibility
+    with earlier envelopes; the root material now
+    comes from the purpose-scoped key module.
+    """
+
+    return derive_key_material(
+        purpose=info_label,
         salt=salt,
-        info=info_label,
-    )
-
-    return hkdf.derive(
-        secret.encode()
     )
 
 
