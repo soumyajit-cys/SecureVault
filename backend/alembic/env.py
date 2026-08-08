@@ -14,6 +14,25 @@ sys.path.insert(
 )
 
 from app.core.database import Base
+
+# Import every model so autogenerate can compare the
+# full metadata against the live schema.
+from app.domain.models import (  # noqa: F401
+    EmailVerificationToken,
+    AuditLog,
+    CryptoKey,
+    JwtSigningKey,
+    MfaRecoveryCode,
+    PasswordResetToken,
+    Permission,
+    RefreshToken,
+    Role,
+    Session,
+    StoredFile,
+    User,
+    UserRole,
+)
+
 from app.core.config import get_settings
 
 config = context.config
