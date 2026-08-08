@@ -11,88 +11,6 @@ from sqlalchemy import delete
 from sqlalchemy import select
 
 
-def get_by_family(
-    self,
-    family: str,
-):
-
-    stmt = (
-        select(
-            RefreshToken
-        )
-        .where(
-            RefreshToken.token_family
-            == family
-        )
-    )
-
-    return (
-        self.db.scalars(stmt)
-        .all()
-    )
-
-
-def revoke_family(
-    self,
-    family: str,
-):
-
-    tokens = (
-        self.get_by_family(
-            family
-        )
-    )
-
-        for token in tokens:
-            token.revoked = True
-
-        self.db.flush()
-
-    def purge_older_than(
-        self,
-        cutoff,
-    ) -> int:
-        """
-        Delete revoked refresh tokens once they pass
-        the retention window. Active (non-revoked)
-        tokens are never touched.
-        """
-
-        stmt = (
-            delete(RefreshToken)
-            .where(
-                RefreshToken.revoked.is_(True),
-                RefreshToken.created_at < cutoff,
-            )
-        )
-
-        result = self.db.execute(stmt)
-
-        self.db.flush()
-
-        return result.rowcount or 0
-
-def get_active_by_hash(
-    self,
-    token_hash: str,
-):
-
-    stmt = (
-        select(
-            RefreshToken
-        )
-        .where(
-            RefreshToken.token_hash
-            == token_hash,
-            RefreshToken.revoked.is_(False),
-        )
-    )
-
-    return self.db.scalar(
-        stmt
-    )
-
-
 class SQLAlchemyRefreshTokenRepository(
     SQLAlchemyRepository[
         RefreshToken
@@ -151,6 +69,30 @@ class SQLAlchemyRefreshTokenRepository(
 
         self.db.flush()
 
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete revoked refresh tokens once they pass
+        the retention window. Active (non-revoked)
+        tokens are never touched.
+        """
+
+        stmt = (
+            delete(RefreshToken)
+            .where(
+                RefreshToken.revoked.is_(True),
+                RefreshToken.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
+
     def get_active_by_hash(
         self,
         token_hash: str,
@@ -192,6 +134,30 @@ class SQLAlchemyRefreshTokenRepository(
 
         self.db.flush()
 
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete revoked refresh tokens once they pass
+        the retention window. Active (non-revoked)
+        tokens are never touched.
+        """
+
+        stmt = (
+            delete(RefreshToken)
+            .where(
+                RefreshToken.revoked.is_(True),
+                RefreshToken.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
+
     def revoke_all_for_user(
         self,
         user_id: UUID,
@@ -213,6 +179,30 @@ class SQLAlchemyRefreshTokenRepository(
             token.revoked = True
 
         self.db.flush()
+
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete revoked refresh tokens once they pass
+        the retention window. Active (non-revoked)
+        tokens are never touched.
+        """
+
+        stmt = (
+            delete(RefreshToken)
+            .where(
+                RefreshToken.revoked.is_(True),
+                RefreshToken.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
 
     def revoke_all_except_session(
         self,
@@ -242,4 +232,28 @@ class SQLAlchemyRefreshTokenRepository(
             token.revoked = True
 
         self.db.flush()
+
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete revoked refresh tokens once they pass
+        the retention window. Active (non-revoked)
+        tokens are never touched.
+        """
+
+        stmt = (
+            delete(RefreshToken)
+            .where(
+                RefreshToken.revoked.is_(True),
+                RefreshToken.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
 
