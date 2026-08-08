@@ -7,6 +7,7 @@ from app.infrastructure.repositories.base_repository import (
     SQLAlchemyRepository,
 )
 
+from sqlalchemy import delete
 from sqlalchemy import select
 
 
