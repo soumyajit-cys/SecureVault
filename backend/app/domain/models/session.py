@@ -39,6 +39,19 @@ class Session(BaseModel):
         nullable=True,
     )
 
+    device_name: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    # SHA-256 of device-ish request headers (UA,
+    # client hints, accept-language).
+    device_fingerprint: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
+
     revoked: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

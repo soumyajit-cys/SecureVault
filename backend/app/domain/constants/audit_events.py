@@ -60,6 +60,8 @@ PASSKEY_LOGIN = "passkey.login"
 
 PASSKEY_VERIFY_FAILED = "passkey.verify_failed"
 
+DEVICE_NEW = "device.new"
+
 PASSWORD_RESET_REQUESTED = (
     "password.reset_requested"
 )
