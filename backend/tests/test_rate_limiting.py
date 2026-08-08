@@ -155,3 +155,157 @@ def test_login_rate_limiter_shared_redis_state():
     finally:
 
         backend.clear_all()
+
+
+# -------------------------------------------------
+# Middleware-level bucket tests
+# -------------------------------------------------
+
+
+@pytest.fixture
+def limiter_app():
+    """
+    Minimal app with the real middleware and
+    deliberately small limits so buckets can be
+    exhausted in a few requests.
+    """
+
+    from fastapi import FastAPI
+
+    from app.core.middleware import RateLimitMiddleware
+
+    mini = FastAPI()
+
+    @mini.post("/api/v1/encryption/text/encrypt")
+    def encrypt():
+        return {"ok": True}
+
+    @mini.post("/api/v1/encryption/text/decrypt")
+    def decrypt():
+        return {"ok": True}
+
+    @mini.post("/api/v1/other")
+    def other():
+        return {"ok": True}
+
+    mini.add_middleware(
+        RateLimitMiddleware,
+        general_limit=10,
+        login_limit=2,
+        crypto_limit=2,
+    )
+
+    from fastapi.testclient import TestClient
+
+    with TestClient(mini) as client:
+        yield client
+
+
+def test_crypto_bucket_limits_encrypt(
+    limiter_app,
+):
+    """
+    Crypto endpoints share a dedicated per-IP bucket,
+    independent from the general mutating bucket.
+    """
+
+    assert (
+        limiter_app.post(
+            "/api/v1/encryption/text/encrypt"
+        ).status_code
+        == 200
+    )
+
+    assert (
+        limiter_app.post(
+            "/api/v1/encryption/text/encrypt"
+        ).status_code
+        == 200
+    )
+
+    response = limiter_app.post(
+        "/api/v1/encryption/text/encrypt"
+    )
+
+    assert response.status_code == 429
+
+    assert (
+        response.headers[
+            "X-RateLimit-Limit"
+        ]
+        == "2"
+    )
+
+    # The general bucket was not consumed by the
+    # crypto calls: other mutating paths still work.
+    assert (
+        limiter_app.post(
+            "/api/v1/other"
+        ).status_code
+        == 200
+    )
+
+
+def test_crypto_bucket_is_path_scoped(
+    limiter_app,
+):
+    """
+    Each crypto path has its own bucket; hammering
+    /decrypt does not throttle /encrypt.
+    """
+
+    for _ in range(4):
+        limiter_app.post(
+            "/api/v1/encryption/text/decrypt"
+        )
+
+    assert (
+        limiter_app.post(
+            "/api/v1/encryption/text/encrypt"
+        ).status_code
+        == 200
+    )
+
+
+def test_download_path_matches_crypto_bucket(
+    limiter_app,
+):
+    """
+    Streaming decryption endpoints (/{file_id}/download)
+    fall under the crypto bucket via prefix match.
+    """
+
+    from fastapi import FastAPI
+
+    from app.core.middleware import RateLimitMiddleware
+
+    mini = FastAPI()
+
+    @mini.get("/api/v1/files/abc123/download")
+    def download():
+        return {"ok": True}
+
+    mini.add_middleware(
+        RateLimitMiddleware,
+        general_limit=10,
+        login_limit=2,
+        crypto_limit=1,
+    )
+
+    from fastapi.testclient import TestClient
+
+    with TestClient(mini) as client:
+
+        assert (
+            client.get(
+                "/api/v1/files/abc123/download"
+            ).status_code
+            == 200
+        )
+
+        assert (
+            client.get(
+                "/api/v1/files/abc123/download"
+            ).status_code
+            == 429
+        )
