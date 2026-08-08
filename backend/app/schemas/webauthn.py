@@ -36,13 +36,6 @@ class PasskeyLoginCompleteRequest(BaseModel):
     response: dict
 
 
-class PasskeyRemoveRequest(BaseModel):
-    credential_id: str = Field(
-        min_length=1,
-        max_length=512,
-    )
-
-
 class MfaPolicyResponse(BaseModel):
     mode: str
     users_with_mfa: int
