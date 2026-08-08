@@ -70,7 +70,7 @@ class StoredFile(BaseModel):
     sha256: Mapped[str] = mapped_column(
         String(64),
         nullable=False,
-        default="",
+        index=True,
     )
 
     is_folder: Mapped[bool] = mapped_column(
@@ -90,6 +90,15 @@ class StoredFile(BaseModel):
         String(20),
         nullable=False,
         default="active",
+        index=True,
+    )
+
+    # Client-supplied idempotency key; a replay of the
+    # same key returns the existing record instead of
+    # encrypting and storing a duplicate.
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
         index=True,
     )
 
