@@ -122,3 +122,9 @@ class User(BaseModel):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    webauthn_credentials = relationship(
+        "WebAuthnCredential",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
