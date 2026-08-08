@@ -150,8 +150,6 @@ class RequestLoggingMiddleware(
             "n/a",
         )
 
-        actor = current_actor()
-
         started = time.perf_counter()
 
         try:
@@ -175,7 +173,11 @@ class RequestLoggingMiddleware(
                 elapsed_ms=(
                     f"{elapsed_ms:.2f}"
                 ),
-                **actor,
+                **getattr(
+                    request.state,
+                    "actor",
+                    {},
+                ),
             )
 
             raise
@@ -201,7 +203,11 @@ class RequestLoggingMiddleware(
             elapsed_ms=(
                 f"{elapsed_ms:.2f}"
             ),
-            **actor,
+            **getattr(
+                request.state,
+                "actor",
+                {},
+            ),
         )
 
         return response
