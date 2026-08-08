@@ -201,6 +201,7 @@ if settings.RATE_LIMIT_ENABLED:
         RateLimitMiddleware,
         general_limit=settings.RATE_LIMIT_PER_MINUTE,
         login_limit=settings.RATE_LIMIT_LOGIN_PER_MINUTE,
+        crypto_limit=settings.RATE_LIMIT_CRYPTO_PER_MINUTE,
     )
 
 app.add_middleware(
