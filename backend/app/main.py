@@ -59,6 +59,8 @@ async def lifespan(app: FastAPI):
 
     global _cleanup_task
 
+    global _cleanup_db
+
     configure_logging()
 
     validate_security_settings()
@@ -68,26 +70,57 @@ async def lifespan(app: FastAPI):
 
         from app.core.database import SessionLocal
 
-        db = SessionLocal()
+        from app.services.data_retention_service import (
+            DataRetentionService,
+        )
 
-        try:
+        from app.infrastructure.repositories.audit_log_repository import (
+            SQLAlchemyAuditLogRepository,
+        )
 
-            collector = GarbageCollector(
-                storage=StorageService(),
-                stored_files=(
-                    SQLAlchemyStoredFileRepository(db)
-                ),
-            )
+        from app.infrastructure.repositories.email_verification_token_repository import (
+            SQLAlchemyEmailVerificationTokenRepository,
+        )
 
-            _cleanup_task = CleanupTask(
-                collector
-            )
+        from app.infrastructure.repositories.password_reset_token_repository import (
+            SQLAlchemyPasswordResetTokenRepository,
+        )
 
-            _cleanup_task.start()
+        from app.infrastructure.repositories.refresh_token_repository import (
+            SQLAlchemyRefreshTokenRepository,
+        )
 
-        finally:
+        from app.infrastructure.repositories.session_repository import (
+            SQLAlchemySessionRepository,
+        )
 
-            db.close()
+        # One long-lived session for the background
+        # collector; closed on shutdown.
+        _cleanup_db = SessionLocal()
+
+        db = _cleanup_db
+
+        collector = GarbageCollector(
+            storage=StorageService(),
+            stored_files=(
+                SQLAlchemyStoredFileRepository(db)
+            ),
+            retention_service=(
+                DataRetentionService(
+                    SQLAlchemyAuditLogRepository(db),
+                    SQLAlchemySessionRepository(db),
+                    SQLAlchemyRefreshTokenRepository(db),
+                    SQLAlchemyPasswordResetTokenRepository(db),
+                    SQLAlchemyEmailVerificationTokenRepository(db),
+                )
+            ),
+        )
+
+        _cleanup_task = CleanupTask(
+            collector
+        )
+
+        _cleanup_task.start()
 
     yield
 
@@ -96,6 +129,12 @@ async def lifespan(app: FastAPI):
         await _cleanup_task.stop()
 
         _cleanup_task = None
+
+    if _cleanup_db is not None:
+
+        _cleanup_db.close()
+
+        _cleanup_db = None
 
 app = FastAPI(
     title=settings.APP_NAME,
