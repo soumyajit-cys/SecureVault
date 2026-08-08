@@ -8,9 +8,12 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import (
     RSAPrivateKey,
 )
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from app.core.config import get_settings
+from app.core.key_material import (
+    PURPOSE_PRIVATE_KEY_WRAP,
+    derive_key_material,
+)
 from app.crypto.aes.aes_gcm import AESGCMCipher
 from app.crypto.exceptions import (
     DecryptionError,
@@ -385,18 +388,13 @@ class KeyManagementService:
         salt: bytes,
     ) -> bytes:
         """
-        Derive a key-encryption key from the application secret.
+        Derive a key-encryption key from the root key
+        material for the private-key-wrap purpose.
         """
 
-        hkdf = HKDF(
-            algorithm=hashes.SHA256(),
-            length=32,
+        return derive_key_material(
+            purpose=PURPOSE_PRIVATE_KEY_WRAP,
             salt=salt,
-            info=self.INFO_LABEL,
-        )
-
-        return hkdf.derive(
-            settings.SECRET_KEY.encode()
         )
 
     def _encrypt_private_key(
