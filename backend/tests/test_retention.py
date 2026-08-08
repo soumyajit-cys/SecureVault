@@ -217,11 +217,19 @@ def _audit_repo(db_session):
     return SQLAlchemyAuditLogRepository(db_session)
 
 
+_owners = {}
+
+
 def _owner(db_session):
 
     from app.domain.models.user import (
         User,
     )
+
+    cached = _owners.get(id(db_session))
+
+    if cached:
+        return cached
 
     user = User(
         email="owner@example.com",
@@ -232,6 +240,8 @@ def _owner(db_session):
     db_session.add(user)
 
     db_session.commit()
+
+    _owners[id(db_session)] = user
 
     return user
 
