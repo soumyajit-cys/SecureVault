@@ -8,6 +8,7 @@ from app.api.dependencies.database import (
 from app.api.dependencies.repositories import (
     get_audit_repository,
     get_crypto_key_repository,
+    get_email_verification_token_repository,
     get_password_reset_token_repository,
     get_refresh_token_repository,
     get_session_repository,
