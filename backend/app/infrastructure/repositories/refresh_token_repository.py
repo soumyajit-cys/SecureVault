@@ -43,10 +43,34 @@ def revoke_family(
         )
     )
 
-    for token in tokens:
-        token.revoked = True
+        for token in tokens:
+            token.revoked = True
 
-    self.db.flush()
+        self.db.flush()
+
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete revoked refresh tokens once they pass
+        the retention window. Active (non-revoked)
+        tokens are never touched.
+        """
+
+        stmt = (
+            delete(RefreshToken)
+            .where(
+                RefreshToken.revoked.is_(True),
+                RefreshToken.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
 
 def get_active_by_hash(
     self,

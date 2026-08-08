@@ -2,6 +2,8 @@ from datetime import datetime
 from datetime import timezone
 from uuid import UUID
 
+from sqlalchemy import delete
+from sqlalchemy import or_
 from sqlalchemy import select
 
 from app.domain.models.password_reset_token import PasswordResetToken
@@ -14,6 +16,34 @@ class SQLAlchemyPasswordResetTokenRepository(
     SQLAlchemyRepository[PasswordResetToken]
 ):
     model = PasswordResetToken
+
+    def purge_older_than(
+        self,
+        cutoff,
+    ) -> int:
+        """
+        Delete one-time tokens that are spent (used)
+        or expired, once they pass the retention
+        window.
+        """
+
+        stmt = (
+            delete(PasswordResetToken)
+            .where(
+                or_(
+                    PasswordResetToken.used_at.is_not(None),
+                    PasswordResetToken.expires_at
+                    < datetime.now(timezone.utc),
+                ),
+                PasswordResetToken.created_at < cutoff,
+            )
+        )
+
+        result = self.db.execute(stmt)
+
+        self.db.flush()
+
+        return result.rowcount or 0
 
     def get_by_token_hash(
         self,
