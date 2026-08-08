@@ -334,7 +334,7 @@ def test_api_login_gated_until_verified(client):
         },
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 401
 
     assert "verified" in response.json()["detail"]
 
@@ -347,7 +347,7 @@ def test_api_verify_endpoint_rejects_bad_token(
         json={"token": "garbage"},
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_api_resend_verification_no_enumeration(
