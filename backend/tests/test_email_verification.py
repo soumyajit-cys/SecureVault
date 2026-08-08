@@ -188,6 +188,17 @@ def _create_user(db_session, email="verify@example.com"):
     return user
 
 
+def _token_from_email(email_service) -> str:
+
+    body = email_service.sent[0]["body"]
+
+    return (
+        body.split("token=")[1]
+        .splitlines()[0]
+        .strip()
+    )
+
+
 def test_issue_for_sends_link_with_token(db_session):
     user = _create_user(db_session)
 
@@ -206,9 +217,7 @@ def test_issue_for_sends_link_with_token(db_session):
 
     assert "verify-email?token=" in body
 
-    token = body.split("token=")[1].strip()
-
-    assert token
+    assert _token_from_email(email_service)
 
 
 def test_issue_for_skips_verified_users(db_session):
@@ -241,11 +250,7 @@ def test_verify_marks_account_verified(db_session):
 
     service.issue_for(user)
 
-    token = (
-        email_service.sent[0]["body"]
-        .split("token=")[1]
-        .strip()
-    )
+    token = _token_from_email(email_service)
 
     service.verify(token)
 
@@ -279,11 +284,7 @@ def test_verify_token_is_one_time(db_session):
 
     service.issue_for(user)
 
-    token = (
-        email_service.sent[0]["body"]
-        .split("token=")[1]
-        .strip()
-    )
+    token = _token_from_email(email_service)
 
     service.verify(token)
 
@@ -336,7 +337,7 @@ def test_api_login_gated_until_verified(client):
 
     assert response.status_code == 401
 
-    assert "verified" in response.json()["detail"]
+    assert "verification" in response.json()["detail"]
 
 
 def test_api_verify_endpoint_rejects_bad_token(
