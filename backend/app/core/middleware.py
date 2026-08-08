@@ -232,8 +232,8 @@ class RateLimitMiddleware(
     CRYPTO_PATHS = {
         "/api/v1/encryption/text/encrypt",
         "/api/v1/encryption/text/decrypt",
-        "/api/v1/encryption/files/encrypt",
-        "/api/v1/encryption/files/decrypt",
+        "/api/v1/files/upload",
+        "/api/v1/files/download",
     }
 
     def __init__(
