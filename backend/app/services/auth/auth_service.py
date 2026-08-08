@@ -17,6 +17,7 @@ from app.core.exceptions import (
 )
 
 from app.domain.constants.audit_events import (
+    LOGIN_FAILED,
     PASSWORD_CHANGED,
     SESSION_REVOKED,
     SESSION_REVOKED_ALL,
@@ -368,6 +369,14 @@ class AuthService:
 
             self.users.update(
                 user
+            )
+
+            self.audit_service.log(
+                user.id,
+                LOGIN_FAILED,
+                details=(
+                    f"ip={client_ip or 'unknown'}"
+                ),
             )
 
             raise InvalidCredentialsError()
