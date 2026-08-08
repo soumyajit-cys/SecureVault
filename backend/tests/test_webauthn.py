@@ -49,16 +49,11 @@ def _make_authenticator():
         ec.SECP256R1()
     )
 
+    import secrets
+
     credential_id = (
         b"synthetic-credential-"
-        + private_key.public_key().public_bytes(
-            encoding=__import__(
-                "cryptography.hazmat.primitives.serialization"
-            ).hazmat.primitives.serialization.Encoding.Raw,
-            format=__import__(
-                "cryptography.hazmat.primitives.serialization"
-            ).hazmat.primitives.serialization.PublicFormat.Raw,
-        )
+        + secrets.token_bytes(16)
     )
 
     return private_key, credential_id
