@@ -359,9 +359,11 @@ def passkey_list(
     ]
 
 
-@router.delete("/passkeys")
+@router.delete(
+    "/passkeys/{credential_id}"
+)
 def passkey_remove(
-    payload: PasskeyRemoveRequest,
+    credential_id: str,
     current_user=Depends(
         get_current_user
     ),
@@ -372,7 +374,7 @@ def passkey_remove(
     removed = (
         webauthn_service.remove_credential(
             current_user.id,
-            payload.credential_id,
+            credential_id,
         )
     )
 

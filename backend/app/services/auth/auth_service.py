@@ -601,6 +601,11 @@ class AuthService:
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+            },
         }
 
     # -------------------------------------------------
