@@ -345,7 +345,7 @@ def test_api_verify_endpoint_rejects_bad_token(
 ):
     response = client.post(
         "/api/v1/auth/verify-email",
-        json={"token": "garbage"},
+        json={"token": "garbage-token-123"},
     )
 
     assert response.status_code == 401
