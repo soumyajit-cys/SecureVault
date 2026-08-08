@@ -18,8 +18,10 @@ from app.core.config import get_settings
 
 # Purpose labels - never rename or reuse these for a
 # different domain, or every wrapped secret breaks.
-PURPOSE_AT_REST = b"securevault-key-material:at-rest-v1"
-PURPOSE_PRIVATE_KEY_WRAP = b"securevault-key-material:private-key-wrap-v1"
+# Values match the original INFO_LABELs so envelopes
+# created before purpose separation stay decryptable.
+PURPOSE_AT_REST = b"securevault-at-rest-encryption-v1"
+PURPOSE_PRIVATE_KEY_WRAP = b"securevault-private-key-encryption"
 
 
 def root_key_material() -> bytes:

@@ -28,7 +28,7 @@ from app.crypto.exceptions import (
 )
 from app.crypto.models.encrypted_payload import EncryptedPayload
 
-INFO_LABEL = b"securevault-at-rest-encryption-v1"
+INFO_LABEL = PURPOSE_AT_REST
 
 
 @dataclass(frozen=True)
