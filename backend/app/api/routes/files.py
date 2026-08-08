@@ -58,6 +58,47 @@ router = APIRouter(
 )
 
 
+def _idempotency_key(
+    request,
+) -> str | None:
+    """
+    Validate and return the client idempotency key
+    (X-Idempotency-Key header).
+
+    Returns None when absent or malformed; malformed
+    keys are rejected loudly to avoid silent
+    duplicate uploads.
+    """
+
+    if request is None:
+        return None
+
+    key = (
+        request.headers.get(
+            "X-Idempotency-Key"
+        )
+    )
+
+    if not key:
+        return None
+
+    key = key.strip()
+
+    if (
+        len(key) < 8
+        or len(key) > 64
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "X-Idempotency-Key must be between "
+                "8 and 64 characters"
+            ),
+        )
+
+    return key
+
+
 def _file_response(
     file,
 ) -> StoredFileResponse:
