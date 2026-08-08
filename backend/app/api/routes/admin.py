@@ -512,6 +512,26 @@ def set_user_roles(
     return _user_response(target)
 
 
+@router.get("/audit/verify-chain")
+def verify_audit_chain(
+    current=Depends(
+        get_current_user
+    ),
+    audit: AuditService = Depends(
+        get_audit_service
+    ),
+):
+
+    issues = (
+        audit.verify_chain()
+    )
+
+    return {
+        "verified": not issues,
+        "issues": issues,
+    }
+
+
 def _user_detail_response(
     target,
     quota: QuotaService,
