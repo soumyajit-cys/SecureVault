@@ -456,6 +456,90 @@ def test_idempotent_upload_replay(client, user_token):
     assert malformed.status_code == 422
 
 
+def test_file_search_across_fields(client, user_token):
+    """
+    Search matches the filename or the MIME type, and
+    every token of a multi-word query must match.
+    """
+
+    headers = {
+        "Authorization": f"Bearer {user_token}"
+    }
+
+    client.post(
+        "/api/v1/keys",
+        headers=headers,
+        json={"name": "primary"},
+    )
+
+    def _upload(name, content, mime):
+        return client.post(
+            "/api/v1/files/upload",
+            headers=headers,
+            files={
+                "upload": (
+                    name,
+                    content,
+                    mime,
+                )
+            },
+        )
+
+    assert (
+        _upload(
+            "quarterly_report.pdf",
+            b"pdf bytes",
+            "application/pdf",
+        ).status_code
+        == 201
+    )
+
+    assert (
+        _upload(
+            "notes.txt",
+            b"note bytes",
+            "text/plain",
+        ).status_code
+        == 201
+    )
+
+    def _search(q):
+        listing = client.get(
+            "/api/v1/files",
+            headers=headers,
+            params={"search": q},
+        )
+
+        assert listing.status_code == 200
+
+        return [
+            item["original_filename"]
+            for item in listing.json()["items"]
+        ]
+
+    # Filename partial match.
+    assert _search("report") == [
+        "quarterly_report.pdf"
+    ]
+
+    # MIME type match (wider field).
+    assert _search("text") == ["notes.txt"]
+
+    # Multi-token: both words must match somewhere.
+    assert _search("quarterly pdf") == [
+        "quarterly_report.pdf"
+    ]
+
+    # A token that matches nothing kills the query.
+    assert _search("quarterly xyz") == []
+
+    # No query returns everything.
+    assert set(_search("")) == {
+        "quarterly_report.pdf",
+        "notes.txt",
+    }
+
+
 def test_audit_logs(client, user_token):
     headers = {
         "Authorization": f"Bearer {user_token}"
