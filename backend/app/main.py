@@ -160,6 +160,15 @@ app = FastAPI(
 )
 
 
+def init_observability() -> None:
+    from app.core.otel import init_otel
+
+    init_otel(app)
+
+
+init_observability()
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=(
