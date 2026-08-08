@@ -588,7 +588,7 @@ class AuthService:
             )
 
         self.audit_service.log(
-            claims.sub,
+            UUID(claims.sub),
             USER_LOGOUT,
         )
 
@@ -605,7 +605,7 @@ class AuthService:
         )
 
         user = self.users.get(
-            claims.sub
+            UUID(claims.sub)
         )
 
         context = AuthContext(
