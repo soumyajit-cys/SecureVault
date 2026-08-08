@@ -262,7 +262,7 @@ def _session(
     s = Session(
         session_identifier=str(uuid.uuid4()),
         expires_at=(
-            now - timedelta(days=1)
+            now - timedelta(days=200)
             if expired
             else now + timedelta(days=7)
         ),
