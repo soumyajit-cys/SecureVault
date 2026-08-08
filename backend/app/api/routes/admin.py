@@ -289,11 +289,28 @@ def garbage_collect(
 
     summary = collector.run_all()
 
+    retention = summary.get("retention", {})
+
     return GarbageCollectionResult(
         orphaned_containers=summary["orphaned_containers"],
         missing_records=summary["missing_records"],
         purged_deleted=summary["purged_deleted"],
         temp_files=summary["temp_files"],
+        retained_audit_logs=retention.get(
+            "audit_logs", 0
+        ),
+        retained_sessions=retention.get(
+            "sessions", 0
+        ),
+        retained_refresh_tokens=retention.get(
+            "refresh_tokens", 0
+        ),
+        retained_reset_tokens=retention.get(
+            "password_reset_tokens", 0
+        ),
+        retained_verification_tokens=retention.get(
+            "email_verification_tokens", 0
+        ),
     )
 
 
