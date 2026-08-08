@@ -44,6 +44,8 @@ settings = get_settings()
 
 _cleanup_task: CleanupTask | None = None
 
+_cleanup_db = None
+
 
 def reset_rate_limiter() -> None:
     """
