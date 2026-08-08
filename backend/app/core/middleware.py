@@ -324,10 +324,15 @@ class RateLimitMiddleware(
 
         elif (
             is_crypto_path
-            and request.method == "POST"
+            and request.method
+            in {
+                "POST",
+                "GET",
+            }
         ):
             bucket_key = (
-                f"crypto:{client_ip}"
+                f"crypto:{request.url.path}:"
+                f"{client_ip}"
             )
             bucket_limit = self.crypto_limit
 
