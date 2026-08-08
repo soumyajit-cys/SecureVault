@@ -194,8 +194,51 @@ def test_verify_chain_endpoint(client, db_session):
 
     _service(db_session).log(uuid4(), "event.x")
 
+    _register(
+        client,
+        "auditboss@example.com",
+        "auditboss",
+    )
+
+    from app.domain.models.user import User
+    from app.domain.models.role import Role
+    from app.domain.models.user_role import UserRole
+
+    user = (
+        db_session.query(User)
+        .filter(User.email == "auditboss@example.com")
+        .first()
+    )
+
+    admin_role = (
+        db_session.query(Role)
+        .filter(Role.name == "Admin")
+        .first()
+    )
+
+    user.roles.append(
+        UserRole(role=admin_role)
+    )
+
+    db_session.commit()
+
+    login = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "auditboss@example.com",
+            "password": "CorrectHorseBatteryStaple!2026",
+        },
+    )
+
+    headers = {
+        "Authorization": (
+            f"Bearer {login.json()['access_token']}"
+        )
+    }
+
     response = client.get(
-        "/api/v1/admin/audit/verify-chain"
+        "/api/v1/admin/audit/verify-chain",
+        headers=headers,
     )
 
     assert response.status_code == 200
@@ -203,6 +246,20 @@ def test_verify_chain_endpoint(client, db_session):
     body = response.json()
 
     assert body["verified"] is True
+
+
+def _register(client, email, username):
+
+    return client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "username": username,
+            "password": (
+                "CorrectHorseBatteryStaple!2026"
+            ),
+        },
+    )
 
 
 def test_failed_login_is_audited(client, db_session):

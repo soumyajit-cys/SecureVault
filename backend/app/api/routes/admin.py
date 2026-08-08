@@ -515,7 +515,7 @@ def set_user_roles(
 @router.get("/audit/verify-chain")
 def verify_audit_chain(
     current=Depends(
-        get_current_user
+        require_role("Admin")
     ),
     audit: AuditService = Depends(
         get_audit_service
