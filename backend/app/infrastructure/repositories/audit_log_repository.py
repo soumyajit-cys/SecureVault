@@ -17,6 +17,25 @@ class SQLAlchemyAuditLogRepository(
 ):
     model = AuditLog
 
+    def last(
+        self,
+    ) -> AuditLog | None:
+        """
+        Tail of the trail: the entry whose digest
+        chains the next one.
+        """
+
+        stmt = (
+            select(AuditLog)
+            .order_by(
+                AuditLog.created_at.desc(),
+                AuditLog.id.desc(),
+            )
+            .limit(1)
+        )
+
+        return self.db.scalar(stmt)
+
     def list_for_user(
         self,
         user_id: UUID,

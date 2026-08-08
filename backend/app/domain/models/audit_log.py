@@ -34,6 +34,23 @@ class AuditLog(BaseModel):
         nullable=True,
     )
 
+    # Hash-chaining: every entry carries the digest
+    # of the entry that precedes it, so any in-place
+    # edit breaks the chain and is detectable.
+    # The first entry uses GENESIS_PREV_HASH.
+    prev_hash: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        server_default="0" * 64,
+    )
+
+    entry_hash: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        server_default="0" * 64,
+        index=True,
+    )
+
     user_id = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
