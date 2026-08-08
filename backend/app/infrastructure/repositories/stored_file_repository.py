@@ -151,7 +151,6 @@ class SQLAlchemyStoredFileRepository(
             self.db.scalars(stmt).all()
         )
 
-    @staticmethod
     def _search_filter(search: str):
         """
         Search wider fields (filename, MIME type) with
