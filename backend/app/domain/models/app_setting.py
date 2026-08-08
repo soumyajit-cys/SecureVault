@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-
-from sqlalchemy import DateTime
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -28,12 +25,5 @@ class AppSetting(Base, TimestampMixin):
 
     value: Mapped[str] = mapped_column(
         String(500),
-        nullable=False,
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
         nullable=False,
     )
