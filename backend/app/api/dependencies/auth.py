@@ -8,6 +8,8 @@ from app.api.dependencies.repositories import (
     get_role_repository,
     get_session_repository,
     get_user_repository,
+    get_webauthn_credential_repository,
+    get_app_setting_repository,
 )
 
 from app.api.dependencies.jwt import (
@@ -32,6 +34,10 @@ from app.services.auth.admin_user_service import (
 
 from app.services.auth.email_verification_service import (
     EmailVerificationService,
+)
+
+from app.services.auth.webauthn_service import (
+    WebAuthnService,
 )
 
 
