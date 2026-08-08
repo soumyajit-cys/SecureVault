@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     SECRET_KEY: str
+    MASTER_ENCRYPTION_KEY: str | None = None
     JWT_ALGORITHM: str = "RS256"
     JWT_KEY_ROTATION_DAYS: int = 90
     JWT_RETIRED_KEY_GRACE_DAYS: int = 14
