@@ -219,6 +219,7 @@ class AuthService:
         user,
         current_password: str,
         new_password: str,
+        keep_session_id: str | None = None,
     ):
 
         if not (
@@ -244,6 +245,38 @@ class AuthService:
         )
 
         self.users.update(user)
+
+        # A password change is a security event:
+        # every other device/session is signed out.
+        # The session that made the change stays
+        # active (its refresh token keeps working).
+        for session in (
+            self.sessions.list_for_user(
+                user.id,
+                include_revoked=False,
+            )
+        ):
+
+            if (
+                keep_session_id
+                and session.session_identifier
+                == keep_session_id
+            ):
+                continue
+
+            session.revoked = True
+
+            self.sessions.update(session)
+
+        if keep_session_id:
+            self.refresh.revoke_all_except_session(
+                user.id,
+                keep_session_id,
+            )
+        else:
+            self.refresh.revoke_all_for_user(
+                user.id
+            )
 
         self.audit_service.log(
             user.id,
