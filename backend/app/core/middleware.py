@@ -300,6 +300,13 @@ class RateLimitMiddleware(
         is_crypto_path = (
             request.url.path
             in self.CRYPTO_PATHS
+        ) or (
+            request.url.path.startswith(
+                "/api/v1/files/"
+            )
+            and request.url.path.endswith(
+                "/download"
+            )
         )
 
         bucket_key: str | None = None

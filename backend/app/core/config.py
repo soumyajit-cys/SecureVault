@@ -84,6 +84,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_PER_MINUTE: int = 120
     RATE_LIMIT_LOGIN_PER_MINUTE: int = 10
+    RATE_LIMIT_CRYPTO_PER_MINUTE: int = 20
     RATE_LIMIT_BACKEND: str = "local"
     REDIS_URL: str | None = None
 
