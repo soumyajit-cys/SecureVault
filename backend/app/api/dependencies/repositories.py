@@ -21,6 +21,12 @@ from app.infrastructure.repositories.jwt_signing_key_repository import (
 from app.infrastructure.repositories.mfa_recovery_code_repository import (
     SQLAlchemyMfaRecoveryCodeRepository,
 )
+from app.infrastructure.repositories.webauthn_credential_repository import (
+    SQLAlchemyWebAuthnCredentialRepository,
+)
+from app.infrastructure.repositories.app_setting_repository import (
+    SQLAlchemyAppSettingRepository,
+)
 from app.infrastructure.repositories.password_reset_token_repository import (
     SQLAlchemyPasswordResetTokenRepository,
 )
@@ -132,5 +138,21 @@ def get_mfa_recovery_code_repository(
     db: Session = Depends(get_db),
 ):
     return SQLAlchemyMfaRecoveryCodeRepository(
+        db
+    )
+
+
+def get_webauthn_credential_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyWebAuthnCredentialRepository(
+        db
+    )
+
+
+def get_app_setting_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyAppSettingRepository(
         db
     )
