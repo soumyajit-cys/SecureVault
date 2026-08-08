@@ -133,7 +133,6 @@ class SQLAlchemyStoredFileRepository(
         )
 
         return self.db.scalar(stmt)
-
     def get_deleted_before(
         self,
         before: datetime,
@@ -151,6 +150,50 @@ class SQLAlchemyStoredFileRepository(
         return list(
             self.db.scalars(stmt).all()
         )
+
+    @staticmethod
+    def _search_filter(search: str):
+        """
+        Search wider fields (filename, MIME type) with
+        every whitespace-separated token required to
+        match somewhere. Postgres can serve the ILIKE
+        patterns from the pg_trgm GIN index; SQLite
+        falls back to a plain scan.
+        """
+
+        from sqlalchemy import or_
+
+        tokens = [
+            token
+            for token in (
+                search.split()
+            )
+            if token
+        ]
+
+        clauses = []
+
+        for token in tokens:
+
+            pattern = f"%{token}%"
+
+            clauses.append(
+                or_(
+                    self.model.original_filename.ilike(
+                        pattern
+                    ),
+                    self.model.mime_type.ilike(
+                        pattern
+                    ),
+                )
+            )
+
+        if len(clauses) == 1:
+            return clauses[0]
+
+        from sqlalchemy import and_
+
+        return and_(*clauses)
 
     def get_all_active(
         self,
