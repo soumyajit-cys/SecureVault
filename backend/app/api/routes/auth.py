@@ -9,6 +9,7 @@ from app.api.dependencies.auth import (
     get_auth_service,
     get_email_verification_service,
     get_mfa_service,
+    get_webauthn_service,
 )
 from app.api.dependencies.current_user import (
     get_current_session_id,
@@ -258,6 +259,194 @@ def mfa_disable(
     )
 
     return {"message": "MFA disabled"}
+
+
+# -------------------------------------------------
+# Passkeys (WebAuthn)
+# -------------------------------------------------
+
+@router.post("/passkeys/register/begin")
+def passkey_register_begin(
+    current_user=Depends(
+        get_current_user
+    ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+):
+    return {
+        "options": (
+            webauthn_service
+            .generate_registration_options(
+                current_user
+            )
+        )
+    }
+
+
+@router.post("/passkeys/register/complete")
+def passkey_register_complete(
+    payload: PasskeyRegistrationCompleteRequest,
+    current_user=Depends(
+        get_current_user
+    ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+):
+    try:
+
+        credential = (
+            webauthn_service
+            .verify_registration(
+                current_user,
+                payload.response,
+                payload.device_label,
+            )
+        )
+
+    except WebAuthnVerificationFailedError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "message": "Passkey registered",
+        "credential_id": (
+            credential.credential_id
+        ),
+    }
+
+
+@router.get("/passkeys")
+def passkey_list(
+    current_user=Depends(
+        get_current_user
+    ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+):
+    return [
+        {
+            "id": item.credential_id,
+            "device_label": item.device_label,
+            "created_at": (
+                item.created_at.isoformat()
+                if item.created_at
+                else None
+            ),
+            "last_used_at": (
+                item.last_used_at.isoformat()
+                if item.last_used_at
+                else None
+            ),
+        }
+        for item in (
+            webauthn_service.list_credentials(
+                current_user.id
+            )
+        )
+    ]
+
+
+@router.delete("/passkeys")
+def passkey_remove(
+    payload: PasskeyRemoveRequest,
+    current_user=Depends(
+        get_current_user
+    ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+):
+    removed = (
+        webauthn_service.remove_credential(
+            current_user.id,
+            payload.credential_id,
+        )
+    )
+
+    if not removed:
+        raise HTTPException(
+            status_code=404,
+            detail="Credential not found",
+        )
+
+    return {
+        "message": "Passkey removed",
+    }
+
+
+@router.post("/passkeys/login/begin")
+def passkey_login_begin(
+    payload: PasskeyLoginBeginRequest,
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+    user_repository=Depends(
+        get_user_repository
+    ),
+):
+    user = None
+
+    if payload.email:
+
+        from app.domain.models.user import User
+
+        found = (
+            user_repository.get_by_email(
+                payload.email
+            )
+        )
+
+        if found is not None:
+            user = found
+
+    return {
+        "options": (
+            webauthn_service
+            .generate_authentication_options(
+                user
+            )
+        )
+    }
+
+
+@router.post("/passkeys/login/complete")
+def passkey_login_complete(
+    payload: PasskeyLoginCompleteRequest,
+    request: Request,
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+    auth_service=Depends(
+        get_auth_service
+    ),
+):
+    try:
+
+        user = (
+            webauthn_service
+            .verify_authentication(
+                payload.response
+            )
+        )
+
+    except WebAuthnVerificationFailedError as exc:
+        raise HTTPException(
+            status_code=401,
+            detail=str(exc),
+        ) from exc
+
+    return auth_service.complete_passkey_login(
+        user,
+        client_ip=_client_ip(request),
+        user_agent=request.headers.get(
+            "User-Agent"
+        ),
+    )
 
 
 # -------------------------------------------------
