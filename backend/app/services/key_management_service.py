@@ -4,7 +4,6 @@ import base64
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.rsa import (
     RSAPrivateKey,
 )
@@ -57,8 +56,6 @@ class KeyManagementService:
     """
 
     KEY_SIZE = 4096
-
-    INFO_LABEL = b"securevault-private-key-encryption"
 
     def __init__(
         self,
