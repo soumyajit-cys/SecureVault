@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.api.dependencies.auth import (
     get_admin_user_service,
+    get_webauthn_service,
 )
 from app.api.dependencies.current_user import (
     get_current_user,
@@ -105,6 +106,132 @@ def admin_status(
 ):
     return {
         "status": "ok"
+    }
+
+
+# -------------------------------------------------
+# MFA enforcement policy
+# -------------------------------------------------
+
+def _mfa_policy_counts(
+    users_repo,
+) -> tuple[int, int]:
+    """
+    Return (users_with_mfa, total_users) where MFA
+    means TOTP enabled or at least one passkey.
+    """
+
+    from sqlalchemy import func
+    from sqlalchemy import or_
+    from sqlalchemy import select
+
+    from app.domain.models.user import User
+    from app.domain.models.webauthn_credential import (
+        WebAuthnCredential,
+    )
+
+    total = (
+        users_repo.db.scalar(
+            select(func.count(User.id))
+        )
+        or 0
+    )
+
+    passkey_users = (
+        select(WebAuthnCredential.user_id)
+        .distinct()
+    )
+
+    with_mfa = (
+        users_repo.db.scalar(
+            select(func.count(User.id))
+            .where(
+                or_(
+                    User.totp_enabled.is_(True),
+                    User.id.in_(
+                        passkey_users
+                    ),
+                )
+            )
+        )
+        or 0
+    )
+
+    return with_mfa, total
+
+
+@router.get("/mfa-policy")
+def get_mfa_policy(
+    user=Depends(
+        require_role(
+            "Admin"
+        )
+    ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+    users_repo=Depends(
+        get_user_repository
+    ),
+):
+    with_mfa, total = _mfa_policy_counts(
+        users_repo
+    )
+
+    return {
+        "mode": (
+            webauthn_service.enforcement_mode()
+        ),
+        "default_mode": (
+            settings.MFA_ENFORCEMENT_MODE
+        ),
+        "users_with_mfa": with_mfa,
+        "total_users": total,
+    }
+
+
+@router.patch("/mfa-policy")
+def update_mfa_policy(
+    payload: MfaPolicyUpdateRequest,
+    user=Depends(
+        require_role(
+            "Admin"
+        )
+    ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
+    users_repo=Depends(
+        get_user_repository
+    ),
+    audit_service=Depends(
+        get_audit_service
+    ),
+):
+    webauthn_service.set_enforcement_mode(
+        payload.mode
+    )
+
+    audit_service.log(
+        user.id,
+        MFA_ENFORCEMENT_UPDATED,
+        details=f"mode={payload.mode}",
+    )
+
+    with_mfa, total = _mfa_policy_counts(
+        users_repo
+    )
+
+    return {
+        "mode": payload.mode,
+        "default_mode": (
+            settings.MFA_ENFORCEMENT_MODE
+        ),
+        "users_with_mfa": with_mfa,
+        "total_users": total,
+        "message": (
+            "MFA policy updated"
+        ),
     }
 
 
