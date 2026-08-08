@@ -35,6 +35,10 @@ from app.schemas.admin import (
     StorageUsageResponse,
 )
 
+from app.schemas.webauthn import (
+    MfaPolicyUpdateRequest,
+)
+
 from app.schemas.user import (
     UserResponse,
 )
@@ -44,9 +48,16 @@ from app.core.exceptions import (
     UserAlreadyExistsError,
 )
 
+from app.core.config import (
+    get_settings,
+)
+
 from app.domain.constants.audit_events import (
     ADMIN_ACTION,
+    MFA_ENFORCEMENT_UPDATED,
 )
+
+settings = get_settings()
 
 from app.services.audit_service import (
     AuditService,
