@@ -11,6 +11,7 @@ from app.api.dependencies.auth import (
     get_mfa_service,
 )
 from app.api.dependencies.current_user import (
+    get_current_session_id,
     get_current_user,
 )
 from app.api.dependencies.jwt import (
@@ -159,6 +160,9 @@ def change_password(
     auth_service=Depends(
         get_auth_service
     ),
+    session_id=Depends(
+        get_current_session_id
+    ),
 ):
     return {
         "message": "Password changed",
@@ -166,6 +170,7 @@ def change_password(
             current_user,
             payload.current_password,
             payload.new_password,
+            keep_session_id=session_id,
         ),
     }
 

@@ -14,7 +14,35 @@ from app.api.dependencies.repositories import (
 security = HTTPBearer(auto_error=False)
 
 
-def get_current_user(
+def get_current_session_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(
+        security
+    ),
+    jwt_service=Depends(
+        get_jwt_service
+    ),
+) -> str | None:
+    """
+    Session identifier embedded in the access token.
+    Used by endpoints that must keep the calling
+    session alive while revoking others.
+    """
+
+    if (
+        credentials is None
+        or not credentials.credentials
+    ):
+        return None
+
+    claims = jwt_service.decode_token(
+        credentials.credentials
+    )
+
+    return getattr(
+        claims,
+        "session_id",
+        None,
+    ) or None
     credentials: HTTPAuthorizationCredentials | None = Depends(
         security
     ),
