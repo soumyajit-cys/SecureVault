@@ -31,6 +31,10 @@ def client(db_session):
     async def _noop_lifespan(_app):
         yield
 
+    from app.core.logging import configure_logging
+
+    configure_logging()
+
     app.router.lifespan_context = _noop_lifespan
 
     app.dependency_overrides[
