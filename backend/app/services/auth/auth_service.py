@@ -269,12 +269,12 @@ class AuthService:
             self.sessions.update(session)
 
         if keep_session_id:
-            self.refresh.revoke_all_except_session(
+            self.refresh_service.repository.revoke_all_except_session(
                 user.id,
                 keep_session_id,
             )
         else:
-            self.refresh.revoke_all_for_user(
+            self.refresh_service.repository.revoke_all_for_user(
                 user.id
             )
 
