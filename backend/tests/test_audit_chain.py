@@ -195,7 +195,7 @@ def test_verify_chain_endpoint(client, db_session):
     _service(db_session).log(uuid4(), "event.x")
 
     response = client.get(
-        "/api/v1/audit/admin/verify-chain"
+        "/api/v1/admin/audit/verify-chain"
     )
 
     assert response.status_code == 200
