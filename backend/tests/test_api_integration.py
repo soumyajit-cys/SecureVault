@@ -6,6 +6,11 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base
 from app.main import app
+
+from app.domain.models.user import (
+    User,
+)
+
 from app.scripts.initialize_identity import (
     seed_permissions,
     seed_roles,
