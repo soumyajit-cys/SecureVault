@@ -88,6 +88,7 @@ class AuthService:
         jwt_service,
         mfa_service=None,
         verification_service=None,
+        webauthn_service=None,
     ):
         self.users = user_repository
         self.roles = role_repository
@@ -97,6 +98,10 @@ class AuthService:
 
         self.verification_service = (
             verification_service
+        )
+
+        self.webauthn_service = (
+            webauthn_service
         )
 
         self.password_service = (
@@ -384,6 +389,27 @@ class AuthService:
         user.failed_login_attempts = 0
 
         self.users.update(user)
+
+        if (
+            self.webauthn_service
+            and (
+                self.webauthn_service
+                .enforcement_mode()
+                == "required"
+            )
+            and not (
+                self.webauthn_service
+                .user_has_mfa(user)
+            )
+        ):
+            from app.core.exceptions import (
+                MfaEnforcementRequiredError,
+            )
+
+            raise MfaEnforcementRequiredError(
+                "MFA is required by policy. "
+                "Enroll a passkey or TOTP first."
+            )
 
         if user.totp_enabled:
 
