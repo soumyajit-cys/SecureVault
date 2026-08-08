@@ -217,6 +217,25 @@ def _audit_repo(db_session):
     return SQLAlchemyAuditLogRepository(db_session)
 
 
+def _owner(db_session):
+
+    from app.domain.models.user import (
+        User,
+    )
+
+    user = User(
+        email="owner@example.com",
+        username="owner",
+        password_hash="x",
+    )
+
+    db_session.add(user)
+
+    db_session.commit()
+
+    return user
+
+
 def _session(
     db_session,
     revoked: bool,
@@ -227,6 +246,8 @@ def _session(
     import uuid
 
     now = datetime.now(UTC)
+
+    owner = _owner(db_session)
 
     s = Session(
         session_identifier=str(uuid.uuid4()),
@@ -239,7 +260,7 @@ def _session(
         created_at=now - timedelta(
             days=days_ago
         ),
-        user_id=None,
+        user_id=owner.id,
     )
 
     db_session.add(s)
@@ -263,6 +284,8 @@ def _refresh_token(
 
     now = datetime.now(UTC)
 
+    owner = _owner(db_session)
+
     token = RefreshToken(
         token_hash=str(uuid.uuid4()),
         token_family=str(uuid.uuid4()),
@@ -272,7 +295,7 @@ def _refresh_token(
         created_at=now - timedelta(
             days=days_ago
         ),
-        user_id=None,
+        user_id=owner.id,
     )
 
     db_session.add(token)
