@@ -547,6 +547,24 @@ class AuthService:
         user_agent: str | None = None,
     ):
 
+        from app.services.auth.device_fingerprint import (
+            device_name,
+            fingerprint_from_headers,
+        )
+
+        fingerprint = (
+            fingerprint_from_headers(
+                user_agent
+            )
+        )
+
+        is_new_device = (
+            self._is_new_device(
+                user,
+                fingerprint,
+            )
+        )
+
         session_identifier = (
             self.session_service
             .create_session_identifier()
@@ -563,6 +581,10 @@ class AuthService:
             last_seen_at=datetime.now(UTC),
             ip_address=ip_address,
             user_agent=user_agent,
+            device_name=device_name(
+                user_agent
+            ),
+            device_fingerprint=fingerprint,
             user_id=user.id,
         )
 
@@ -598,6 +620,21 @@ class AuthService:
             USER_LOGIN,
         )
 
+        if is_new_device:
+
+            from app.domain.constants.audit_events import (
+                DEVICE_NEW,
+            )
+
+            self.audit_service.log(
+                user.id,
+                DEVICE_NEW,
+                details=(
+                    f"fingerprint={fingerprint} "
+                    f"ua={user_agent or 'unknown'}"
+                ),
+            )
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -606,7 +643,37 @@ class AuthService:
                 "email": user.email,
                 "username": user.username,
             },
+            "new_device": is_new_device,
         }
+
+    def _is_new_device(
+        self,
+        user,
+        fingerprint: str | None,
+    ) -> bool:
+        """
+        A login is from a "new device" when the user
+        already has active sessions but none of them
+        carry this device fingerprint.
+        """
+
+        if not fingerprint:
+            return False
+
+        sessions = (
+            self.sessions.list_for_user(
+                user.id,
+                include_revoked=False,
+            )
+        )
+
+        if not sessions:
+            return False
+
+        return all(
+            s.device_fingerprint != fingerprint
+            for s in sessions
+        )
 
     # -------------------------------------------------
     # Logout / refresh
