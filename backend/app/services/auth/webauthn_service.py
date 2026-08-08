@@ -12,6 +12,7 @@ from webauthn import (
 from webauthn.helpers import (
     base64url_to_bytes,
     bytes_to_base64url,
+    options_to_json_dict,
 )
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
@@ -248,7 +249,9 @@ class WebAuthnService:
             "register",
         )
 
-        return options.model_dump()
+        return options_to_json_dict(
+            options
+        )
 
     def verify_registration(
         self,
