@@ -394,7 +394,9 @@ class WebAuthnService:
             "login",
         )
 
-        return options.model_dump()
+        return options_to_json_dict(
+            options
+        )
 
     def verify_authentication(
         self,
