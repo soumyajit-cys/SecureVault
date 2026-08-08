@@ -522,6 +522,24 @@ class AuthService:
             user_agent=user_agent,
         )
 
+    def complete_passkey_login(
+        self,
+        user,
+        client_ip: str | None = None,
+        user_agent: str | None = None,
+    ):
+        """
+        Finish a passkey-based login for an already
+        verified user (credential assertion checked by
+        the WebAuthn service) by issuing tokens.
+        """
+
+        return self._issue_tokens(
+            user,
+            ip_address=client_ip,
+            user_agent=user_agent,
+        )
+
     def _issue_tokens(
         self,
         user,

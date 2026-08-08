@@ -150,6 +150,9 @@ def get_auth_service(
     verification_service=Depends(
         get_email_verification_service
     ),
+    webauthn_service=Depends(
+        get_webauthn_service
+    ),
 ):
 
     return AuthService(
@@ -161,4 +164,5 @@ def get_auth_service(
         jwt_service,
         mfa_service,
         verification_service,
+        webauthn_service,
     )
