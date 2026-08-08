@@ -20,6 +20,10 @@ from app.core.logging import get_logger
 from app.core.metrics import (
     record_request,
 )
+
+from app.core.request_context import (
+    current_actor,
+)
 from app.core.rate_limit_backend import (
     RateLimitBackend,
     build_rate_limit_backend,

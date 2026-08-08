@@ -99,4 +99,17 @@ def get_current_user(
             detail="User not found",
         )
 
+    from app.core.request_context import (
+        bind_actor,
+    )
+
+    bind_actor(
+        user_id=user.id,
+        session_id=getattr(
+            claims,
+            "session_id",
+            None,
+        ),
+    )
+
     return user
