@@ -269,8 +269,8 @@ def test_unknown_device_is_flagged(client, db_session):
     from app.domain.models.audit_log import AuditLog
 
     events = [
-        event.event
-        for event in db_session.query(
+        entry.action
+        for entry in db_session.query(
             AuditLog
         ).all()
     ]
