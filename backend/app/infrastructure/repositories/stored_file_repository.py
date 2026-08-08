@@ -151,7 +151,10 @@ class SQLAlchemyStoredFileRepository(
             self.db.scalars(stmt).all()
         )
 
-    def _search_filter(search: str):
+    def _search_filter(
+        self,
+        search: str,
+    ):
         """
         Search wider fields (filename, MIME type) with
         every whitespace-separated token required to
