@@ -81,3 +81,8 @@ class GarbageCollectionResult(BaseModel):
     missing_records: int
     purged_deleted: int
     temp_files: int
+    retained_audit_logs: int = 0
+    retained_sessions: int = 0
+    retained_refresh_tokens: int = 0
+    retained_reset_tokens: int = 0
+    retained_verification_tokens: int = 0
