@@ -87,6 +87,8 @@ def _file_response(
 )
 async def upload_file(
     upload: UploadFile = File(...),
+    request: Request = None,
+    response: Response = None,
     current_user=Depends(
         get_current_user
     ),
@@ -100,6 +102,32 @@ async def upload_file(
         get_audit_service
     ),
 ):
+
+    idempotency_key = (
+        _idempotency_key(
+            request
+        )
+    )
+
+    if idempotency_key:
+
+        existing = (
+            uploads.find_idempotent(
+                current_user.id,
+                idempotency_key,
+            )
+        )
+
+        if existing is not None:
+
+            # Replay: the previous attempt already
+            # stored the file, return it as a 200
+            # instead of encrypting a duplicate.
+            response.status_code = 200
+
+            return _file_response(
+                existing
+            )
 
     try:
 

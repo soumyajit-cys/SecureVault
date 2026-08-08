@@ -403,6 +403,7 @@ class UploadService:
         is_folder: bool,
         folder_file_count: int,
         container: Path,
+        idempotency_key: str | None = None,
     ) -> StoredFile:
 
         entity = StoredFile(
@@ -420,6 +421,7 @@ class UploadService:
             is_folder=is_folder,
             folder_file_count=folder_file_count,
             status="active",
+            idempotency_key=idempotency_key,
         )
 
         return self._files.create(entity)
