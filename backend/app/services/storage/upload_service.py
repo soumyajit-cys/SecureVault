@@ -94,6 +94,7 @@ class UploadService:
         mime_type: str | None = None,
         chunk_size: int = 4 * 1024 * 1024,
         quota_bytes: int | None = None,
+        idempotency_key: str | None = None,
     ) -> StoredFile:
         """
         Stream-encrypt a file into the storage layout.
@@ -105,6 +106,9 @@ class UploadService:
             filename: original filename (required for streams).
             mime_type: optional MIME type; auto-detected otherwise.
             quota_bytes: per-user quota; None disables the check.
+            idempotency_key: client-supplied replay key; the
+                caller must deduplicate with
+                ``find_idempotent`` before calling this.
 
         Raises:
             NotFoundError: source file does not exist.
@@ -188,6 +192,27 @@ class UploadService:
             is_folder=False,
             folder_file_count=0,
             container=target,
+            idempotency_key=idempotency_key,
+        )
+
+    def find_idempotent(
+        self,
+        user_id: uuid.UUID,
+        idempotency_key: str,
+    ) -> StoredFile | None:
+        """
+        Return the stored file previously created with
+        this idempotency key, if any.
+        """
+
+        if not idempotency_key:
+            return None
+
+        return (
+            self._files.get_by_idempotency_key(
+                user_id,
+                idempotency_key,
+            )
         )
 
     # -------------------------------------------------
