@@ -44,7 +44,7 @@ export const encryption = {
 
 export const files = {
   list: (params: { page?: number; page_size?: number; status?: string; search?: string }) =>
-    api.get<Paginated<StoredFile>>("/files/", { params }).then((r) => r.data),
+    api.get<Paginated<StoredFile>>("/files", { params }).then((r) => r.data),
   upload: (file: File, keyId?: string) => {
     const form = new FormData();
     form.append("file", file);
@@ -61,7 +61,7 @@ export const files = {
 
 export const folders = {
   list: (params: { page?: number; page_size?: number }) =>
-    api.get<Paginated<StoredFile>>("/folders/", { params }).then((r) => r.data),
+    api.get<Paginated<StoredFile>>("/folders", { params }).then((r) => r.data),
   upload: (zip: File, keyId?: string) => {
     const form = new FormData();
     form.append("upload", zip);
@@ -106,7 +106,7 @@ export const admin = {
   usage: () => api.get<StorageUsage>("/admin/storage").then((r) => r.data),
   gc: () => api.post<GcResult>("/admin/garbage-collect").then((r) => r.data),
   users: (params: { page?: number; page_size?: number }) =>
-    api.get<Paginated<User>>("/admin/users/", { params }).then((r) => r.data),
+    api.get<Paginated<User>>("/admin/users", { params }).then((r) => r.data),
   deactivateUser: (id: string) =>
     api.post<{ message: string }>(`/admin/users/${id}/deactivate`).then((r) => r.data),
   activateUser: (id: string) =>
