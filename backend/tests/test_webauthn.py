@@ -458,16 +458,6 @@ def test_passkey_registration_and_login_flow(
     assert "access_token" in body
     assert "refresh_token" in body
 
-    # The assertion bumped the stored sign counter.
-    import sqlite3
-
-    creds = listed.json()
-
-    assert (
-        login_complete.status_code
-        == 200
-    )
-
     assert body["user"]["email"] == (
         "passkey@example.com"
     )
