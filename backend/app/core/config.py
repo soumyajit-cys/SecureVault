@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     TOTP_WINDOW: int = 1
     MFA_RECOVERY_CODE_COUNT: int = 10
 
+    WEBAUTHN_RP_ID: str = "localhost"
+    WEBAUTHN_RP_NAME: str = "SecureVault"
+    WEBAUTHN_ORIGIN: str = "http://localhost:5173"
+    # optional | required - admins can override at
+    # runtime via the /admin/mfa-policy endpoint.
+    MFA_ENFORCEMENT_MODE: str = "optional"
+
     EMAIL_VERIFICATION_REQUIRED: bool = False
     EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
     EMAIL_BACKEND: str = "console"
