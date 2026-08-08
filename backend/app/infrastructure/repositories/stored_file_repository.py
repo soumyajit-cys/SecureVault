@@ -38,6 +38,28 @@ class SQLAlchemyStoredFileRepository(
 
         return self.db.scalar(stmt)
 
+    def get_by_idempotency_key(
+        self,
+        user_id: UUID,
+        idempotency_key: str,
+    ) -> StoredFile | None:
+
+        stmt = (
+            select(self.model)
+            .where(
+                self.model.user_id == user_id,
+                self.model.idempotency_key
+                == idempotency_key,
+                self.model.status == "active",
+            )
+            .order_by(
+                self.model.created_at.desc()
+            )
+            .limit(1)
+        )
+
+        return self.db.scalar(stmt)
+
     def list_for_user(
         self,
         user_id: UUID,
