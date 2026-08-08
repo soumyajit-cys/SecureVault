@@ -192,7 +192,7 @@ def test_forged_prev_hash_is_detected(db_session):
 
 def test_verify_chain_endpoint(client, db_session):
 
-    _service(db_session).log("user-1", "event.x")
+    _service(db_session).log(uuid4(), "event.x")
 
     response = client.get(
         "/api/v1/audit/admin/verify-chain"
