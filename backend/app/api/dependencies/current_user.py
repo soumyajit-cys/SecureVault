@@ -43,6 +43,9 @@ def get_current_session_id(
         "session_id",
         None,
     ) or None
+
+
+def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(
         security
     ),
