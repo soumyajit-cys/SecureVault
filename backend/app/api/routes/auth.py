@@ -42,7 +42,6 @@ from app.schemas.webauthn import (
     PasskeyLoginBeginRequest,
     PasskeyLoginCompleteRequest,
     PasskeyRegistrationCompleteRequest,
-    PasskeyRemoveRequest,
 )
 
 from app.schemas.user import (

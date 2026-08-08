@@ -695,11 +695,8 @@ def test_remove_credential(
     )
 
     removed = client.delete(
-        "/api/v1/auth/passkeys",
+        f"/api/v1/auth/passkeys/{credential_id_str}",
         headers=headers,
-        json={
-            "credential_id": credential_id_str,
-        },
     )
 
     assert removed.status_code == 200
