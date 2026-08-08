@@ -728,6 +728,26 @@ def test_mfa_policy_endpoints(
         "Authorization": f"Bearer {admin_token}"
     }
 
+    # Non-admins cannot read or change the policy.
+    non_admin = _register_user(
+        client,
+        email="peon@example.com",
+    )
+
+    peon_headers = {
+        "Authorization": (
+            f"Bearer {non_admin}"
+        )
+    }
+
+    assert (
+        client.get(
+            "/api/v1/admin/mfa-policy",
+            headers=peon_headers,
+        ).status_code
+        == 403
+    )
+
     policy = client.get(
         "/api/v1/admin/mfa-policy",
         headers=headers,
@@ -760,25 +780,16 @@ def test_mfa_policy_endpoints(
 
     assert invalid.status_code == 422
 
-    # Non-admins cannot read or change the policy.
-    non_admin = _register_user(
-        client,
-        email="peon@example.com",
+    # Enforced policy blocks new password logins.
+    blocked = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "peon@example.com",
+            "password": "CorrectHorseBatteryStaple!2026",
+        },
     )
 
-    peon_headers = {
-        "Authorization": (
-            f"Bearer {non_admin}"
-        )
-    }
-
-    assert (
-        client.get(
-            "/api/v1/admin/mfa-policy",
-            headers=peon_headers,
-        ).status_code
-        == 403
-    )
+    assert blocked.status_code == 401
 
 
 def test_enforced_mfa_blocks_password_login(
@@ -799,6 +810,17 @@ def test_enforced_mfa_blocks_password_login(
 
     db_session.commit()
 
+    # Register users while the policy is optional.
+    _register_user(
+        client,
+        email="nofactor@example.com",
+    )
+
+    token = _register_user(
+        client,
+        email="withkey@example.com",
+    )
+
     headers = {
         "Authorization": f"Bearer {admin_token}"
     }
@@ -809,11 +831,6 @@ def test_enforced_mfa_blocks_password_login(
         json={
             "mode": "required",
         },
-    )
-
-    _register_user(
-        client,
-        email="nofactor@example.com",
     )
 
     login = client.post(
@@ -832,11 +849,6 @@ def test_enforced_mfa_blocks_password_login(
     )
 
     # A user with a passkey is not blocked.
-    token = _register_user(
-        client,
-        email="withkey@example.com",
-    )
-
     headers2 = {
         "Authorization": f"Bearer {token}"
     }
