@@ -70,6 +70,18 @@ class MfaVerificationFailedError(
     pass
 
 
+class MfaEnforcementRequiredError(
+    AuthenticationError
+):
+    pass
+
+
+class WebAuthnVerificationFailedError(
+    AuthenticationError
+):
+    pass
+
+
 class PasswordResetTokenInvalidError(
     AuthenticationError
 ):
