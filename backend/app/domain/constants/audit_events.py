@@ -2,6 +2,8 @@ USER_REGISTERED = "user.registered"
 
 USER_LOGIN = "user.login"
 
+LOGIN_FAILED = "login.failed"
+
 USER_LOGOUT = "user.logout"
 
 PASSWORD_CHANGED = "user.password_changed"
