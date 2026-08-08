@@ -229,11 +229,19 @@ class RateLimitMiddleware(
         "/api/v1/auth/password-reset/confirm",
     }
 
+    CRYPTO_PATHS = {
+        "/api/v1/encryption/text/encrypt",
+        "/api/v1/encryption/text/decrypt",
+        "/api/v1/encryption/files/encrypt",
+        "/api/v1/encryption/files/decrypt",
+    }
+
     def __init__(
         self,
         app,
         general_limit: int,
         login_limit: int,
+        crypto_limit: int = 20,
         window_seconds: int = 60,
         backend: RateLimitBackend | None = None,
     ):
@@ -246,6 +254,10 @@ class RateLimitMiddleware(
 
         self.login_limit = (
             login_limit
+        )
+
+        self.crypto_limit = (
+            crypto_limit
         )
 
         self.window_seconds = (
@@ -285,13 +297,14 @@ class RateLimitMiddleware(
             in self.LOGIN_PATHS
         )
 
+        is_crypto_path = (
+            request.url.path
+            in self.CRYPTO_PATHS
+        )
+
         bucket_key: str | None = None
 
         bucket_limit: int | None = None
-
-        if is_mutating:
-            bucket_key = f"ip:{client_ip}"
-            bucket_limit = self.general_limit
 
         if (
             is_login_path
@@ -301,6 +314,19 @@ class RateLimitMiddleware(
                 f"auth:{client_ip}"
             )
             bucket_limit = self.login_limit
+
+        elif (
+            is_crypto_path
+            and request.method == "POST"
+        ):
+            bucket_key = (
+                f"crypto:{client_ip}"
+            )
+            bucket_limit = self.crypto_limit
+
+        elif is_mutating:
+            bucket_key = f"ip:{client_ip}"
+            bucket_limit = self.general_limit
 
         if bucket_key is not None:
 
