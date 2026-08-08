@@ -50,6 +50,16 @@ MFA_DISABLED = "mfa.disabled"
 
 MFA_VERIFY_FAILED = "mfa.verify_failed"
 
+MFA_ENFORCEMENT_UPDATED = "mfa.enforcement_updated"
+
+PASSKEY_REGISTERED = "passkey.registered"
+
+PASSKEY_REMOVED = "passkey.removed"
+
+PASSKEY_LOGIN = "passkey.login"
+
+PASSKEY_VERIFY_FAILED = "passkey.verify_failed"
+
 PASSWORD_RESET_REQUESTED = (
     "password.reset_requested"
 )
