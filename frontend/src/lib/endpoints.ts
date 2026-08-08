@@ -81,9 +81,9 @@ export const folders = {
 
 export const keys = {
   list: (params: { page?: number; page_size?: number; status?: string }) =>
-    api.get<Paginated<Key>>("/keys/", { params }).then((r) => r.data),
+    api.get<Paginated<Key>>("/keys", { params }).then((r) => r.data),
   generate: (body: { name: string; validity_days?: number }) =>
-    api.post<KeyCreateResponse>("/keys/", body).then((r) => r.data),
+    api.post<KeyCreateResponse>("/keys", body).then((r) => r.data),
   rotate: (body: {
     current_key_id: string;
     name?: string;
