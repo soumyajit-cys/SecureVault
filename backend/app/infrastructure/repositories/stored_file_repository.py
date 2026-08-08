@@ -92,9 +92,7 @@ class SQLAlchemyStoredFileRepository(
 
         if search:
             filters.append(
-                self.model.original_filename.ilike(
-                    f"%{search}%"
-                )
+                self._search_filter(search)
             )
 
         total = (
