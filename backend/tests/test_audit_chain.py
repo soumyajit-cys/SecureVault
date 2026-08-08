@@ -14,6 +14,8 @@ from app.services.audit_service import (
     AuditService,
 )
 
+from uuid import uuid4
+
 from app.domain.models.audit_log import (
     AuditLog,
 )
@@ -105,7 +107,7 @@ def test_chain_is_consistent(db_session):
 
     for i in range(5):
         service.log(
-            "user-1",
+            uuid4(),
             f"event.{i}",
             details=f"payload-{i}",
         )
@@ -117,9 +119,9 @@ def test_chain_links_entries(db_session):
 
     service = _service(db_session)
 
-    service.log("user-1", "event.a")
-    service.log("user-1", "event.b")
-    service.log("user-1", "event.c")
+    service.log(uuid4(), "event.a")
+    service.log(uuid4(), "event.b")
+    service.log(uuid4(), "event.c")
 
     entries = (
         db_session.query(AuditLog)
@@ -138,8 +140,8 @@ def test_tampering_is_detected(db_session):
 
     service = _service(db_session)
 
-    service.log("user-1", "event.a")
-    service.log("user-1", "event.b")
+    service.log(uuid4(), "event.a")
+    service.log(uuid4(), "event.b")
 
     entry = (
         db_session.query(AuditLog)
@@ -164,9 +166,9 @@ def test_forged_prev_hash_is_detected(db_session):
 
     service = _service(db_session)
 
-    service.log("user-1", "event.a")
-    service.log("user-1", "event.b")
-    service.log("user-1", "event.c")
+    service.log(uuid4(), "event.a")
+    service.log(uuid4(), "event.b")
+    service.log(uuid4(), "event.c")
 
     third = (
         db_session.query(AuditLog)
