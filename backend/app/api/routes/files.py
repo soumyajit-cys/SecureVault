@@ -6,6 +6,8 @@ from fastapi import HTTPException
 from fastapi import Query
 from fastapi import UploadFile
 from fastapi import File
+from fastapi import Request
+from fastapi import Response
 from fastapi.responses import StreamingResponse
 
 from app.api.dependencies.current_user import (
@@ -185,6 +187,7 @@ async def upload_file(
             quota_bytes=(
                 current_user.storage_quota_bytes
             ),
+            idempotency_key=idempotency_key,
         )
 
     except KeyNotFoundError as exc:
