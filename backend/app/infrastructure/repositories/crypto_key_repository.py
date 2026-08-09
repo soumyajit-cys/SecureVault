@@ -1,3 +1,4 @@
+from datetime import UTC
 from datetime import datetime
 from uuid import UUID
 
@@ -68,6 +69,10 @@ class SQLAlchemyCryptoKeyRepository(
             .where(
                 self.model.user_id == user_id,
                 self.model.status == "active",
+                (
+                    self.model.expires_at.is_(None)
+                    | (self.model.expires_at > datetime.now(UTC))
+                ),
             )
             .order_by(
                 self.model.created_at.desc(),
