@@ -935,7 +935,7 @@ def test_key_rotation_promotes_new_key(
     assert by_id[str(first_id)]["status"] == "revoked"
 
     assert (
-        by_id[rotated.json()["key_id"]]["status"]
+        by_id[rotated.json()["new_key"]["id"]]["status"]
         == "active"
     )
 
