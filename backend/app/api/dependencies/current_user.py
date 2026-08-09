@@ -4,6 +4,10 @@ from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.security import HTTPBearer
 from starlette.requests import Request
 
+from app.domain.constants.token_types import (
+    ACCESS_TOKEN,
+)
+
 from app.api.dependencies.jwt import (
     get_jwt_service,
 )
@@ -76,6 +80,15 @@ def get_current_user(
     claims = jwt_service.decode_token(
         credentials.credentials
     )
+
+    if claims.token_type != ACCESS_TOKEN:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token type",
+            headers={
+                "WWW-Authenticate": "Bearer"
+            },
+        )
 
     try:
 
