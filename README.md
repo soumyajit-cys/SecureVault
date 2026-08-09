@@ -1,60 +1,71 @@
 # SecureVault
 
-Enterprise-grade encryption and secure file management platform.
+Enterprise-grade server-side encryption and secure file management platform.
 
-SecureVault protects sensitive data end-to-end: files are sealed with
-**AES-256-GCM**, per-message keys are wrapped with the user's RSA key, passwords
-are hashed with **Argon2id**, and every security-relevant action is logged to an
-immutable audit trail with RBAC-aware access control.
+SecureVault protects sensitive data with **AES-256-GCM** authenticated
+encryption: files are sealed with per-message session keys, each session key
+is wrapped with a per-user **RSA-4096** parent key, passwords are hashed with
+**Argon2id**, and every security-relevant action is logged to an audit trail
+with hash-chain integrity and RBAC-aware access control.
+
+## Security model (read this first)
+
+SecureVault is **server-side encrypted with server-held key custody**. It is
+**not a zero-knowledge / end-to-end-encrypted service**:
+
+- The server generates the per-user RSA parent keys.
+- The server stores the RSA private keys in the database, encrypted at rest
+  with a master key derived from `SECRET_KEY`.
+- The server necessarily holds plaintext in memory while encrypting or
+  decrypting, and an operator who controls the server (or its database and
+  secret material) can decrypt stored files.
+
+Data *at rest* on the storage volume is ciphertext; the plaintext never
+touches the disk in the normal flow, and a storage-volume compromise alone
+does not expose file contents. See [docs/security.md](docs/security.md) for
+the detailed security model, key-custody analysis and the architectural
+changes required for true zero-knowledge.
 
 ## Features
 
 - **Cryptography**
-  - AES-256 / AES-128 GCM authenticated encryption with AAD
-  - ChaCha20 flavor (negotiable per-key by vault policy)
-  - per-message sealed keys wrapped with RSA-4096 / RSA-2048
+  - AES-256-GCM authenticated encryption with optional AAD
+  - per-message session keys wrapped with RSA-4096 OAEP
   - SHA-256 integrity verification on every container
-  - Streaming encryption for files of arbitrary size
+  - Streaming encryption/decryption for files of arbitrary size
+  - SecureVault binary container format (magic + versioned header)
 
 - **Key management**
   - Server-side key generation, rotation and revocation
-  - Key expiry, fingerprinting and replacement tracking
+  - Key expiry (expired keys are rejected for new encryptions),
+    fingerprinting and replacement tracking
 
 - **Storage engine**
   - Layout-isolated encrypted containers (one file = one container)
-  - Upload (streaming encrypt), download (streaming decrypt + verify)
+  - Streaming upload (encrypt) and download (decrypt + verify)
   - Folder archive encryption (zip + AES-GCM) and safe restore
+  - Zip-bomb protection (size caps, compression-ratio guard)
   - Soft-delete, garbage collection and temp-file cleanup
-  - Optional background cleanup task
+  - Idempotent uploads and multi-field file search (pg_trgm)
 
 - **Security & auth**
-  - Argon2id password hashing
-  - JWT access + rotating refresh tokens (family detection, replay protection)
-  - Account lockout after failed attempts, deactivation
+  - Argon2id password hashing, account lockout, deactivation
+  - RSA-256-signed JWTs with rotated signing keys (at-rest wrapped)
+  - Rotating refresh tokens (family detection, replay protection)
+  - TOTP MFA with recovery codes and enforced-MFA policy
+  - WebAuthn passkey registration and login (FIDO2)
   - Role-based access control (`User`, `Admin`, `Auditor`)
-  - Full audit trail (`user.*`, `file.*`, `folder.*`, `key.*`, `admin.*`)
-  - Global exception handling, request validation, max upload enforcement
+  - Hash-chained audit trail (`user.*`, `file.*`, `folder.*`, `key.*`,
+    `admin.*`, `device.*`) with CSV export
 
 - **Operations & hardening**
-  - Liveness/readiness probes (`/health/live`, `/health/ready`) that verify DB
-  - Prometheus-format metrics endpoint (`/metrics`) with request counts,
-    latency and uptime
-  - Per-IP rate limiting with trusted-proxy aware `X-Forwarded-For` handling
-  - Security headers (CSP-style, HSTS, `nosniff`, frame/coop policies)
-  - Request tracing headers (`X-Request-ID`) + structured JSON request logs
-
-- **API**
-  - `Auth` — register, login, refresh, logout, change password
-  - `Encryption` — text encrypt / decrypt
-  - `Files` — upload, list, metadata, download, rename, soft-delete, summary
-  - `Folders` — archive upload, list, restore
-  - `Keys` — generate, list, rotate, revoke
-  - `Audit` — log stream (exports too)
-  - `Admin` — storage usage, garbage collection, user management
-
-- **Frontend (React + TypeScript + Vite + Tailwind)**
-  - Dark "cyber vault" UI; login/register, dashboard, text & file crypto,
-    folder tools, key manager, audit logs, settings and an admin panel
+  - Liveness/readiness probes (`/health/live`, `/health/ready`)
+  - Prometheus-format metrics (`/metrics`)
+  - Per-IP rate limiting (login + crypto paths) with trusted-proxy-aware
+    `X-Forwarded-For` handling
+  - Security headers, CORS, request IDs, structured JSON logs
+  - Global exception handling that never leaks stack traces or secrets
+  - Path-traversal-safe storage, ownership-scoped queries (no IDOR)
 
 ## Stack
 
@@ -62,7 +73,7 @@ immutable audit trail with RBAC-aware access control.
 | -------- | --------------------------------------------- |
 | Backend  | Python 3.13, FastAPI, SQLAlchemy 2, Alembic   |
 | Storage  | PostgreSQL (prod) / SQLite (tests)            |
-| Crypto   | `cryptography`, `pycryptodome`, `argon2-cffi` |
+| Crypto   | `cryptography`, `argon2-cffi`                 |
 | Frontend | React 18, TypeScript, Vite 5, Tailwind 3      |
 
 ## Getting started
@@ -70,17 +81,16 @@ immutable audit trail with RBAC-aware access control.
 ### Backend
 
 ```bash
-cp .env.example .env               # configure DATABASE_URL, JWT secret, etc.
+cp .env.example .env               # configure DATABASE_URL, SECRET_KEY, etc.
 python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
 cd backend
 alembic upgrade head
-uvicorn app.main:app --reload     # startup seeds roles/permissions + role-permission links
+uvicorn app.main:app --reload     # startup seeds roles/permissions + links
                                   # and creates the admin account (VAULT_ADMIN_*)
 ```
 
 Health check: http://localhost:8000/api/v1/health
-
 Interactive API docs: http://localhost:8000/docs
 
 ### Frontend
@@ -96,28 +106,37 @@ npm run build      # static production bundle in dist/
 
 ```bash
 cd backend
-source ../.venv/bin/activate
-python -m pytest tests/ -q --cov=app --cov-report=term
+.venv/bin/python -m pytest tests/ -q --cov=app --cov-report=term
 ```
 
-159 tests — 88% coverage across app modules.
+238+ tests (including parameterized crypto tamper cases), ~90% coverage
+across `app` modules.
 
 ## API overview
 
-Base path: `/api/v1`
+Base path: `/api/v1`. All endpoints except auth/health require
+`Authorization: Bearer <access_token>`.
 
-- `GET  /health` · `GET /health/live` · `GET /health/ready` · `GET /metrics`
-
-- `POST /auth/register` · `POST /auth/login` · `POST /auth/refresh` · `POST /auth/logout` · `POST /auth/change-password`
-- `GET  /profile/me`
-- `POST /encryption/text/encrypt` · `POST /encryption/text/decrypt`
-- `POST /files/upload` · `GET /files` · `GET /files/summary` · `GET /files/{id}` · `GET /files/{id}/download` · `PATCH /files/{id}` · `DELETE /files/{id}`
-- `POST /folders/upload` · `GET /folders` · `POST /folders/{id}/restore`
-- `POST /keys` (generate) · `GET /keys` · `GET /keys/active` · `GET /keys/{id}` · `POST /keys/rotate` · `POST /keys/{id}/revoke`
-- `GET /audit/logs` · `GET /audit/admin/logs`
-- `GET /admin/status` · `GET /admin/users` · `POST /admin/users/{id}/activate|deactivate` · `GET /admin/storage` · `POST /admin/garbage-collect`
-
-All endpoints except auth/health require `Authorization: Bearer <access_token>`.
+- **Health** — `GET /health` · `/health/live` · `/health/ready` · `/metrics`
+- **Auth** — `POST /auth/register` · `/login` · `/refresh` · `/logout` ·
+  `/change-password` · `POST /auth/verify-email` · `/password-reset/request` ·
+  `/password-reset/confirm` · MFA: `GET /auth/mfa/status` ·
+  `POST /auth/mfa/setup|enable|disable|verify` · Passkeys:
+  `POST /auth/passkeys/register/{begin|complete}` · `/passkeys/login/...` ·
+  `GET|DELETE /auth/passkeys` · Sessions: `GET /auth/sessions` ·
+  `POST /auth/sessions/revoke` · `/sessions/revoke-all`
+- **Profile** — `GET /profile/me`
+- **Encryption** — `POST /encryption/text/encrypt|decrypt` (optional AAD)
+- **Files** — `POST /files/upload` (idempotency key) · `GET /files` (search,
+  filters) · `/files/summary` · `GET /files/{id}` · `GET /files/{id}/download`
+  · `PATCH /files/{id}` · `DELETE /files/{id}`
+- **Folders** — `POST /folders/upload` · `GET /folders` ·
+  `POST /folders/{id}/restore`
+- **Keys** — `POST /keys` · `GET /keys` · `GET /keys/active` · `GET /keys/{id}`
+  · `POST /keys/rotate` · `POST /keys/{id}/revoke`
+- **Audit** — `GET /audit/logs` · `GET /audit/admin/logs` (admin) · CSV export
+- **Admin** — `GET /admin/users` · activate/deactivate · `GET /admin/storage` ·
+  `POST /admin/garbage-collect` · `GET|PATCH /admin/mfa-policy`
 
 ## Architecture
 
@@ -128,12 +147,12 @@ backend/app/
 │   └── routes/              # auth, profile, encryption, files, folders,
 │                            # keys, audit, admin, health, metrics
 ├── core/                    # config, middleware (CORS, rate limit, tracing),
-│                            # logging, metrics registry
-├── crypto/                  # low-level crypto services (AES-GCM, RSA, hashing)
-├── domain/                  # models, repositories (ports), constants
+│                            # logging, metrics registry, at-rest crypto
+├── crypto/                  # AES-GCM, RSA/hybrid, hashing, streaming, header
+├── domain/                  # models, repository ports, constants
 ├── infrastructure/          # SQLAlchemy repositories, storage layout
 ├── schemas/                 # pydantic request/response models
-├── services/                # encryption, storage, key mgmt, audit, auth
+├── services/                # auth, encryption, storage, key mgmt, audit
 ├── scripts/                 # identity seeding, maintenance
 └── main.py                  # FastAPI app, routers, lifespan, exception handler
 
@@ -142,19 +161,22 @@ frontend/
     ├── components/          # layout, guards, ui kit
     ├── lib/                 # axios client (JWT refresh), endpoints, format
     ├── pages/               # dashboard, crypto, files, folders, keys,
-    │                        # audit, profile, settings, admin
+    │                        # audit, profile, settings, admin, landing
     ├── store/               # zustand auth store
     └── types/               # shared API types
 ```
 
 ### Crypto design
 
-1. Every vault user owns parent RSA keys (`CryptoKey` rows).
-2. To store a file, the server generates a fresh AES message key, encrypts the
-   payload, encrypts (wraps) the message key with the RSA public key and
-   stores only the container (header + nonce + ciphertext + tag + signature).
-3. On download, integrity is verified and the file is streamed-decrypted.
-4. Folder uploads ZIP the tree recursively, then encrypt the archive.
+1. Every vault user owns parent RSA-4096 keys (`CryptoKey` rows). The server
+   generates them and stores the private halves at-rest encrypted.
+2. To store a file, the server generates a fresh AES-256 session key, encrypts
+   the payload, wraps the session key with the RSA public key and stores only
+   the container (magic + header + nonce + ciphertext + tag + wrapped key).
+3. On download, the container header is validated, the session key unwrapped
+   with the RSA private key, integrity verified and the file streamed-decrypted.
+4. Folder uploads ZIP the tree recursively (streaming), then encrypt the
+   archive; restore reverses the process with traversal and zip-bomb guards.
 5. Key rotation issues a new parent key; new files use it. Revocation blocks
    usage; old containers remain readable by their recorded key.
 
@@ -162,7 +184,9 @@ frontend/
 
 `User` → `Role` / `UserRole` / `Permission`; `RefreshToken` (families + replay
 protection); `CryptoKey` (lifecycle, fingerprints); `StoredFile` (metadata,
-sizes, sha256, folders, soft-delete); `AuditLog`; `Session`.
+sizes, sha256, folders, soft-delete, idempotency keys); `AuditLog` (hash
+chain); `Session` (device fingerprints); `WebAuthnCredential`; `AppSetting`
+(MFA policy).
 
 Migrations live in `backend/alembic/versions/`.
 
@@ -173,8 +197,8 @@ Start from `.env.example`. Key settings (see `backend/app/core/config.py`):
 | Variable | Default | Purpose |
 | -------- | ------- | ------- |
 | `DATABASE_URL` | — | SQLAlchemy DSN (PostgreSQL) |
-| `SECRET_KEY` | — | JWT signing secret (rotate per deploy) |
-| `JWT_ALGORITHM` | `HS256` | token signing algorithm |
+| `SECRET_KEY` | — | master key for at-rest wrapping (signing keys, user private keys) |
+| `JWT_ALGORITHM` | `RS256` | token signing algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | access token lifetime |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | `7` | refresh token lifetime |
 | `MAX_LOGIN_ATTEMPTS` | `5` | lockout threshold |
@@ -185,16 +209,34 @@ Start from `.env.example`. Key settings (see `backend/app/core/config.py`):
 | `MAX_UPLOAD_SIZE_BYTES` | 4 GiB | max upload size |
 | `STORAGE_DIR` | `storage/` | vault container layout |
 | `GARBAGE_COLLECTION_ENABLED` | `true` | cleanup task toggle |
+| `RATE_LIMIT_BACKEND` | `local` | `local` or `redis` rate limiting |
 
 ## Deployment (production)
 
 - Run migrations with `alembic upgrade head`; roles/permissions are seeded
   automatically by the app startup hook.
-- Serve the API with `uvicorn app.main:app` behind a TLS proxy (nginx / Caddy).
-- Serve the built React app (`frontend/dist`) behind the same origin
-  reverse proxy and forward `/api` to the API server.
-- Configure `DATABASE_URL` to a managed PostgreSQL instance, rotate `SECRET_KEY`
-  at deploy, and enable the background garbage-collection task via lifespan
-  (default on).
-- Data-at-rest encryption for the vault directory (see `StorageService`) is
-  enforced: plaintext is never written to the vault layout.
+- Serve the API with `uvicorn app.main:app` behind a TLS reverse proxy
+  (nginx / Caddy) with `TRUSTED_PROXY_COUNT` configured.
+- Serve the built React app (`frontend/dist`) behind the same origin and
+  forward `/api` to the API server.
+- Use a managed PostgreSQL instance, a strong unique `SECRET_KEY` (rotating it
+  re-wraps at-rest material on next access), and enable Redis-backed rate
+  limiting for multi-worker deployments.
+- See [docs/deployment.md](docs/deployment.md) for the full checklist and the
+  Docker Compose stack.
+
+## Documentation
+
+See `docs/` for the complete v1.0 documentation:
+
+- [architecture.md](docs/architecture.md) — system structure and data flow
+- [security.md](docs/security.md) — security model, key custody, hardening
+- [cryptography.md](docs/cryptography.md) — algorithms, container format
+- [authentication.md](docs/authentication.md) — auth flows, MFA, WebAuthn
+- [authorization.md](docs/authorization.md) — RBAC model and permissions
+- [storage.md](docs/storage.md) — storage engine and file lifecycle
+- [database.md](docs/database.md) — schema, indexes, migrations
+- [api.md](docs/api.md) — endpoint reference
+- [deployment.md](docs/deployment.md) — production deployment
+- [testing.md](docs/testing.md) — running the test suites
+- [threat-model.md](docs/threat-model.md) — threat model and mitigations
