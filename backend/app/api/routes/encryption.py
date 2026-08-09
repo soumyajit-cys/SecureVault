@@ -131,6 +131,7 @@ def decrypt_text(
             current_user.id,
             key,
             hybrid,
+            aad=payload.aad,
         )
 
     except KeyNotFoundError as exc:
