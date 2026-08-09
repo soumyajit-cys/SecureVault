@@ -268,7 +268,7 @@ def test_extract_rejects_zip_bomb(tmp_path):
     import time
     import zlib
 
-    declared_size = 8 * 1024 * 1024 * 1024
+    declared_size = 3 * 1024 * 1024 * 1024
 
     payload = b"x" * 1024
 
