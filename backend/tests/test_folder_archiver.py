@@ -256,3 +256,163 @@ def test_symlinks_skipped(
     assert "link.txt" not in names
 
     assert "real.txt" in names
+
+
+def test_extract_rejects_zip_bomb(tmp_path):
+    """
+    A tiny archive declaring an enormous uncompressed
+    member must be rejected before any data is written.
+    """
+
+    import struct
+    import time
+    import zlib
+
+    declared_size = 8 * 1024 * 1024 * 1024
+
+    payload = b"x" * 1024
+
+    compressed = zlib.compress(payload)
+
+    crc = zlib.crc32(payload) & 0xFFFFFFFF
+
+    now = time.localtime()
+
+    dostime = (
+        (now.tm_hour << 11)
+        | (now.tm_min << 5)
+        | (now.tm_sec // 2)
+    )
+
+    dostdate = (
+        ((now.tm_year - 1980) << 9)
+        | (now.tm_mon << 5)
+        | now.tm_mday
+    )
+
+    name = b"bomb.bin"
+
+    local = struct.pack(
+        "<IHHHHHIIIHH",
+        0x04034B50,
+        20,
+        0,
+        8,
+        dostime,
+        dostdate,
+        crc,
+        len(compressed),
+        declared_size,
+        len(name),
+        0,
+    )
+
+    central = struct.pack(
+        "<IHHHHHHIIIHHHHHII",
+        0x02014B50,
+        20,
+        20,
+        0,
+        8,
+        dostime,
+        dostdate,
+        crc,
+        len(compressed),
+        declared_size,
+        len(name),
+        0,
+        0,
+        0,
+        0,
+        0,
+    )
+
+    central_offset = (
+        len(local) + len(name) + len(compressed)
+    )
+
+    eocd = struct.pack(
+        "<IHHHHIIH",
+        0x06054B50,
+        0,
+        0,
+        1,
+        1,
+        central_offset + len(central) + len(name),
+        30,
+    )
+
+    archive_path = tmp_path / "bomb.zip"
+
+    archive_path.write_bytes(
+        local
+        + name
+        + compressed
+        + central
+        + name
+        + eocd
+    )
+
+    destination = tmp_path / "out"
+
+    with pytest.raises(
+        ArchiveError,
+        match="compression limit",
+    ):
+
+        FolderArchiver().extract_archive(
+            archive_path,
+            destination,
+        )
+
+    assert not (destination / "bomb.bin").exists()
+
+
+def test_extract_respects_total_size_cap(tmp_path):
+    """
+    The cumulative extracted size must never exceed the
+    configured cap, even when each member passes the
+    per-member ratio guard.
+    """
+
+    import io
+    import zipfile
+
+    buffer = io.BytesIO()
+
+    with zipfile.ZipFile(
+        buffer,
+        "w",
+        zipfile.ZIP_DEFLATED,
+    ) as archive:
+
+        archive.writestr(
+            "one.bin",
+            b"a" * (2 * 1024 * 1024),
+        )
+
+        archive.writestr(
+            "two.bin",
+            b"b" * (2 * 1024 * 1024),
+        )
+
+    archive_path = tmp_path / "cap.zip"
+
+    archive_path.write_bytes(
+        buffer.getvalue()
+    )
+
+    destination = tmp_path / "out"
+
+    with pytest.raises(
+        ArchiveError,
+        match="extraction limit",
+    ):
+
+        FolderArchiver().extract_archive(
+            archive_path,
+            destination,
+            max_total_size=3 * 1024 * 1024,
+        )
+
+    assert not (destination / "two.bin").exists()
