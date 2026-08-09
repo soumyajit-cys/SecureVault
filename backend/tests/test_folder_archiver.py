@@ -341,6 +341,7 @@ def test_extract_rejects_zip_bomb(tmp_path):
         1,
         central_offset + len(central) + len(name),
         30,
+        0,
     )
 
     archive_path = tmp_path / "bomb.zip"
