@@ -63,9 +63,15 @@ class CryptoService:
         user_id: UUID,
         key: CryptoKey,
         plaintext: str,
+        aad: str | None = None,
     ) -> HybridEncryptedPayload:
         """
         Encrypt a text string with the user's key.
+
+        Args:
+            aad: optional additional authenticated data bound to
+                the ciphertext; the same value (if any) must be
+                supplied to decrypt_text.
 
         Raises:
             EncryptionError: encryption failed.
@@ -83,12 +89,14 @@ class CryptoService:
         return self._hybrid.encrypt(
             plaintext.encode("utf-8"),
             public_key,
+            aad.encode("utf-8") if aad else None,
         )
 
     def encrypt_text_with_active_key(
         self,
         user_id: UUID,
         plaintext: str,
+        aad: str | None = None,
     ) -> HybridEncryptedPayload:
         """
         Convenience wrapper using the user's active key.
@@ -102,6 +110,7 @@ class CryptoService:
             user_id,
             key,
             plaintext,
+            aad=aad,
         )
 
     # -------------------------------------------------
@@ -113,9 +122,14 @@ class CryptoService:
         user_id: UUID,
         key: CryptoKey,
         payload: HybridEncryptedPayload,
+        aad: str | None = None,
     ) -> str:
         """
         Decrypt a hybrid payload back to plaintext.
+
+        Args:
+            aad: the additional authenticated data used at
+                encryption time, if any.
 
         Raises:
             DecryptionError: unwrap or payload decryption failed.
@@ -130,6 +144,7 @@ class CryptoService:
             return self._hybrid.decrypt(
                 payload,
                 private_key,
+                aad.encode("utf-8") if aad else None,
             ).decode("utf-8")
 
         except DecryptionError:
@@ -144,6 +159,7 @@ class CryptoService:
         self,
         user_id: UUID,
         payload: HybridEncryptedPayload,
+        aad: str | None = None,
     ) -> str:
         """
         Convenience wrapper using the user's active key.
@@ -157,4 +173,5 @@ class CryptoService:
             user_id,
             key,
             payload,
+            aad=aad,
         )
