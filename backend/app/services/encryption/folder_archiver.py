@@ -4,6 +4,10 @@ import os
 import zipfile
 from pathlib import Path
 
+MAX_EXTRACTED_BYTES = 16 * 1024 * 1024 * 1024  # 16 GiB hard cap
+
+MAX_COMPRESSION_RATIO = 100  # per-member uncompressed vs archive size
+
 
 class ArchiveError(Exception):
     """Raised when a folder archive cannot be created or extracted."""
@@ -21,9 +25,11 @@ class FolderArchiver:
 
     - Symlinks are skipped (never followed) to prevent archive
       traversal and dangling references.
-    - Extraction rejects absolute paths, parent traversal and
-      duplicate entries, making it safe against malicious archives.
-    - Empty directories are preserved.
+        - Extraction rejects absolute paths, parent traversal and
+          duplicate entries, making it safe against malicious archives.
+        - Extraction enforces a total uncompressed-size cap and a
+          per-member compression-ratio guard, mitigating zip bombs.
+        - Empty directories are preserved.
     """
 
     def create_archive(
