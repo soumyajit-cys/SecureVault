@@ -325,6 +325,7 @@ def test_extract_rejects_zip_bomb(tmp_path):
         0,
         0,
         0,
+        0,
     )
 
     central_offset = (
