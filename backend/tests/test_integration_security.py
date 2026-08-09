@@ -964,3 +964,107 @@ def test_key_rotation_promotes_new_key(
         decrypted.json()["plaintext"]
         == "pre-rotation secret"
     )
+
+
+# -------------------------------------------------
+# 8.4 Text encryption with AAD
+# -------------------------------------------------
+
+def test_text_encrypt_decrypt_with_aad(client):
+
+    _register(
+        client,
+        "aad@example.com",
+        "aaduser",
+    )
+
+    token = _login(
+        client,
+        "aad@example.com",
+    )["access_token"]
+
+    _generate_key(
+        client,
+        token,
+        name="aad-key",
+    )
+
+    headers = _auth("aad@example.com", token)
+
+    encrypted = client.post(
+        "/api/v1/encryption/text/encrypt",
+        headers=headers,
+        json={
+            "plaintext": "context-bound secret",
+            "aad": "domain:payroll",
+        },
+    )
+
+    assert encrypted.status_code == 200
+
+    decrypted = client.post(
+        "/api/v1/encryption/text/decrypt",
+        headers=headers,
+        json={
+            **encrypted.json(),
+            "aad": "domain:payroll",
+        },
+    )
+
+    assert decrypted.status_code == 200
+
+    assert (
+        decrypted.json()["plaintext"]
+        == "context-bound secret"
+    )
+
+    # The same ciphertext without the AAD must fail.
+    missing = client.post(
+        "/api/v1/encryption/text/decrypt",
+        headers=headers,
+        json=encrypted.json(),
+    )
+
+    assert missing.status_code == 422
+
+    # A different AAD must fail.
+    wrong = client.post(
+        "/api/v1/encryption/text/decrypt",
+        headers=headers,
+        json={
+            **encrypted.json(),
+            "aad": "domain:finance",
+        },
+    )
+
+    assert wrong.status_code == 422
+
+
+def test_text_encrypt_rejects_oversized_plaintext(client):
+
+    _register(
+        client,
+        "bigtext@example.com",
+        "bigtext",
+    )
+
+    token = _login(
+        client,
+        "bigtext@example.com",
+    )["access_token"]
+
+    _generate_key(
+        client,
+        token,
+        name="bigtext-key",
+    )
+
+    response = client.post(
+        "/api/v1/encryption/text/encrypt",
+        headers=_auth("bigtext@example.com", token),
+        json={
+            "plaintext": "A" * (1024 * 1024 + 1),
+        },
+    )
+
+    assert response.status_code == 422
