@@ -227,11 +227,15 @@ def test_expired_access_token_rejected(
         )
     )
 
+    claims = jwt_service.decode_token(
+        login["access_token"]
+    )
+
     expired = jwt_service.create_token(
         {
-            "sub": login["user"]["id"],
-            "email": "expired@example.com",
-            "session_id": login["session_id"],
+            "sub": claims.sub,
+            "email": claims.email,
+            "session_id": claims.session_id,
             "token_type": "access",
         },
         timedelta(seconds=-60),
@@ -454,12 +458,6 @@ def test_mfa_enforced_login_issues_no_access_token(
     assert "mfa_token" in body
 
     # The unverified mfa_token must not grant access.
-    from app.services.auth.token_service import (
-        TokenService,
-    )
-
-    assert body["mfa_token"] != body["mfa_token"]
-
     profile = client.get(
         "/api/v1/profile/me",
         headers=_auth(
