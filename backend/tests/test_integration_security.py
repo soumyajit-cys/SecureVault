@@ -732,7 +732,7 @@ def test_cross_user_folder_restore_denied(
 
     assert upload.status_code in (200, 201)
 
-    folder_id = upload.json()["id"]
+    folder_id = upload.json()["file_id"]
 
     restore = client.post(
         f"/api/v1/folders/{folder_id}/restore",
