@@ -120,6 +120,7 @@ class FolderArchiver:
         self,
         archive_path: str | Path,
         destination: str | Path,
+        max_total_size: int = MAX_EXTRACTED_BYTES,
     ) -> Path:
         """
         Restore an archive into a destination directory.
@@ -130,6 +131,8 @@ class FolderArchiver:
         Args:
             archive_path: ZIP archive to extract.
             destination: directory where files are restored.
+            max_total_size: hard cap on total uncompressed bytes
+                extracted from the archive (zip-bomb mitigation).
 
         Returns:
             The destination directory.
@@ -160,6 +163,10 @@ class FolderArchiver:
                 "r",
             ) as zf:
 
+                archive_size = archive.stat().st_size
+
+                extracted_total = 0
+
                 seen = set()
 
                 for info in zf.infolist():
@@ -186,11 +193,11 @@ class FolderArchiver:
 
                     seen.add(member)
 
-                    target = destination_dir.joinpath(
-                        member
-                    )
-
                     if member.endswith("/"):
+
+                        target = destination_dir.joinpath(
+                            member
+                        )
 
                         target.mkdir(
                             parents=True,
@@ -198,6 +205,34 @@ class FolderArchiver:
                         )
 
                         continue
+
+                    ratio_floor = 64 * 1024 * 1024
+
+                    if (
+                        info.file_size
+                        > max(
+                            archive_size
+                            * MAX_COMPRESSION_RATIO,
+                            ratio_floor,
+                        )
+                    ):
+                        raise ArchiveError(
+                            f"Archive member exceeds "
+                            f"compression limit: {member}"
+                        )
+
+                    if (
+                        extracted_total + info.file_size
+                        > max_total_size
+                    ):
+                        raise ArchiveError(
+                            "Archive expands beyond "
+                            "the extraction limit"
+                        )
+
+                    target = destination_dir.joinpath(
+                        member
+                    )
 
                     target.parent.mkdir(
                         parents=True,
@@ -219,6 +254,8 @@ class FolderArchiver:
                                 break
 
                             out.write(chunk)
+
+                    extracted_total += info.file_size
 
             return destination_dir
 
