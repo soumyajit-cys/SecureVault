@@ -124,7 +124,7 @@ Base path: `/api/v1`. All endpoints except auth/health require
   `POST /auth/mfa/setup|enable|disable|verify` · Passkeys:
   `POST /auth/passkeys/register/{begin|complete}` · `/passkeys/login/...` ·
   `GET|DELETE /auth/passkeys` · Sessions: `GET /auth/sessions` ·
-  `POST /auth/sessions/revoke` · `/sessions/revoke-all`
+  `DELETE /auth/sessions/{id}` · `POST /auth/sessions/revoke-all`
 - **Profile** — `GET /profile/me`
 - **Encryption** — `POST /encryption/text/encrypt|decrypt` (optional AAD)
 - **Files** — `POST /files/upload` (idempotency key) · `GET /files` (search,
@@ -136,7 +136,8 @@ Base path: `/api/v1`. All endpoints except auth/health require
   · `POST /keys/rotate` · `POST /keys/{id}/revoke`
 - **Audit** — `GET /audit/logs` · `GET /audit/admin/logs` (admin) · CSV export
 - **Admin** — `GET /admin/users` · activate/deactivate · `GET /admin/storage` ·
-  `POST /admin/garbage-collect` · `GET|PATCH /admin/mfa-policy`
+  `POST /admin/garbage-collect` · `GET|PATCH /admin/mfa-policy` ·
+  `GET /admin/audit/verify-chain`
 
 ## Architecture
 
