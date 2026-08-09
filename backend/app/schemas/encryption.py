@@ -58,6 +58,11 @@ class DecryptTextRequest(
         max_length=MAX_ENCRYPTED_FIELD_BYTES,
     )
 
+    aad: str | None = Field(
+        default=None,
+        max_length=MAX_AAD_BYTES,
+    )
+
 
 class DecryptTextResponse(
     BaseModel
