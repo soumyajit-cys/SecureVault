@@ -66,6 +66,7 @@ def encrypt_text(
                 current_user.id,
                 key,
                 payload.plaintext,
+                aad=payload.aad,
             )
         )
 
