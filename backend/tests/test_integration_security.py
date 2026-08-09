@@ -576,6 +576,28 @@ def test_auditor_role_cannot_use_admin_endpoints(
     assert storage.status_code == 403
 
 
+def _generate_key(
+    client,
+    token: str,
+    name: str = "idorendpoint-key",
+):
+    """
+    Create an encryption key for the given user so
+    uploads have a key to seal containers with.
+    """
+
+    response = client.post(
+        "/api/v1/keys",
+        headers=_auth("owner@example.com", token),
+        json={
+            "name": name,
+            "validity_days": 365,
+        },
+    )
+
+    assert response.status_code == 201
+
+
 # -------------------------------------------------
 # 8.4 Object ownership (IDOR)
 # -------------------------------------------------
@@ -606,11 +628,16 @@ def test_cross_user_file_access_denied(
         "other@example.com",
     )
 
+    _generate_key(
+        client,
+        owner["access_token"],
+    )
+
     upload = client.post(
         "/api/v1/files/upload",
         headers=_auth("owner@example.com", owner["access_token"]),
         files={
-            "file": (
+            "upload": (
                 "secret.txt",
                 b"owner plaintext",
                 "text/plain",
@@ -668,6 +695,12 @@ def test_cross_user_folder_restore_denied(
     other = _login(
         client,
         "folderother@example.com",
+    )
+
+    _generate_key(
+        client,
+        owner["access_token"],
+        name="folderowner-key",
     )
 
     import io
