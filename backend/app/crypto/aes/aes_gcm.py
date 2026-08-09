@@ -47,6 +47,7 @@ class AESGCMCipher(
         self,
         plaintext: bytes,
         key: bytes,
+        aad: bytes | None = None,
     ) -> EncryptedPayload:
 
         try:
@@ -60,7 +61,7 @@ class AESGCMCipher(
             encrypted = aes.encrypt(
                 nonce,
                 plaintext,
-                None,
+                aad,
             )
 
             ciphertext = (
@@ -92,6 +93,7 @@ class AESGCMCipher(
         self,
         payload: EncryptedPayload,
         key: bytes,
+        aad: bytes | None = None,
     ) -> bytes:
 
         try:
@@ -124,7 +126,7 @@ class AESGCMCipher(
             return aes.decrypt(
                 nonce,
                 encrypted,
-                None,
+                aad,
             )
 
         except Exception as exc:

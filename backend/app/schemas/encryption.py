@@ -1,10 +1,17 @@
 from pydantic import BaseModel
+from pydantic import Field
+
+MAX_TEXT_PLAINTEXT_BYTES = 1024 * 1024  # 1 MiB
+
+MAX_ENCRYPTED_FIELD_BYTES = 2 * 1024 * 1024  # 2 MiB
 
 
 class EncryptTextRequest(
     BaseModel
 ):
-    plaintext: str
+    plaintext: str = Field(
+        max_length=MAX_TEXT_PLAINTEXT_BYTES,
+    )
 
 
 class EncryptTextResponse(
@@ -28,13 +35,21 @@ class EncryptTextResponse(
 class DecryptTextRequest(
     BaseModel
 ):
-    nonce: str
+    nonce: str = Field(
+        max_length=MAX_ENCRYPTED_FIELD_BYTES,
+    )
 
-    ciphertext: str
+    ciphertext: str = Field(
+        max_length=MAX_ENCRYPTED_FIELD_BYTES,
+    )
 
-    tag: str
+    tag: str = Field(
+        max_length=MAX_ENCRYPTED_FIELD_BYTES,
+    )
 
-    encrypted_key: str
+    encrypted_key: str = Field(
+        max_length=MAX_ENCRYPTED_FIELD_BYTES,
+    )
 
 
 class DecryptTextResponse(

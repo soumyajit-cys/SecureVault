@@ -93,6 +93,7 @@ class HybridEncryptor:
         self,
         plaintext: bytes,
         public_key: RSAPublicKey,
+        aad: bytes | None = None,
     ) -> HybridEncryptedPayload:
 
         try:
@@ -104,6 +105,7 @@ class HybridEncryptor:
             encrypted = self._aes.encrypt(
                 plaintext=plaintext,
                 key=session_key,
+                aad=aad,
             )
 
             wrapped = self.wrap_key(
@@ -144,6 +146,7 @@ class HybridEncryptor:
         self,
         payload: HybridEncryptedPayload,
         private_key: RSAPrivateKey,
+        aad: bytes | None = None,
     ) -> bytes:
 
         try:
@@ -166,6 +169,7 @@ class HybridEncryptor:
             return self._aes.decrypt(
                 payload=encrypted_payload,
                 key=session_key,
+                aad=aad,
             )
 
         except Exception as exc:
