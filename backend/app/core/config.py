@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     TOTP_WINDOW: int = 1
     MFA_RECOVERY_CODE_COUNT: int = 10
 
+    # Cookie-based refresh transport. SECURE_COOKIES is
+    # forced on in production.
+    SECURE_COOKIES: bool = False
+
     WEBAUTHN_RP_ID: str = "localhost"
     WEBAUTHN_RP_NAME: str = "SecureVault"
     WEBAUTHN_ORIGIN: str = "http://localhost:5173"
@@ -99,6 +103,21 @@ class Settings(BaseSettings):
 
     ENABLE_METRICS: bool = True
     ENABLE_SECURITY_HEADERS: bool = True
+
+    # Content-Security-Policy sent when ENABLE_SECURITY_HEADERS
+    # is on. Relax for local dev if needed (e.g. WebSocket HMR).
+    SECURITY_CSP: str = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "connect-src 'self' ws: wss:; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'"
+    )
 
     KMS_BACKEND: str = "local"
     KMS_TRANSIT_URL: str | None = None
