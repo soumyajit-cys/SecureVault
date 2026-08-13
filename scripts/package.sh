@@ -30,6 +30,7 @@ find "$STAGE/$NAME" -type d -name .pytest_cache -prune -exec rm -rf {} +
 find "$STAGE/$NAME" -type f -name "*.pyc" -delete
 rm -rf "$STAGE/$NAME/backend/storage"
 rm -rf "$STAGE/$NAME/backend/.coverage"
+rm -rf "$STAGE/$NAME/backend/.venv"
 
 # Frontend build outputs & TS project files
 rm -rf "$STAGE/$NAME/frontend/dist"
@@ -49,5 +50,5 @@ echo "Created $OUT_DIR/$NAME.zip"
 
 cd "$ROOT"
 unzip -l "$OUT_DIR/$NAME.zip" \
-  | grep -E "storage/|.pytest_cache|.coverage|dist/|.env$|tsbuildinfo" \
+  | grep -E "backend/storage/|/\.pytest_cache/|\.coverage$|/frontend/dist/|backend/\.venv/|/\.env$|\.tsbuildinfo$" \
   || echo "OK: no forbidden artifacts in archive"
