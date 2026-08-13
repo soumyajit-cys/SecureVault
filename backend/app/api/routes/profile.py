@@ -29,9 +29,24 @@ def me(
         ),
         "email": current_user.email,
         "username": current_user.username,
+        "is_active": current_user.is_active,
+        "is_verified": current_user.is_verified,
         "mfa_enabled": bool(
             current_user.totp_enabled
         ),
+        "roles": [
+            {
+                "id": str(
+                    user_role.role.id
+                ),
+                "name": (
+                    user_role.role.name
+                ),
+            }
+            for user_role
+            in current_user.roles
+            if user_role.role is not None
+        ],
     }
 
 
