@@ -484,7 +484,11 @@ def test_passkey_registration_and_login_flow(
     body = login_complete.json()
 
     assert "access_token" in body
-    assert "refresh_token" in body
+
+    # Refresh token travels in the HttpOnly cookie.
+    assert "refresh_token" not in body
+
+    assert "sv_refresh" in client.cookies
 
     assert body["user"]["email"] == (
         "passkey@example.com"
