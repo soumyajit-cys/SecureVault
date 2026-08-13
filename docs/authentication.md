@@ -26,8 +26,9 @@ register ─► email verification (optional) ─► login ─► access + refre
   (`AppSetting["mfa_policy"]` optional|required — enforced logins return
   `mfa_required`).
 - On success: creates a session row (device fingerprint + user-agent +
-  IP), issues an access token (15 min) and a refresh token (7 days), and
-  records `user.login` (+ `device.new` on first device).
+  IP), issues an access token (15 min) and a refresh token (7 days) in an
+  HttpOnly cookie, and records `user.login` (+ `device.new` on first
+  device).
 - If TOTP is enabled, returns `mfa_required: true` and an `mfa_token`
   (5-min MFA challenge) instead of tokens.
 
@@ -70,6 +71,20 @@ mfa-challenge token as a bearer token returns 401 (see
   token become useless.
 - Logout revokes the refresh token; refresh after logout fails.
 - Expired or unknown tokens fail with 401.
+
+## Refresh token transport & CSRF
+
+- The web SPA receives the refresh token in an **HttpOnly, Secure (in
+  production), SameSite=Strict** cookie (`sv_refresh`, path
+  `/api/v1/auth`); the access token stays in browser memory and is never
+  persisted, so a full page reload silently re-authenticates via the
+  refresh cookie.
+- `/auth/refresh` and `/auth/logout` require a CSRF double-submit:
+  `X-CSRF-Token` must match the `sv_csrf` cookie (readable by JS, strict
+  same-site). Every refresh rotates the CSRF cookie too.
+- API clients that cannot use cookies may still present the refresh token
+  in the JSON body (legacy path, no cookie involved); body and cookie
+  paths use identical rotation/replay semantics.
 
 ## Sessions & device awareness
 
