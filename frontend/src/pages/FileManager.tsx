@@ -7,8 +7,7 @@ import Table from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Pagination from "@/components/ui/Pagination";
 import Modal from "@/components/ui/Modal";
-import { SelectField } from "@/components/ui/Field";
-import { extractDetail } from "@/lib/api";
+import { SelectField } from "@/components/ui/Field";import { extractDetail } from "@/lib/api";
 import { files, keys } from "@/lib/endpoints";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
 import { formatBytes, formatDate } from "@/lib/format";
@@ -104,20 +103,6 @@ export default function FileManager() {
                 setPage(1);
               }}
             />
-            <SelectField
-              value={keyId}
-              onChange={(e) => setKeyId(e.target.value)}
-              className="!w-44"
-            >
-              <option value="">Auto (active key)</option>
-              {(keyPage?.items ?? [])
-                .filter((k) => k.status === "active")
-                .map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.name}
-                  </option>
-                ))}
-            </SelectField>
           </div>
         }
       >
