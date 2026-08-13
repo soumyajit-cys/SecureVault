@@ -80,7 +80,17 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route
             path="/*"
-            element={isAuthenticated ? protectedContent : <Navigate to="/login" replace />}
+            element={
+              pending ? (
+                <div className="flex min-h-screen items-center justify-center">
+                  <div className="text-sm text-ink-faint">Restoring session…</div>
+                </div>
+              ) : isAuthenticated ? (
+                protectedContent
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
           />
         </Routes>
       </BrowserRouter>
