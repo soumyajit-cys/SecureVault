@@ -208,25 +208,83 @@ def verify_mfa_login(
 @router.post("/refresh")
 def refresh(
     payload: RefreshRequest,
+    request: Request,
     auth_service=Depends(
         get_auth_service
     ),
 ):
-    return auth_service.refresh(
-        payload.refresh_token
+    refresh_token = (
+        read_refresh_token(
+            request
+        )
+        or (
+            payload.refresh_token
+            if payload
+            else None
+        )
+    )
+
+    if not refresh_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing refresh token",
+        )
+
+    if (
+        read_refresh_token(
+            request
+        )
+    ):
+        require_valid_csrf(request)
+
+    return _issue_token_response(
+        auth_service.refresh(
+            refresh_token
+        )
     )
 
 
 @router.post("/logout")
 def logout(
     payload: LogoutRequest,
+    request: Request,
     auth_service=Depends(
         get_auth_service
     ),
 ):
-    return auth_service.logout(
-        payload.refresh_token
+    refresh_token = (
+        read_refresh_token(
+            request
+        )
+        or (
+            payload.refresh_token
+            if payload
+            else None
+        )
     )
+
+    if refresh_token:
+
+        if (
+            read_refresh_token(
+                request
+            )
+        ):
+            require_valid_csrf(request)
+
+        auth_service.logout(
+            refresh_token
+        )
+
+    response = JSONResponse(
+        content={
+            "message": "Logged out"
+        }
+    )
+
+    clear_auth_cookies(response)
+
+    return response
 
 
 @router.post("/change-password")
