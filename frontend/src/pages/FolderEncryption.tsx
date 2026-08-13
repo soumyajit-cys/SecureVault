@@ -7,9 +7,8 @@ import Modal from "@/components/ui/Modal";
 import Table from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Pagination from "@/components/ui/Pagination";
-import { SelectField } from "@/components/ui/Field";
 import { extractDetail } from "@/lib/api";
-import { folders, keys } from "@/lib/endpoints";
+import { folders } from "@/lib/endpoints";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
 import { formatBytes, formatDate } from "@/lib/format";
 import type { StoredFile } from "@/types";
@@ -25,17 +24,11 @@ export default function FolderEncryption() {
   const queryClient = useQueryClient();
   const zipInput = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
-  const [keyId, setKeyId] = useState("");
   const [restoreInfo, setRestoreInfo] = useState<RestoreInfo | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["folders", { page, page_size: PAGE_SIZE }],
     queryFn: () => folders.list({ page, page_size: PAGE_SIZE })
-  });
-
-  const { data: keyPage } = useQuery({
-    queryKey: ["keys", { page: 1, page_size: 100 }],
-    queryFn: () => keys.list({ page: 1, page_size: 100 })
   });
 
   const uploadMutation = useMutation({
@@ -63,20 +56,6 @@ export default function FolderEncryption() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-end gap-3">
-        <SelectField
-          value={keyId}
-            onChange={(e) => setKeyId(e.target.value)}
-            className="!w-44"
-          >
-            <option value="">Auto (active key)</option>
-            {(keyPage?.items ?? [])
-              .filter((k) => k.status === "active")
-              .map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.name}
-                </option>
-              ))}
-          </SelectField>
           <input
             ref={zipInput}
             type="file"
