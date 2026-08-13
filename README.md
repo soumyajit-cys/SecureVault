@@ -51,8 +51,11 @@ changes required for true zero-knowledge.
 - **Security & auth**
   - Argon2id password hashing, account lockout, deactivation
   - RSA-256-signed JWTs with rotated signing keys (at-rest wrapped)
-  - Rotating refresh tokens (family detection, replay protection)
-  - TOTP MFA with recovery codes and enforced-MFA policy
+  - Rotating refresh tokens (family detection, replay protection) with
+    HttpOnly/Secure cookie transport, CSRF double-submit protection, and
+    an access token kept in browser memory only
+  - TOTP MFA with recovery codes and enforced-MFA policy (Admin/Auditor
+    MFA is mandatory even under the optional policy)
   - WebAuthn passkey registration and login (FIDO2)
   - Role-based access control (`User`, `Admin`, `Auditor`)
   - Hash-chained audit trail (`user.*`, `file.*`, `folder.*`, `key.*`,
@@ -62,8 +65,10 @@ changes required for true zero-knowledge.
   - Liveness/readiness probes (`/health/live`, `/health/ready`)
   - Prometheus-format metrics (`/metrics`)
   - Per-IP rate limiting (login + crypto paths) with trusted-proxy-aware
-    `X-Forwarded-For` handling
-  - Security headers, CORS, request IDs, structured JSON logs
+    `X-Forwarded-For` handling; Redis backend enforced in production
+  - Security headers (CSP, HSTS, frame/embedding/XSS protections), CORS,
+    request IDs, structured JSON logs
+  - Breached-password screening at registration (HIBP k-anonymity)
   - Global exception handling that never leaks stack traces or secrets
   - Path-traversal-safe storage, ownership-scoped queries (no IDOR)
 
