@@ -39,7 +39,7 @@ export default function FolderEncryption() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (zip: File) => folders.upload(zip, keyId || undefined),
+    mutationFn: (zip: File) => folders.upload(zip),
     onSuccess: () => {
       toastSuccess("Folder archive encrypted and stored");
       if (zipInput.current) zipInput.current.value = "";

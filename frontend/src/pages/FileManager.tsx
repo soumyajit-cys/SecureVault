@@ -37,7 +37,7 @@ export default function FileManager() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => files.upload(file, keyId || undefined),
+    mutationFn: (file: File) => files.upload(file),
     onSuccess: () => {
       toastSuccess("File encrypted and stored");
       queryClient.invalidateQueries({ queryKey: ["files"] });
