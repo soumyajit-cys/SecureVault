@@ -53,7 +53,9 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     APP_BASE_URL: str = "http://localhost:5173"
 
-    PWNED_CHECK_ENABLED: bool = False
+    # Screened by default so new deployments fail
+    # closed; disable explicitly only with reason.
+    PWNED_CHECK_ENABLED: bool = True
     PWNED_ON_BREACH: str = "block"
     PWNED_TIMEOUT_SECONDS: int = 3
 
