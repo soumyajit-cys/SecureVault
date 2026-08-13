@@ -24,6 +24,10 @@ CSRF_HEADER = "X-CSRF-Token"
 
 _COOKIE_PATH = "/api/v1/auth"
 
+# The CSRF cookie must be readable by client-side JS
+# (double-submit), so it is scoped to the whole site.
+_CSRF_PATH = "/"
+
 
 class CsrfValidationError(HTTPException):
 
@@ -69,7 +73,7 @@ def attach_auth_cookies(
         key=CSRF_COOKIE_NAME,
         value=csrf_token,
         max_age=max_age_seconds,
-        path=_COOKIE_PATH,
+        path=_CSRF_PATH,
         httponly=False,
         secure=secure,
         samesite="strict",
@@ -90,7 +94,7 @@ def clear_auth_cookies(
 
     response.delete_cookie(
         CSRF_COOKIE_NAME,
-        path=_COOKIE_PATH,
+        path=_CSRF_PATH,
     )
 
 
