@@ -1,23 +1,17 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
-import { SelectField, TextArea, TextField } from "@/components/ui/Field";
-import { encryption, keys } from "@/lib/endpoints";
+import { TextArea, TextField } from "@/components/ui/Field";
+import { encryption } from "@/lib/endpoints";
 import { extractDetail } from "@/lib/api";
 import { toastSuccess } from "@/components/ui/Toast";
 
 export default function EncryptText() {
   const [text, setText] = useState("");
-  const [keyId, setKeyId] = useState("");
   const [aad, setAad] = useState("");
   const [result, setResult] = useState<string | null>(null);
-
-  const { data: keyPage } = useQuery({
-    queryKey: ["keys", { page: 1, page_size: 100 }],
-    queryFn: () => keys.list({ page: 1, page_size: 100 })
-  });
 
   const encryptMutation = useMutation({
     mutationFn: () =>
@@ -34,36 +28,22 @@ export default function EncryptText() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Card title="Plaintext">
-        <div className="space-y-4">
-          <TextArea
-            label="Message"
-            required
-            placeholder="Enter the secret message…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label="Encryption key"
-              value={keyId}
-              onChange={(e) => setKeyId(e.target.value)}
-            >
-              <option value="">Auto (active key)</option>
-              {(keyPage?.items ?? [])
-                .filter((k) => k.status === "active")
-                .map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.name} · {k.fingerprint?.slice(0, 8)}
-                  </option>
-                ))}
-            </SelectField>
+          <div className="space-y-4">
+            <TextArea
+              label="Message"
+              required
+              placeholder="Enter the secret message…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
             <TextField
               label="Additional authenticated data (optional)"
               placeholder="AAD"
               value={aad}
               onChange={(e) => setAad(e.target.value)}
             />
-          </div>
+            </div>
 
           <Button
             loading={encryptMutation.isPending}
