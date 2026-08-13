@@ -61,10 +61,9 @@ export const files = {
 export const folders = {
   list: (params: { page?: number; page_size?: number }) =>
     api.get<Paginated<StoredFile>>("/folders", { params }).then((r) => r.data),
-  upload: (zip: File, keyId?: string) => {
+  upload: (zip: File) => {
     const form = new FormData();
     form.append("upload", zip);
-    if (keyId) form.append("key_id", keyId);
     return api.post<StoredFile>("/folders/upload", form).then((r) => r.data);
   },
   restore: (id: string) =>

@@ -22,10 +22,8 @@ export default function EncryptText() {
   const encryptMutation = useMutation({
     mutationFn: () =>
       encryption.encryptText({
-        text,
-        key_id: keyId || undefined,
-        aad: aad || undefined,
-        output_format: "base64"
+        plaintext: text,
+        aad: aad || undefined
       }),
     onSuccess: (res) => {
       setResult(JSON.stringify(res, null, 2));
