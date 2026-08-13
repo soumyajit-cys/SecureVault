@@ -12,7 +12,7 @@ list. Critical settings:
 | `VAULT_ADMIN_EMAIL/USERNAME/PASSWORD` | yes | bootstrap admin |
 | `CORS_ALLOW_ORIGINS` | prod | restrict to your origin, e.g. `["https://vault.example.com"]` |
 | `TRUSTED_PROXY_COUNT` | prod | 1 when behind a TLS proxy |
-| `RATE_LIMIT_BACKEND` | multi-worker | `redis` with `REDIS_URL` |
+| `RATE_LIMIT_BACKEND` | **mandatory in prod** | `redis` with `REDIS_URL`; startup refuses to run with the in-memory backend in production |
 | `ENABLE_SECURITY_HEADERS` | yes | on by default |
 | `APP_ENV` | yes | `production` |
 
@@ -33,9 +33,11 @@ SECRET_KEY="$(openssl rand -hex 32)" docker compose up --build
 The Compose stack is a development/self-hosting baseline. For production:
 
 1. **TLS termination** at a reverse proxy (nginx/Caddy) with
-   `TRUSTED_PROXY_COUNT=1`.
+   `TRUSTED_PROXY_COUNT=1`. TLS is required anyway for Secure cookie
+   attributes (refresh token + CSRF cookies are `Secure` in production).
 2. Managed PostgreSQL with automated backups + point-in-time recovery.
-3. `RATE_LIMIT_BACKEND=redis` if running more than one API worker.
+3. **Redis** for the rate limiter (`RATE_LIMIT_BACKEND=redis`,
+   `REDIS_URL=...`) — enforced at startup in production.
 4. Volume encryption for `vault-storage` (LUKS at the host, or
    provider-managed encryption).
 5. Run the frontend as a static bundle (`frontend/dist`) served by the
@@ -68,6 +70,6 @@ and optionally starts the background GC task.
 - [ ] Frontend `npm run build` succeeds; serve `dist/`
 - [ ] `SECRET_KEY` provisioned (never default)
 - [ ] CORS restricted; `TRUSTED_PROXY_COUNT` set; TLS enabled
-- [ ] Redis rate limiting enabled for multi-worker
+- [ ] Redis rate limiting enabled and reachable (required in production)
 - [ ] Storage volume encrypted; backups verified
 - [ ] Admin credentials rotated post-bootstrap
