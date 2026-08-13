@@ -75,6 +75,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       setAccessToken(token);
     }
 
-    set({ isAuthenticated: token !== null, sessionChecked: true });
+    let user: User | null = null;
+
+    if (token) {
+      try {
+        const res = await fetch(`${API_BASE}/profile/me`, {
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        user = res.ok ? ((await res.json()) as User) : null;
+      } catch {
+        user = null;
+      }
+    }
+
+    set({
+      user,
+      isAuthenticated: token !== null,
+      sessionChecked: true
+    });
   }
 }));
