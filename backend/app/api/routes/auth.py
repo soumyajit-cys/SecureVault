@@ -1,9 +1,12 @@
 from uuid import UUID
 
+import secrets
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
+from fastapi.responses import JSONResponse
 
 from app.api.dependencies.auth import (
     get_auth_service,
@@ -23,6 +26,14 @@ from app.api.dependencies.repositories import (
 )
 from app.api.dependencies.storage import (
     get_password_reset_service,
+)
+
+from app.core.config import get_settings
+from app.core.cookie_auth import (
+    attach_auth_cookies,
+    clear_auth_cookies,
+    read_refresh_token,
+    require_valid_csrf,
 )
 
 from app.schemas.auth import (
@@ -78,6 +89,52 @@ def _client_ip(request: Request) -> str | None:
         if request.client
         else None
     )
+
+
+def _issue_token_response(
+    tokens: dict,
+) -> JSONResponse:
+    """
+    Deliver an access token in the body and the
+    refresh token in an HttpOnly cookie; the CSRF
+    token is exposed in a readable cookie.
+    """
+
+    settings = get_settings()
+
+    csrf_token = (
+        secrets.token_urlsafe(32)
+    )
+
+    refresh_token = (
+        tokens.get(
+            "refresh_token"
+        )
+    )
+
+    body = {
+        key: value
+        for key, value
+        in tokens.items()
+        if key != "refresh_token"
+    }
+
+    response = JSONResponse(
+        content=body
+    )
+
+    if refresh_token:
+        attach_auth_cookies(
+            response,
+            refresh_token=refresh_token,
+            max_age_seconds=(
+                settings.REFRESH_TOKEN_EXPIRE_DAYS
+                * 24 * 60 * 60
+            ),
+            csrf_token=csrf_token,
+        )
+
+    return response
 
 
 @router.post("/register")
