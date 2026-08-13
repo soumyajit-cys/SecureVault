@@ -19,7 +19,9 @@ export const auth = {
   login: (body: { email: string; password: string }) =>
     api.post<LoginResponse>("/auth/login", body).then((r) => r.data),
   register: (body: { email: string; username: string; password: string }) =>
-    api.post<User>("/auth/register", body).then((r) => r.data)
+    api.post<User>("/auth/register", body).then((r) => r.data),
+  verifyMfa: (body: { mfa_token: string; code: string }) =>
+    api.post<LoginResponse>("/auth/mfa/verify", body).then((r) => r.data)
 };
 
 export const profile = {
