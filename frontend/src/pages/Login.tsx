@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import Button from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
-import { auth } from "@/lib/endpoints";
+import { auth, profile } from "@/lib/endpoints";
 import { extractDetail } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { IconShield } from "@/components/layout/Sidebar";
@@ -84,28 +84,43 @@ export default function Login() {
         </div>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={mfaToken ? handleMfa : handleSubmit}
           className="space-y-5 rounded-2xl border border-cyber-line bg-surface-elevated p-8 shadow-modal"
         >
-          <TextField
-            label="Email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com"
-          />
+          {!mfaToken ? (
+            <>
+              <TextField
+                label="Email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+              />
 
-          <TextField
-            label="Password"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••••••"
-          />
+              <TextField
+                label="Password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+              />
+            </>
+          ) : (
+            <TextField
+              label="Authenticator code"
+              required
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="000000"
+              hint="Enter the 6-digit code from your authenticator app"
+            />
+          )}
 
           {error && (
             <div className="animate-fade-in rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
@@ -114,8 +129,22 @@ export default function Login() {
           )}
 
           <Button type="submit" className="w-full py-3">
-            Sign in
+            {mfaToken ? "Verify code" : "Sign in"}
           </Button>
+
+          {mfaToken && (
+            <button
+              type="button"
+              onClick={() => {
+                setMfaToken(null);
+                setCode("");
+                setError(null);
+              }}
+              className="w-full text-center text-sm text-ink-faint transition-colors hover:text-brand-600"
+            >
+              Back to sign in
+            </button>
+          )}
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-faint">
