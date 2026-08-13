@@ -46,6 +46,11 @@ jobs:
       - name: Run test suite
         run: pytest -q
 
+      - name: Scan Python dependencies for vulnerabilities
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
   frontend-build:
     runs-on: ubuntu-latest
     defaults:
@@ -68,3 +73,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Scan npm dependencies for vulnerabilities
+        run: npm audit --omit=dev
