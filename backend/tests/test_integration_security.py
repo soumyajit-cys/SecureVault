@@ -178,14 +178,30 @@ def _enable_totp(
 
 def _refresh(
     client,
-    refresh_token: str,
+    refresh_token: str | None = None,
 ):
+    """
+    Cookie-path refresh (CSRF header from the jar) when
+    no token is given; body-path refresh otherwise. Call
+    client.cookies.clear() first to force the body path.
+    """
+
+    headers = {}
+
+    if client.cookies.get("sv_csrf"):
+        headers["X-CSRF-Token"] = (
+            client.cookies.get("sv_csrf")
+        )
+
+    body = {}
+
+    if refresh_token is not None:
+        body["refresh_token"] = refresh_token
 
     return client.post(
         "/api/v1/auth/refresh",
-        json={
-            "refresh_token": refresh_token,
-        },
+        json=body,
+        headers=headers,
     )
 
 
