@@ -49,6 +49,9 @@ register ─► email verification (optional) ─► login ─► access + refre
 - Signatures verified with FIDO2 semantics; sign count is monotonic.
 - When `mfa_policy=required`, users must enroll TOTP or a passkey before
   login completes (enforcement lives in `auth_service.login`).
+- Independently of the policy, **Admin and Auditor accounts must have
+  TOTP enrolled** to use privileged endpoints (403 otherwise) — the
+  boundary guard lives in `api/dependencies/rbac.py` (`require_privileged_mfa`).
 
 ## Tokens
 
