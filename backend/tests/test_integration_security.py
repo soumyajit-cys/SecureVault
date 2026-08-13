@@ -310,26 +310,37 @@ def test_refresh_token_rotation_invalidates_old_token(
         "rotateuser",
     )
 
-    login = _login(
+    _login(
         client,
         "rotate@example.com",
     )
 
+    rotated_cookie = (
+        client.cookies.get(
+            "sv_refresh"
+        )
+    )
+
     first = _refresh(
         client,
-        login["refresh_token"],
     )
 
     assert first.status_code == 200
 
     assert (
-        first.json()["refresh_token"]
-        != login["refresh_token"]
+        client.cookies.get(
+            "sv_refresh"
+        )
+        != rotated_cookie
     )
+
+    # Replay the pre-rotation token through the body
+    # path: rotation invalidated it.
+    client.cookies.clear()
 
     replay = _refresh(
         client,
-        login["refresh_token"],
+        rotated_cookie,
     )
 
     assert replay.status_code == 401
@@ -345,21 +356,38 @@ def test_replayed_refresh_token_revokes_whole_family(
         "familyuser",
     )
 
-    login = _login(
+    _login(
         client,
         "family@example.com",
     )
 
+    pre_rotation = (
+        client.cookies.get(
+            "sv_refresh"
+        )
+    )
+
     first = _refresh(
         client,
-        login["refresh_token"],
     )
 
     assert first.status_code == 200
 
+    post_rotation = (
+        client.cookies.get(
+            "sv_refresh"
+        )
+    )
+
+    assert post_rotation != pre_rotation
+
+    # Replay the pre-rotation token: the family is
+    # poisoned, so this must fail.
+    client.cookies.clear()
+
     replay = _refresh(
         client,
-        login["refresh_token"],
+        pre_rotation,
     )
 
     assert replay.status_code == 401
@@ -368,7 +396,7 @@ def test_replayed_refresh_token_revokes_whole_family(
     # the replay must have poisoned it too.
     second = _refresh(
         client,
-        first.json()["refresh_token"],
+        post_rotation,
     )
 
     assert second.status_code == 401
@@ -382,23 +410,39 @@ def test_logout_revokes_refresh_token(client):
         "logoutuser",
     )
 
-    login = _login(
+    _login(
         client,
         "logout@example.com",
     )
 
+    current = (
+        client.cookies.get(
+            "sv_refresh"
+        )
+    )
+
     logout = client.post(
         "/api/v1/auth/logout",
-        json={
-            "refresh_token": login["refresh_token"],
+        json={},
+        headers={
+            "X-CSRF-Token": (
+                client.cookies.get(
+                    "sv_csrf"
+                )
+            )
         },
     )
 
     assert logout.status_code == 200
 
+    assert (
+        "sv_refresh"
+        not in client.cookies
+    )
+
     refresh = _refresh(
         client,
-        login["refresh_token"],
+        current,
     )
 
     assert refresh.status_code == 401
@@ -416,6 +460,8 @@ def test_refresh_rejects_access_token_type(client):
         client,
         "wrongtype@example.com",
     )
+
+    client.cookies.clear()
 
     response = _refresh(
         client,
