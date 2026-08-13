@@ -30,27 +30,24 @@ export const profile = {
 
 export const encryption = {
   encryptText: (body: {
-    text: string;
-    key_id?: string;
+    plaintext: string;
     aad?: string;
-    output_format?: "hex" | "base64";
   }) => api.post<EncryptTextResponse>("/encryption/text/encrypt", body).then((r) => r.data),
   decryptText: (body: {
     ciphertext: string;
-    nonce?: string;
-    tag?: string;
+    nonce: string;
+    tag: string;
+    encrypted_key: string;
     aad?: string;
-    output_format?: "hex" | "base64";
   }) => api.post<DecryptTextResponse>("/encryption/text/decrypt", body).then((r) => r.data)
 };
 
 export const files = {
   list: (params: { page?: number; page_size?: number; status?: string; search?: string }) =>
     api.get<Paginated<StoredFile>>("/files", { params }).then((r) => r.data),
-  upload: (file: File, keyId?: string) => {
+  upload: (file: File) => {
     const form = new FormData();
-    form.append("file", file);
-    if (keyId) form.append("key_id", keyId);
+    form.append("upload", file);
     return api.post<StoredFile>("/files/upload", form).then((r) => r.data);
   },
   download: (id: string) =>

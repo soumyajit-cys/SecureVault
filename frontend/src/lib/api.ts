@@ -32,15 +32,15 @@ export function getCsrfToken(): string | null {
 
 const api = axios.create({
   baseURL: API_BASE,
-  headers: {
-    "Content-Type": "application/json"
-  },
   withCredentials: true
 });
 
 api.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
   }
   return config;
 });
