@@ -25,13 +25,21 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const sessionChecked = useAuthStore((s) => s.sessionChecked);
   const logout = useAuthStore((s) => s.logout);
+  const restoreSession = useAuthStore((s) => s.restoreSession);
 
   useEffect(() => {
     const handle = () => logout();
     window.addEventListener("auth:logout", handle);
     return () => window.removeEventListener("auth:logout", handle);
   }, [logout]);
+
+  useEffect(() => {
+    void restoreSession();
+  }, [restoreSession]);
+
+  const pending = !sessionChecked;
 
   const protectedContent = useMemo(
     () => (
