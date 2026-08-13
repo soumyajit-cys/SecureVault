@@ -355,7 +355,35 @@ def admin_token(client, db_session):
         },
     )
 
-    return login.json()["access_token"]
+    token = login.json()["access_token"]
+
+    setup = client.post(
+        "/api/v1/auth/mfa/setup",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+    )
+
+    assert setup.status_code == 200
+
+    secret = setup.json()["secret"]
+
+    import pyotp
+
+    enabled = client.post(
+        "/api/v1/auth/mfa/enable",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        json={
+            "secret": secret,
+            "code": pyotp.TOTP(secret).now(),
+        },
+    )
+
+    assert enabled.status_code == 200
+
+    return token
 
 
 # -------------------------------------------------
