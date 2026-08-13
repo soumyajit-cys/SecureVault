@@ -144,6 +144,38 @@ def _auth(email: str, token: str) -> dict:
     }
 
 
+def _enable_totp(
+    client,
+    token: str,
+) -> None:
+    """
+    Enable TOTP for the given session so privileged
+    (Admin/Auditor) users clear the MFA boundary.
+    """
+
+    setup = client.post(
+        "/api/v1/auth/mfa/setup",
+        headers=_auth("mfa-boundary", token),
+    )
+
+    assert setup.status_code == 200
+
+    secret = setup.json()["secret"]
+
+    import pyotp
+
+    enabled = client.post(
+        "/api/v1/auth/mfa/enable",
+        headers=_auth("mfa-boundary", token),
+        json={
+            "secret": secret,
+            "code": pyotp.TOTP(secret).now(),
+        },
+    )
+
+    assert enabled.status_code == 200
+
+
 def _refresh(
     client,
     refresh_token: str,
@@ -494,6 +526,8 @@ def test_role_removal_revokes_admin_access(
         client,
         "demote@example.com",
     )["access_token"]
+
+    _enable_totp(client, admin_token)
 
     admin_call = client.get(
         "/api/v1/admin/users",
