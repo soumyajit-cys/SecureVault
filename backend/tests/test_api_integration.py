@@ -265,11 +265,16 @@ def test_register_login_flow(client):
         in refreshed.json()
     )
 
-    # Logout clears the cookies.
+    # Logout clears the cookies. The refresh rotated
+    # the CSRF cookie, so re-read it.
     out = client.post(
         "/api/v1/auth/logout",
         headers={
-            "X-CSRF-Token": csrf
+            "X-CSRF-Token": (
+                client.cookies.get(
+                    "sv_csrf"
+                )
+            )
         },
     )
 
