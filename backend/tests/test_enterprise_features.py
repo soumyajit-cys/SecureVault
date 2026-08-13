@@ -174,9 +174,13 @@ def _make_admin(
 
     db_session.commit()
 
-    return _login(client, email)[
+    token = _login(client, email)[
         "access_token"
     ]
+
+    _enable_mfa(client, token)
+
+    return token
 
 
 def _enable_mfa(
