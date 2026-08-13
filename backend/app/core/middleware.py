@@ -73,12 +73,12 @@ class SecurityHeadersMiddleware(
 ):
 
     HEADERS = {
+        "Content-Security-Policy": None,
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "Referrer-Policy": (
             "strict-origin-when-cross-origin"
         ),
-        "X-XSS-Protection": "1; mode=block",
         "Cross-Origin-Opener-Policy": (
             "same-origin"
         ),
@@ -104,6 +104,13 @@ class SecurityHeadersMiddleware(
             if name not in (
                 response.headers
             ):
+                if name == (
+                    "Content-Security-Policy"
+                ):
+                    value = (
+                        get_settings()
+                        .SECURITY_CSP
+                    )
                 response.headers[name] = (
                     value
                 )

@@ -124,7 +124,27 @@ def test_security_headers_present():
 
     assert (
         "X-XSS-Protection"
-        in response.headers
+        not in response.headers
+    )
+
+    csp = (
+        response.headers.get(
+            "Content-Security-Policy"
+        )
+    )
+
+    assert csp is not None
+
+    assert "default-src 'self'" in csp
+
+    assert (
+        "script-src 'self'"
+        in csp
+    )
+
+    assert (
+        "frame-ancestors 'none'"
+        in csp
     )
 
 

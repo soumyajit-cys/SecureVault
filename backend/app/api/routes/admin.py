@@ -12,6 +12,7 @@ from app.api.dependencies.current_user import (
     get_current_user,
 )
 from app.api.dependencies.rbac import (
+    require_privileged_mfa,
     require_role,
 )
 from app.api.dependencies.repositories import (
@@ -82,6 +83,9 @@ from app.services.storage.storage_service import (
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
+    dependencies=[
+        Depends(require_privileged_mfa)
+    ],
 )
 
 

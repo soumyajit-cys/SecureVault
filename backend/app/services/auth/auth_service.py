@@ -27,6 +27,8 @@ from app.domain.constants.audit_events import (
 )
 
 from app.domain.constants.auth import (
+    ADMIN_ROLE,
+    AUDITOR_ROLE,
     DEFAULT_ROLE,
 )
 
@@ -540,6 +542,22 @@ class AuthService:
             user_agent=user_agent,
         )
 
+    def _has_privileged_role(
+        self,
+        user,
+    ) -> bool:
+
+        privileged = {
+            ADMIN_ROLE,
+            AUDITOR_ROLE,
+        }
+
+        return any(
+            ur.role is not None
+            and ur.role.name in privileged
+            for ur in user.roles
+        )
+
     def _issue_tokens(
         self,
         user,
@@ -551,7 +569,6 @@ class AuthService:
             device_name,
             fingerprint_from_headers,
         )
-
         fingerprint = (
             fingerprint_from_headers(
                 user_agent

@@ -10,6 +10,7 @@ from app.api.dependencies.current_user import (
 )
 
 from app.api.dependencies.rbac import (
+    require_privileged_mfa,
     require_role,
 )
 
@@ -88,6 +89,9 @@ def all_audit_logs(
     current_user=Depends(
         require_role("Admin")
     ),
+    mfa_guard=Depends(
+        require_privileged_mfa
+    ),
     audit: AuditService = Depends(
         get_audit_service
     ),
@@ -129,6 +133,9 @@ def export_audit_logs(
     action: str | None = Query(None),
     current_user=Depends(
         require_role("Admin")
+    ),
+    mfa_guard=Depends(
+        require_privileged_mfa
     ),
     audit: AuditService = Depends(
         get_audit_service

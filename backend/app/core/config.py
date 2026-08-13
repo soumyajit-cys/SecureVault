@@ -105,14 +105,20 @@ class Settings(BaseSettings):
     ENABLE_SECURITY_HEADERS: bool = True
 
     # Content-Security-Policy sent when ENABLE_SECURITY_HEADERS
-    # is on. Relax for local dev if needed (e.g. WebSocket HMR).
+    # is on. The Google Fonts origins are required by the
+    # production bundle's index.html. Relax further for local
+    # dev only if needed (e.g. WebSocket HMR).
     SECURITY_CSP: str = (
         "default-src 'self'; "
         "script-src 'self'; "
-        "style-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' "
+        "https://fonts.googleapis.com; "
         "img-src 'self' data:; "
-        "font-src 'self'; "
-        "connect-src 'self' ws: wss:; "
+        "font-src 'self' "
+        "https://fonts.gstatic.com; "
+        "connect-src 'self' ws: wss: "
+        "https://fonts.googleapis.com "
+        "https://fonts.gstatic.com; "
         "object-src 'none'; "
         "base-uri 'self'; "
         "form-action 'self'; "

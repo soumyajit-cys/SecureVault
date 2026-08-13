@@ -17,6 +17,42 @@ from app.scripts.initialize_identity import (
 )
 
 
+def _enable_totp(
+    client,
+    token: str,
+) -> None:
+    """
+    Enable TOTP for the given session so privileged
+    (Admin/Auditor) users clear the MFA boundary.
+    """
+
+    setup = client.post(
+        "/api/v1/auth/mfa/setup",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+    )
+
+    assert setup.status_code == 200
+
+    secret = setup.json()["secret"]
+
+    import pyotp
+
+    enabled = client.post(
+        "/api/v1/auth/mfa/enable",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        json={
+            "secret": secret,
+            "code": pyotp.TOTP(secret).now(),
+        },
+    )
+
+    assert enabled.status_code == 200
+
+
 @pytest.fixture
 def db_session(tmp_path):
 
@@ -706,7 +742,14 @@ def admin_token(client, db_session):
 
     assert login.status_code == 200
 
-    return login.json()["access_token"]
+    token = login.json()["access_token"]
+
+    _enable_totp(
+        client,
+        token,
+    )
+
+    return token
 
 
 def test_admin_user_management(client, user_token, admin_token):
