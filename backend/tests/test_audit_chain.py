@@ -236,6 +236,11 @@ def test_verify_chain_endpoint(client, db_session):
         )
     }
 
+    _enable_totp(
+        client,
+        login.json()["access_token"],
+    )
+
     response = client.get(
         "/api/v1/admin/audit/verify-chain",
         headers=headers,
