@@ -7,8 +7,8 @@ import Table from "@/components/ui/Table";
 import Badge from "@/components/ui/Badge";
 import Pagination from "@/components/ui/Pagination";
 import Modal from "@/components/ui/Modal";
-import { SelectField } from "@/components/ui/Field";import { extractDetail } from "@/lib/api";
-import { files, keys } from "@/lib/endpoints";
+import { extractDetail } from "@/lib/api";
+import { files } from "@/lib/endpoints";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
 import { formatBytes, formatDate } from "@/lib/format";
 import type { StoredFile } from "@/types";
@@ -19,7 +19,6 @@ export default function FileManager() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [keyId, setKeyId] = useState("");
   const [preview, setPreview] = useState<StoredFile | null>(null);
 
   const pageSize = 10;
@@ -28,11 +27,6 @@ export default function FileManager() {
     queryKey: ["files", { page, page_size: pageSize, search }],
     queryFn: () =>
       files.list({ page, page_size: pageSize, search: search || undefined })
-  });
-
-  const { data: keyPage } = useQuery({
-    queryKey: ["keys", { page: 1, page_size: 100 }],
-    queryFn: () => keys.list({ page: 1, page_size: 100 })
   });
 
   const uploadMutation = useMutation({
