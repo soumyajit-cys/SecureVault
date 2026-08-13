@@ -23,6 +23,6 @@ logs/
 
 .DS_Store
 
-
+release/
 
 *.tsbuildinfo
