@@ -577,12 +577,14 @@ def passkey_login_complete(
             detail=str(exc),
         ) from exc
 
-    return auth_service.complete_passkey_login(
-        user,
-        client_ip=_client_ip(request),
-        user_agent=request.headers.get(
-            "User-Agent"
-        ),
+    return _issue_token_response(
+        auth_service.complete_passkey_login(
+            user,
+            client_ip=_client_ip(request),
+            user_agent=request.headers.get(
+                "User-Agent"
+            ),
+        )
     )
 
 
