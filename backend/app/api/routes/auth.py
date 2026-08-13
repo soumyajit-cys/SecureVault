@@ -207,8 +207,8 @@ def verify_mfa_login(
 
 @router.post("/refresh")
 def refresh(
-    payload: RefreshRequest | None = None,
     request: Request,
+    payload: RefreshRequest | None = None,
     auth_service=Depends(
         get_auth_service
     ),
@@ -246,8 +246,8 @@ def refresh(
 
 @router.post("/logout")
 def logout(
-    payload: LogoutRequest | None = None,
     request: Request,
+    payload: LogoutRequest | None = None,
     auth_service=Depends(
         get_auth_service
     ),
