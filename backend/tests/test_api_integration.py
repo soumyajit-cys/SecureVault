@@ -235,7 +235,50 @@ def test_register_login_flow(client):
 
     assert "access_token" in l.json()
 
-    assert "refresh_token" in l.json()
+    assert "refresh_token" not in l.json()
+
+    # Refresh token travels in an HttpOnly cookie; the
+    # CSRF double-submit cookie is readable.
+    assert "sv_refresh" in client.cookies
+
+    assert "sv_csrf" in client.cookies
+
+    assert (
+        client.cookies.get(
+            "sv_refresh"
+        )
+    )
+
+    csrf = client.cookies.get("sv_csrf")
+
+    refreshed = client.post(
+        "/api/v1/auth/refresh",
+        headers={
+            "X-CSRF-Token": csrf
+        },
+    )
+
+    assert refreshed.status_code == 200
+
+    assert (
+        "access_token"
+        in refreshed.json()
+    )
+
+    # Logout clears the cookies.
+    out = client.post(
+        "/api/v1/auth/logout",
+        headers={
+            "X-CSRF-Token": csrf
+        },
+    )
+
+    assert out.status_code == 200
+
+    assert (
+        "sv_refresh"
+        not in client.cookies
+    )
 
 
 def test_key_lifecycle(client, user_token):
@@ -957,15 +1000,36 @@ def test_change_password_revokes_other_sessions(
 
     # Refresh tokens from the other two sessions are
     # now revoked; the calling session is not.
-    for login in (login_one, login_two):
+    # (Capture per-login cookies before they overwrite
+    # each other in the client jar.)
+    first_refresh = {
+        "refresh_token": (
+            login_one
+            .cookies
+            .get("sv_refresh")
+        ),
+    }
+
+    second_refresh = {
+        "refresh_token": (
+            login_two
+            .cookies
+            .get("sv_refresh")
+        ),
+    }
+
+    for stale_body in (
+        first_refresh,
+        second_refresh,
+    ):
+
+        # Drop the cookie jar so the body token is the
+        # only credential presented (the legacy API path).
+        client.cookies.clear()
 
         stale = client.post(
             "/api/v1/auth/refresh",
-            json={
-                "refresh_token": (
-                    login.json()["refresh_token"]
-                ),
-            },
+            json=stale_body,
         )
 
         assert stale.status_code == 401
