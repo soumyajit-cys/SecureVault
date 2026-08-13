@@ -10,6 +10,42 @@ from app.scripts.initialize_identity import (
     seed_permissions,
     seed_roles,
 )
+
+
+def _enable_totp(
+    client,
+    token: str,
+) -> None:
+    """
+    Enable TOTP for the given session so privileged
+    (Admin/Auditor) users clear the MFA boundary.
+    """
+
+    setup = client.post(
+        "/api/v1/auth/mfa/setup",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+    )
+
+    assert setup.status_code == 200
+
+    secret = setup.json()["secret"]
+
+    import pyotp
+
+    enabled = client.post(
+        "/api/v1/auth/mfa/enable",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        json={
+            "secret": secret,
+            "code": pyotp.TOTP(secret).now(),
+        },
+    )
+
+    assert enabled.status_code == 200
 from app.services.audit_service import (
     AuditService,
 )
