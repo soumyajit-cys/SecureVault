@@ -168,11 +168,22 @@ def login(
         get_auth_service
     ),
 ):
-    return auth_service.login(
+    result = auth_service.login(
         payload.email,
         payload.password,
         _client_ip(request),
         request.headers.get("User-Agent"),
+    )
+
+    if (
+        result.get(
+            "mfa_required"
+        )
+    ):
+        return result
+
+    return _issue_token_response(
+        result
     )
 
 
@@ -184,11 +195,13 @@ def verify_mfa_login(
         get_auth_service
     ),
 ):
-    return auth_service.complete_login_with_mfa(
-        payload.mfa_token,
-        payload.code,
-        _client_ip(request),
-        request.headers.get("User-Agent"),
+    return _issue_token_response(
+        auth_service.complete_login_with_mfa(
+            payload.mfa_token,
+            payload.code,
+            _client_ip(request),
+            request.headers.get("User-Agent"),
+        )
     )
 
 
