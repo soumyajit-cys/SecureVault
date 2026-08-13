@@ -69,9 +69,20 @@ deliberate product decision.
 ## Hardening measures in place
 
 - Rate limiting on login (per IP+email) and crypto/upload/download paths.
+  In production the rate limiter **must** use the Redis backend so state is
+  shared across instances; startup refuses to run otherwise
+  (`RATE_LIMIT_BACKEND=redis` required when `APP_ENV=production`).
 - Account lockout after `MAX_LOGIN_ATTEMPTS` failures.
 - Refresh-token rotation with family revocation on replay.
-- MFA enforcement policy (`Admin` setting, optional|required).
+- Refresh tokens travel only in an **HttpOnly, Secure, SameSite=Strict**
+  cookie scoped to `/api/v1/auth`; the access token is kept in browser
+  memory and never persisted. `/auth/refresh` and `/auth/logout` require
+  a CSRF double-submit (`X-CSRF-Token` header matching the `sv_csrf`
+  cookie). API clients may still refresh via a JSON body token (legacy
+  path, no cookie involved).
+- MFA enforcement policy (`Admin` setting, optional|required). Even in
+  "optional" mode, **Admin and Auditor roles must have MFA enrolled**
+  before they can use privileged endpoints (403 otherwise).
 - Token-type validation: only `access` tokens satisfy `get_current_user`;
   MFA challenge and refresh tokens are rejected as access tokens.
 - Expired keys are excluded from key selection.
@@ -81,8 +92,15 @@ deliberate product decision.
 - Ownership-scoped repository queries; cross-user access returns 404.
 - Global exception handler: client errors never leak stack traces, SQL, or
   filesystem paths.
-- Security headers: `X-Content-Type-Options`, `X-Frame-Options`, CSP-style
-  policies, HSTS (production), `Referrer-Policy`, `Cross-Origin-*`.
+- Security headers: `X-Content-Type-Options`, `X-Frame-Options`,
+  `Content-Security-Policy` (`default-src 'self'`, Google Fonts origins
+  whitelisted, `frame-ancestors 'none'`), HSTS (production),
+  `Referrer-Policy`, `Cross-Origin-*`.
+- Breached-password screening at registration/password change
+  (`PWNED_CHECK_ENABLED=true` by default; k-anonymity HIBP query).
+- Startup validation fails loudly in production on placeholder
+  `SECRET_KEY`/`VAULT_ADMIN_PASSWORD` values and on the local rate-limit
+  backend (see `core/security_settings.py`).
 
 ## What we explicitly do not claim
 
