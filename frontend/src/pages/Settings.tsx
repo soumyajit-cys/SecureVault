@@ -48,15 +48,10 @@ export default function Settings() {
     }
   }
 
-  async function handleLogout() {
-    try {
-      await api.post("/auth/logout", { refresh_token: localStorage.getItem("securevault_refresh_token") });
-    } catch {
-      /* ignore */
-    }
-    logout();
-    navigate("/login", { replace: true });
-  }
+async function handleLogout() {
+  logout();
+  navigate("/login", { replace: true });
+}
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
