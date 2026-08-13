@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import Button from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
-import { auth, profile } from "@/lib/endpoints";
+import { auth } from "@/lib/endpoints";
 import { extractDetail } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { IconShield } from "@/components/layout/Sidebar";
@@ -16,9 +16,24 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/dashboard";
+
+  async function finish(access: string) {
+    setTokens(access);
+
+    try {
+      const me = await profile.me();
+      setUser(me);
+    } catch {
+      setUser(null);
+    }
+
+    navigate(from, { replace: true });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,16 +41,25 @@ export default function Login() {
 
     try {
       const res = await auth.login({ email, password });
-      setTokens(res.access_token);
 
-      try {
-        const me = await profile.me();
-        setUser(me);
-      } catch {
-        setUser(null);
+      if (res.mfa_required && res.mfa_token) {
+        setMfaToken(res.mfa_token);
+        return;
       }
 
-      navigate(from, { replace: true });
+      await finish(res.access_token);
+    } catch (err) {
+      setError(extractDetail(err));
+    }
+  }
+
+  async function handleMfa(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const res = await auth.verifyMfa({ mfa_token: mfaToken!, code });
+      await finish(res.access_token);
     } catch (err) {
       setError(extractDetail(err));
     }
