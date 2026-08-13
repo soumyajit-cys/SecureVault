@@ -2,20 +2,45 @@ import axios, { AxiosError } from "axios";
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
 
-export const TOKEN_STORAGE_KEY = "securevault_access_token";
-export const REFRESH_STORAGE_KEY = "securevault_refresh_token";
+/**
+ * The access token lives in memory only; it is never
+ * written to localStorage or sessionStorage so an XSS
+ * payload cannot read it later. The refresh token stays
+ * in an HttpOnly cookie managed by the server; this
+ * client only carries the CSRF token for the double-
+ * submit exchange.
+ */
+let accessToken: string | null = null;
+
+const CSRF_COOKIE = "sv_csrf";
+const CSRF_HEADER = "X-CSRF-Token";
+
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
+}
+
+export function getCsrfToken(): string | null {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${CSRF_COOKIE}=([^;]*)`)
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
     "Content-Type": "application/json"
-  }
+  },
+  withCredentials: true
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
@@ -38,23 +63,22 @@ api.interceptors.response.use(
     ) {
       original._retried = true;
 
-      const refreshToken = localStorage.getItem(REFRESH_STORAGE_KEY);
+      const csrf = getCsrfToken();
 
-      if (refreshToken) {
+      if (csrf) {
         try {
-          const { data } = await axios.post(`${API_BASE}/auth/refresh`, {
-            refresh_token: refreshToken
+          const { data } = await axios.post(`${API_BASE}/auth/refresh`, null, {
+            headers: { [CSRF_HEADER]: csrf },
+            withCredentials: true
           });
 
-          localStorage.setItem(TOKEN_STORAGE_KEY, data.access_token);
-          localStorage.setItem(REFRESH_STORAGE_KEY, data.refresh_token);
+          setAccessToken(data.access_token);
 
           original.headers.Authorization = `Bearer ${data.access_token}`;
 
           return api(original);
         } catch {
-          localStorage.removeItem(TOKEN_STORAGE_KEY);
-          localStorage.removeItem(REFRESH_STORAGE_KEY);
+          setAccessToken(null);
           window.dispatchEvent(new CustomEvent("auth:logout"));
         }
       }

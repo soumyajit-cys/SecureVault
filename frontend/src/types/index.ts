@@ -14,7 +14,14 @@ export interface User {
 
 export interface LoginResponse {
   access_token: string;
-  refresh_token: string;
+  refresh_token?: string;
+  mfa_required?: boolean;
+  mfa_token?: string;
+  user?: {
+    id: string;
+    email: string;
+    username: string;
+  };
 }
 
 export interface Key {

@@ -22,7 +22,7 @@ export default function Register() {
     mutationFn: () => auth.register({ email, username, password }),
     onSuccess: async () => {
       const res = await auth.login({ email, password });
-      useAuthStore.getState().setTokens(res.access_token, res.refresh_token);
+      useAuthStore.getState().setTokens(res.access_token);
       useAuthStore.getState().setUser(null);
       navigate("/dashboard", { replace: true });
     },

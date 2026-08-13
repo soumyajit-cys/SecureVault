@@ -26,7 +26,7 @@ export default function Login() {
 
     try {
       const res = await auth.login({ email, password });
-      setTokens(res.access_token, res.refresh_token);
+      setTokens(res.access_token);
 
       try {
         const me = await profile.me();
