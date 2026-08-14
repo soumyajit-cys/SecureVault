@@ -62,17 +62,23 @@ if [ -z "$VAULT_ADMIN_PASSWORD" ]; then
   warn "VAULT_ADMIN_PASSWORD generated — save it from the summary below!"
 fi
 
-ADMIN_EMAIL="${VAULT_ADMIN_EMAIL:-$(env_get VAULT_ADMIN_EMAIL)}"
+ADMIN_EMAIL="$(env_get VAULT_ADMIN_EMAIL)"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
-env_get VAULT_ADMIN_EMAIL >/dev/null || env_set VAULT_ADMIN_EMAIL "$ADMIN_EMAIL"
+if [ -z "$(env_get VAULT_ADMIN_EMAIL)" ]; then
+  env_set VAULT_ADMIN_EMAIL "$ADMIN_EMAIL"
+fi
 
 ADMIN_USER="${VAULT_ADMIN_USERNAME:-$(env_get VAULT_ADMIN_USERNAME)}"
 ADMIN_USER="${ADMIN_USER:-admin}"
-env_get VAULT_ADMIN_USERNAME >/dev/null || env_set VAULT_ADMIN_USERNAME "$ADMIN_USER"
+if [ -z "$(env_get VAULT_ADMIN_USERNAME)" ]; then
+  env_set VAULT_ADMIN_USERNAME "$ADMIN_USER"
+fi
 
-CORS="${CORS_ORIGINS:-$(env_get CORS_ALLOW_ORIGINS)}"
-CORS="${CORS:-'[\"http://localhost:5173\"]'}"
-env_get CORS_ALLOW_ORIGINS >/dev/null || env_set CORS_ALLOW_ORIGINS "$CORS"
+CORS="$(env_get CORS_ALLOW_ORIGINS)"
+if [ -z "$CORS" ]; then
+  CORS="${CORS_ORIGINS:-[\"http://localhost:5173\"]}"
+  env_set CORS_ALLOW_ORIGINS "$CORS"
+fi
 
 # ---------- 2. Build & start ----------
 
