@@ -35,10 +35,14 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@db:5432/securevault
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
       APP_ENV: production
-      CORS_ALLOW_ORIGINS: '["http://localhost:5173"]'
+      CORS_ALLOW_ORIGINS: '${CORS_ALLOW_ORIGINS:-["http://localhost:5173"]}'
       PWNED_CHECK_ENABLED: "true"
       RATE_LIMIT_BACKEND: redis
       REDIS_URL: redis://redis:6379/0
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
+      VAULT_ADMIN_EMAIL: ${VAULT_ADMIN_EMAIL:-}
+      VAULT_ADMIN_USERNAME: ${VAULT_ADMIN_USERNAME:-}
+      VAULT_ADMIN_PASSWORD: ${VAULT_ADMIN_PASSWORD:-}
     ports:
       - "8000:8000"
     depends_on:
