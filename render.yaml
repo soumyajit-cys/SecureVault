@@ -1,0 +1,48 @@
+# Render Blueprint — SecureVault backend (FastAPI + Postgres + Redis)
+# Deploy: Render Dashboard → New → Blueprint → connect this repo.
+# Free tier: web service sleeps after 15 min idle (cold start ~1 min).
+# Free-tier caveats:
+#   - Filesystem is ephemeral: uploaded vault files are LOST on redeploy/restart.
+#     Use the paid "Persistent Disk" (mount at /app/storage) for real use.
+#   - Use Neon (free Postgres) instead of Render's free Postgres (auto-deleted after 90 days).
+#   - Use Upstash (free Redis) for REDIS_URL; Render has no free managed Redis.
+services:
+  - type: web
+    name: securevault-api
+    runtime: docker
+    repo: https://github.com/YOUR_USERNAME/SecureVault
+    plan: free
+    region: oregon
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /api/v1/health/ready
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        sync: false          # set a random 32+ char value in the dashboard
+      - key: DATABASE_URL
+        sync: false          # postgresql+psycopg://user:pass@neon-host/securevault
+      - key: RATE_LIMIT_BACKEND
+        value: redis
+      - key: REDIS_URL
+        sync: false          # redis://...@upstash-host:6379 (free tier)
+      - key: CORS_ALLOW_ORIGINS
+        value: '["https://YOUR-APP.vercel.app"]'
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
+      - key: PWNED_CHECK_ENABLED
+        value: "true"
+      - key: ENABLE_SECURITY_HEADERS
+        value: "true"
+      - key: VAULT_ADMIN_EMAIL
+        value: admin@example.com
+      - key: VAULT_ADMIN_USERNAME
+        value: admin
+      - key: VAULT_ADMIN_PASSWORD
+        sync: false          # set a strong password in the dashboard
+      - key: STORAGE_DIR
+        value: /app/storage
+      - key: MAX_UPLOAD_SIZE_BYTES
+        value: "52428800"    # 50 MB — stays under Render free-tier limits
