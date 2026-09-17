@@ -21,6 +21,7 @@ from app.domain.models import (  # noqa: F401
     EmailVerificationToken,
     AuditLog,
     CryptoKey,
+    FileShare,
     JwtSigningKey,
     MfaRecoveryCode,
     PasswordResetToken,

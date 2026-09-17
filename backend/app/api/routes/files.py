@@ -352,6 +352,9 @@ def download_file(
     keys=Depends(
         get_key_management_service
     ),
+    shares=Depends(
+        get_file_share_service
+    ),
     audit: AuditService = Depends(
         get_audit_service
     ),
@@ -364,14 +367,62 @@ def download_file(
             file_id,
         )
 
+        grant = None
+
         key = keys.get_key(
             current_user.id,
             file.key_id,
         )
 
-    except (NotFoundError, KeyNotFoundError) as exc:
+        session_key = None
+
+    except (NotFoundError, KeyNotFoundError):
+        # Not the owner (or owner key missing): fall back to an
+        # active share grant. Both cases are 404 when neither
+        # path resolves, to avoid resource enumeration.
+        try:
+            file, grant = (
+                shares.resolve_accessible_file(
+                    current_user.id,
+                    file_id,
+                )
+            )
+
+            key = None
+
+            session_key = shares.session_key_for(
+                current_user.id,
+                file,
+                grant,
+            )
+
+        except ShareNotFoundError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=str(exc),
+            ) from exc
+
+        except (NotFoundError, KeyNotFoundError) as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=str(exc),
+            ) from exc
+
+        except (KeyRevokedError, KeyExpiredError) as exc:
+            raise HTTPException(
+                status_code=403,
+                detail=str(exc),
+            ) from exc
+
+        except Exception as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Download failed: {exc}",
+            ) from exc
+
+    except (KeyRevokedError, KeyExpiredError) as exc:
         raise HTTPException(
-            status_code=404,
+            status_code=403,
             detail=str(exc),
         ) from exc
 
@@ -382,6 +433,51 @@ def download_file(
             file.original_filename
         )[0]
         or "application/octet-stream"
+    )
+
+    if grant is not None:
+        audit.log(
+            current_user.id,
+            FILE_DOWNLOADED,
+            (
+                f"file={file.id} "
+                f"shared=true grant={grant.id}"
+            ),
+            resource_type="stored_file",
+            resource_id=str(file.id),
+        )
+
+        def shared_stream():
+
+            try:
+
+                yield from SharedSessionStreamer(
+                    downloads,
+                    file,
+                    session_key,
+                )
+
+            except NotFoundError as exc:
+                raise RuntimeError(str(exc)) from exc
+
+        return StreamingResponse(
+            shared_stream(),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="{file.original_filename}"'
+                ),
+                "X-SHA256": file.sha256,
+                "X-File-Id": str(file.id),
+            },
+        )
+
+    audit.log(
+        current_user.id,
+        FILE_DOWNLOADED,
+        f"file={file.id}",
+        resource_type="stored_file",
+        resource_id=str(file.id),
     )
 
     def stream():
@@ -408,6 +504,75 @@ def download_file(
             "X-File-Id": str(file.id),
         },
     )
+
+
+class SharedSessionStreamer:
+    """
+    Stream decrypted plaintext using a pre-unwrapped session key.
+
+    Used for share-grantee downloads: the grant already carries
+    RSA-OAEP(session_key) under the grantee's public key, so the
+    route unwraps it once via ShareService and streams every
+    chunk with the resulting key (no owner private key needed).
+    """
+
+    def __init__(
+        self,
+        downloads: DownloadService,
+        file,
+        session_key: bytes,
+    ) -> None:
+
+        self._downloads = downloads
+
+        self._file = file
+
+        self._session_key = session_key
+
+    def __iter__(self):
+
+        container = (
+            self._downloads.container_path(
+                self._file
+            )
+        )
+
+        if not container.is_file():
+            raise NotFoundError(
+                "Encrypted container missing on disk."
+            )
+
+        from app.crypto.streams.decrypt_stream import (
+            DecryptStream,
+        )
+
+        from app.services.encryption.container_serializer import (
+            ContainerSerializer,
+        )
+
+        serializer = ContainerSerializer()
+
+        decrypt = DecryptStream()
+
+        stream, _, _wrapped = (
+            serializer.open_file(container)
+        )
+
+        try:
+
+            for payload in serializer.iter_chunks(stream):
+
+                for plaintext in decrypt.decrypt(
+                    [payload],
+                    self._session_key,
+                ):
+
+                    yield plaintext
+
+        finally:
+
+            if not stream.closed:
+                stream.close()
 
 
 class FileStreamer:
