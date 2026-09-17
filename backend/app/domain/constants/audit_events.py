@@ -24,6 +24,8 @@ FILE_DELETED = "file.deleted"
 
 FILE_SHARED = "file.shared"
 
+FILE_SHARE_REVOKED = "file.share_revoked"
+
 FOLDER_ENCRYPTED = "folder.encrypted"
 
 FOLDER_DECRYPTED = "folder.decrypted"
