@@ -9,6 +9,7 @@ from app.api.dependencies.repositories import (
     get_audit_repository,
     get_crypto_key_repository,
     get_email_verification_token_repository,
+    get_file_share_repository,
     get_password_reset_token_repository,
     get_refresh_token_repository,
     get_session_repository,
@@ -212,6 +213,37 @@ def get_audit_service(
 
     return AuditService(
         audit_repository
+    )
+
+
+def get_file_share_service(
+    shares=Depends(
+        get_file_share_repository
+    ),
+    stored_files=Depends(
+        get_stored_file_repository
+    ),
+    users=Depends(
+        get_user_repository
+    ),
+    keys=Depends(
+        get_key_management_service
+    ),
+    storage=Depends(
+        get_storage_service
+    ),
+):
+
+    from app.services.file_share_service import (
+        ShareService,
+    )
+
+    return ShareService(
+        shares,
+        stored_files,
+        users,
+        keys,
+        storage=storage,
     )
 
 
