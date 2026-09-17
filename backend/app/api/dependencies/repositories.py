@@ -113,6 +113,14 @@ def get_stored_file_repository(
     )
 
 
+def get_file_share_repository(
+    db: Session = Depends(get_db),
+):
+    return SQLAlchemyFileShareRepository(
+        db
+    )
+
+
 def get_jwt_signing_key_repository(
     db: Session = Depends(get_db),
 ):
