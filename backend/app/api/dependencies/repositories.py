@@ -45,6 +45,9 @@ from app.infrastructure.repositories.session_repository import (
 from app.infrastructure.repositories.stored_file_repository import (
     SQLAlchemyStoredFileRepository,
 )
+from app.infrastructure.repositories.file_share_repository import (
+    SQLAlchemyFileShareRepository,
+)
 from app.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
