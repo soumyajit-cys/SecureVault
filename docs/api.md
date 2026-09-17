@@ -69,6 +69,28 @@ large, 422 validation, 429 rate limited).
 | PATCH | `/files/{id}` | rename, restore |
 | DELETE | `/files/{id}` | soft delete |
 
+`GET /files/{id}` and `GET /files/{id}/download` resolve share
+grants: the owner uses their own key, an active grantee uses
+their per-grant wrapped session key. Non-owners without a grant
+get 404. Every download (owner or grantee) emits
+`file.downloaded` with `shared=true grant=<id>` for grantees.
+
+## Sharing
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/shares/files/{id}/share` | `{grantee_email}` → 201; requires `share:create`; owner only; idempotent |
+| DELETE | `/shares/files/{id}/shares/{grantee_id}` | revoke → 204; requires `share:revoke`; owner only |
+| GET | `/shares/files/{id}/shares` | list grants for a file (owner only) |
+| GET | `/shares/received` | files shared with me (active grants + metadata) |
+| GET | `/shares/sent` | grants I created (active + revoked) |
+
+Sharing wraps a copy of the file's AES session key under the
+grantee's active RSA-4096 public key — the container is never
+re-encrypted. Revocation blocks future downloads but does not
+rotate the session key (a grantee who cached plaintext keeps
+it). Events: `file.shared`, `file.share_revoked`.
+
 ## Folders
 
 | Method | Path | Notes |

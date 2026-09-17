@@ -114,3 +114,27 @@ export interface StorageUsage {
   stored_file_count: number;
   temp_file_count: number;
 }
+
+export interface FileShare {
+  id: string;
+  file_id: string;
+  owner_id: string;
+  grantee_id: string;
+  grantee_key_id: string | null;
+  key_algorithm: string;
+  created_at: string;
+  updated_at: string;
+  revoked_at: string | null;
+}
+
+export interface SharedFileItem {
+  share: FileShare;
+  file_id: string;
+  original_filename: string;
+  mime_type: string;
+  original_size: number;
+  encrypted_size: number;
+  sha256: string;
+  is_folder: boolean;
+  owner_id: string;
+}

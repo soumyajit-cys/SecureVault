@@ -51,6 +51,8 @@ custody** (not zero-knowledge — see `docs/security.md`).
 | T20 | XSS in SPA | Reflected/stored input rendering | Token theft | Medium | React escaping by default, no `dangerouslySetInnerHTML` in critical paths, CSP headers | Low |
 | T21 | Dependency vulnerabilities | Outdated packages | RCE | Medium | Vendored audited libs (`cryptography`, `argon2-cffi`); keep updated | Low |
 | T22 | Rate-limit bypass via spoofed IP | `X-Forwarded-For` abuse | DoS on login/crypto | Medium | Trusted-proxy-aware extraction (only when behind proxy), Redis backend | Low |
+| T23 | Share-grant abuse (confused deputy / enumeration) | Attacker guesses file UUIDs, forges grants, or re-shares | Unauthorized read | Medium | Owner-only share/revoke + `share:create`/`share:revoke` RBAC, active-grant check on every metadata/download, 404 (not 403) on foreign resources, per-grant audit (`file.shared`, `file.share_revoked`, `file.downloaded shared=true`) | Low |
+| T24 | Revoked grantee retains data | Grantee caches plaintext/session key before revocation | Confidentiality breach (post-revocation) | High (if grantee is hostile) | Documented limitation: revocation blocks future downloads only; no session-key rotation yet — re-encrypt to fully remove access | Medium (accepted; must be disclosed to owners at share time) |
 
 ## CIA & OWASP mapping
 
@@ -70,7 +72,12 @@ custody** (not zero-knowledge — see `docs/security.md`).
 ## Residual risk statement
 
 The dominant residual risk is **T13 — server compromise**, inherent to the
-server-held key-custody model. All other residual risks are rated Low or
+server-held key-custody model. Sharing does not change this: the
+server transiently holds both private keys at grant time, so a
+compromised server can read shared files. The second accepted risk
+is **T24 — post-revocation retention**: revocation is an access-control
+operation, not a cryptographic one, until session-key rotation /
+re-encryption is implemented. All other residual risks are rated Low or
 Medium with concrete mitigations. Full zero-knowledge would require the
 client-side key-custody redesign described in `docs/security.md` (treated
 as future work).

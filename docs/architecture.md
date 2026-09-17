@@ -75,6 +75,7 @@ crypto (pure primitives: AES-GCM, RSA, hybrid, hashing, streams)
 | `app/services/storage/` | Upload, download, metadata, GC, quota |
 | `app/services/auth/` | Auth flows, JWT, refresh rotation, MFA, WebAuthn |
 | `app/services/key_management_service.py` | Key lifecycle + private-key unlock |
+| `app/services/file_share_service.py` | Per-grantee session-key wraps, grant revocation, access resolution |
 | `app/services/audit_service.py` | Hash-chained audit writes |
 
 ## Frontend structure

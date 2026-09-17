@@ -13,7 +13,7 @@ User ──< UserRole >── Role ──< RolePermission >── Permission
 - **Roles** (`app/scripts/seed_roles.py`):
   - `Admin` — `*` (all permissions)
   - `User` — `file:encrypt`, `file:decrypt`, `file:upload`,
-    `file:download`, `share:create`
+    `file:download`, `share:create`, `share:revoke`
   - `Auditor` — `audit:read`, `audit:export`
 - **Superuser / special cases**: the bootstrapped admin
   (`VAULT_ADMIN_*` env) is granted `Admin` at startup. Role management
@@ -28,7 +28,13 @@ User ──< UserRole >── Role ──< RolePermission >── Permission
 3. **Object ownership** — all repository queries filter by `user_id`:
    `StoredFile`, `CryptoKey`, sessions. Cross-user access yields **404**
    (not 403) to avoid resource enumeration.
-4. **Audit scoping** — regular users see their own audit events; admins see
+4. **Share grants** — `POST /shares/files/{id}/share` requires
+   `share:create` *and* file ownership; `DELETE .../shares/{grantee}`
+   requires `share:revoke` *and* ownership. Grantees get read-only
+   metadata + download via their per-grant wrapped key; they cannot
+   re-share, rename, delete, or restore. Unknown files, foreign
+   files without a grant, and unknown recipients all return 404.
+5. **Audit scoping** — regular users see their own audit events; admins see
    everything (`/audit/admin/logs`).
 
 ## Route → requirement map (relevant subset)
@@ -36,6 +42,10 @@ User ──< UserRole >── Role ──< RolePermission >── Permission
 | Route group | Requirement |
 | --- | --- |
 | `/api/v1/profile/*`, `/files/*`, `/folders/*`, `/keys/*`, `/encryption/*` | authenticated user (own data only) |
+| `/api/v1/shares/files/{id}/share` | `share:create` + file ownership |
+| `/api/v1/shares/files/{id}/shares/{grantee}` | `share:revoke` + file ownership (revoke) |
+| `/api/v1/shares/received`, `/shares/sent`, `/shares/files/{id}/shares` | authenticated user (own grants) |
+| `/api/v1/files/{id}`, `/files/{id}/download` | owner **or** active grantee (else 404) |
 | `/api/v1/audit/logs` | authenticated user (own events) |
 | `/api/v1/audit/admin/logs`, `/api/v1/audit/export` | `audit:read` / `audit:export` (Auditor+, Admin) |
 | `/api/v1/admin/*` | `admin:access` (Admin) |

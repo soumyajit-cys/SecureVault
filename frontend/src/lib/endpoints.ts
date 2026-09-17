@@ -3,12 +3,14 @@ import type {
   AuditLog,
   DecryptTextResponse,
   EncryptTextResponse,
+  FileShare,
   GcResult,
   Key,
   KeyCreateResponse,
   KeyRotateResponse,
   LoginResponse,
   Paginated,
+  SharedFileItem,
   StoredFile,
   StorageSummary,
   StorageUsage,
@@ -98,6 +100,24 @@ export const keys = {
 export const audit = {
   list: (params: { page?: number; page_size?: number; action?: string }) =>
     api.get<Paginated<AuditLog>>("/audit/logs", { params }).then((r) => r.data)
+};
+
+export const shares = {
+  shareFile: (fileId: string, body: { grantee_email: string }) =>
+    api
+      .post<FileShare>(`/shares/files/${fileId}/share`, body)
+      .then((r) => r.data),
+  revokeShare: (fileId: string, granteeId: string) =>
+    api
+      .delete(`/shares/files/${fileId}/shares/${granteeId}`)
+      .then((r) => r.data),
+  listForFile: (fileId: string) =>
+    api
+      .get<FileShare[]>(`/shares/files/${fileId}/shares`)
+      .then((r) => r.data),
+  received: () =>
+    api.get<SharedFileItem[]>("/shares/received").then((r) => r.data),
+  sent: () => api.get<FileShare[]>("/shares/sent").then((r) => r.data)
 };
 
 export const admin = {

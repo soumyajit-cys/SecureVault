@@ -53,6 +53,37 @@ These changes are intentionally NOT implemented automatically: they alter the
 threat model, the API, the UI and the container format, and must be a
 deliberate product decision.
 
+## Multi-user sharing (server-custody grants)
+
+`file_shares` implements read-only sharing without re-encrypting the
+payload:
+
+- At share time the server unwraps the file's AES session key with
+  the **owner's** private key and wraps a copy with the **grantee's
+  active RSA-4096 public key** (OAEP-SHA256). The copy is stored in
+  `file_shares.wrapped_key`; the container on disk is untouched.
+- Each grantee unwraps their own copy with their own private key
+  and streams the same container. Grants are per (file, grantee);
+  re-sharing is idempotent, and only the owner can share or revoke
+  (grantees cannot delegate).
+- `GET /files/{id}` and `/download` accept an active grant;
+  everything else (rename, delete, restore, re-share) stays
+  owner-only. Share, revoke, and every download (owner or grantee)
+  emit hash-chained audit events (`file.shared`,
+  `file.share_revoked`, `file.downloaded` with `shared=true`).
+
+Revocation limits (read carefully):
+
+- Revocation sets `revoked_at` and blocks **future** downloads, but
+  it does **not** rotate the AES session key. A grantee who cached
+  the plaintext — or the unwrapped session key — retains it.
+- True cryptographic removal requires re-encrypting the file under
+  a fresh session key and re-issuing grants (not yet implemented).
+- Sharing preserves the server-custody model: the server still
+  holds both private keys transiently at grant time, so T13 (server
+  compromise) still exposes shared files. Do not represent grants
+  as end-to-end encrypted.
+
 ## Secret management
 
 - `SECRET_KEY` is read from the environment (`.env` in development, secret
