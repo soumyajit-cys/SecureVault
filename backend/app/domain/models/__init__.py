@@ -11,6 +11,7 @@ from app.domain.models.role import Role
 from app.domain.models.role_permission import RolePermission
 from app.domain.models.session import Session
 from app.domain.models.stored_file import StoredFile
+from app.domain.models.file_share import FileShare
 from app.domain.models.user import User
 from app.domain.models.user_role import UserRole
 from app.domain.models.webauthn_credential import WebAuthnCredential
@@ -27,6 +28,7 @@ __all__ = [
     "CryptoKey",
     "JwtSigningKey",
     "StoredFile",
+    "FileShare",
     "MfaRecoveryCode",
     "PasswordResetToken",
     "EmailVerificationToken",
