@@ -48,6 +48,10 @@ from app.api.routes.profile import (
     router as profile_router
 )
 
+from app.api.routes.shares import (
+    router as shares_router
+)
+
 api_router = APIRouter()
 
 api_router.include_router(
@@ -96,4 +100,8 @@ api_router.include_router(
 
 api_router.include_router(
     profile_router
+)
+
+api_router.include_router(
+    shares_router
 )
