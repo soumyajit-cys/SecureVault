@@ -17,6 +17,7 @@ from app.api.dependencies.current_user import (
 from app.api.dependencies.storage import (
     get_audit_service,
     get_download_service,
+    get_file_share_service,
     get_key_management_service,
     get_metadata_service,
     get_upload_service,
@@ -41,8 +42,13 @@ from app.schemas.storage import (
 )
 
 from app.services.audit_service import AuditService
+from app.services.file_share_service import (
+    ShareNotFoundError,
+)
 from app.services.key_management_service import (
+    KeyExpiredError,
     KeyNotFoundError,
+    KeyRevokedError,
 )
 from app.services.storage.download_service import (
     DownloadService,
@@ -300,6 +306,9 @@ def get_file(
     metadata: MetadataService = Depends(
         get_metadata_service
     ),
+    shares=Depends(
+        get_file_share_service
+    ),
 ):
 
     try:
@@ -309,11 +318,22 @@ def get_file(
             file_id,
         )
 
-    except NotFoundError as exc:
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        ) from exc
+    except NotFoundError:
+        # Not the owner: allow an active grantee to see the
+        # metadata of a file shared with them (404 otherwise
+        # to avoid resource enumeration).
+        try:
+            file, _grant = (
+                shares.resolve_accessible_file(
+                    current_user.id,
+                    file_id,
+                )
+            )
+        except ShareNotFoundError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=str(exc),
+            ) from exc
 
     return _file_response(file)
 
