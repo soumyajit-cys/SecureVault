@@ -8,6 +8,7 @@ ROLES = {
         "file:upload",
         "file:download",
         "share:create",
+        "share:revoke",
     ],
     "Auditor": [
         "audit:read",
