@@ -571,8 +571,6 @@ def test_each_grantee_gets_independent_wrap(client):
 
     assert len(listing.json()) == 2
 
-    from app.domain.models.file_share import FileShare as ShareModel
-
     # Distinct grantees, distinct wrapped keys (checked at the DB
     # level through the service in the next assertion via API
     # visibility: both downloads succeeded independently).

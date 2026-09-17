@@ -47,6 +47,9 @@ changes required for true zero-knowledge.
   - Zip-bomb protection (size caps, compression-ratio guard)
   - Soft-delete, garbage collection and temp-file cleanup
   - Idempotent uploads and multi-field file search (pg_trgm)
+  - Secure file sharing: per-grantee RSA-wrapped session keys,
+    owner-only share/revoke, grantee download, `file.shared` /
+    `file.share_revoked` audit events
 
 - **Security & auth**
   - Argon2id password hashing, account lockout, deactivation
@@ -135,6 +138,10 @@ Base path: `/api/v1`. All endpoints except auth/health require
 - **Files** — `POST /files/upload` (idempotency key) · `GET /files` (search,
   filters) · `/files/summary` · `GET /files/{id}` · `GET /files/{id}/download`
   · `PATCH /files/{id}` · `DELETE /files/{id}`
+- **Sharing** — `POST /shares/files/{id}/share` ·
+  `DELETE /shares/files/{id}/shares/{grantee_id}` ·
+  `GET /shares/files/{id}/shares` · `GET /shares/received` ·
+  `GET /shares/sent` (grantee metadata/download via grant)
 - **Folders** — `POST /folders/upload` · `GET /folders` ·
   `POST /folders/{id}/restore`
 - **Keys** — `POST /keys` · `GET /keys` · `GET /keys/active` · `GET /keys/{id}`

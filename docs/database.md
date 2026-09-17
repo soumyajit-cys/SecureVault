@@ -6,7 +6,7 @@
   in tests (inline StaticPool, seeded identity).
 - DSN from `DATABASE_URL`.
 - Migrations via Alembic (`backend/alembic/versions/`); the deployed
-  database must be at head (currently `5c0705199c28`).
+  database must be at head (currently `8a1f2c3d4e5f`).
 
 ## Models
 
@@ -19,6 +19,7 @@
 | `CryptoKey` | Vault keys | user_id, name, algorithm, key_size, status (active/revoked/expired), fingerprint, public_key_pem, encrypted_private_key_pem, nonce/tag/salt, expires_at, replaced_by_key_id |
 | `JwtSigningKey` | Token signing | algorithm, status, wrapped private key material, rotated_at |
 | `StoredFile` | Vault items | user_id, original_filename, mime_type, original_size, encrypted_size, sha256, is_folder, status, deleted_at, key_id, idempotency_key, folder metadata |
+| `FileShare` | Share grants | file_id, owner_id, grantee_id, grantee_key_id, wrapped_key (RSA-OAEP session key), key_algorithm, revoked_at |
 | `AuditLog` | Audit trail | user_id, action, details, ip, user_agent, prev_hash, hash (chain) |
 | `EmailVerificationToken` / `PasswordResetToken` | Flows | hashed token, expiry, consumed |
 | `MfaRecoveryCode` | Recovery | hashed code, used |
@@ -34,6 +35,10 @@ All primary keys are UUIDs; timestamp columns use UTC.
 - `stored_files`: index on `user_id`, `(user_id, status)`, and a
   **pg_trgm GIN index** (`gin_trgm_ops`) on `original_filename` for
   fuzzy-substring search; `idempotency_key` unique per user.
+- `file_shares`: indexes on `file_id`, `owner_id`, `grantee_id`,
+  `grantee_key_id`; one active (`revoked_at IS NULL`) grant per
+  (file, grantee) enforced in `ShareService` (idempotent re-share
+  returns the existing row).
 - `audit_logs`: index on `(user_id, created_at)`.
 - Foreign keys with ON DELETE CASCADE for dependent rows
   (refresh tokens, sessions, user roles).
