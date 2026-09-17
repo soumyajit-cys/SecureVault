@@ -122,7 +122,7 @@ class ShareService:
             return existing
 
         try:
-            grantee_key = self._keys.get_active_for_user(
+            grantee_key = self._keys.get_active_key(
                 grantee.id
             )
         except KeyNotFoundError as exc:
@@ -359,7 +359,7 @@ class ShareService:
                 # error below instead of a silent mismatch.
                 pass
 
-        active = self._keys.get_active_for_user(
+        active = self._keys.get_active_key(
             user_id
         )
 
