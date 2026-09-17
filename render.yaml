@@ -21,13 +21,13 @@ services:
       - key: APP_ENV
         value: production
       - key: SECRET_KEY
-        sync: false          # set a random 32+ char value in the dashboard
+        sync: adab0eeb42962f0f2179cdfc6264b81da8d85fec82cd1847a68602a6ceb9f965  # set a random 32+ char value in the dashboard
       - key: DATABASE_URL
-        sync: false          # postgresql+psycopg://user:pass@neon-host/securevault
+        sync: https://adapted-asp-44607-gcp-usc1-search.upstash.io   # postgresql+psycopg://user:pass@neon-host/securevault
       - key: RATE_LIMIT_BACKEND
         value: redis
       - key: REDIS_URL
-        sync: false          # redis://...@upstash-host:6379 (free tier)
+        sync: postgresql://neondb_owner:npg_oWVPw09CnUcp@ep-rough-morning-azzb8ypa.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=req   # redis://...@upstash-host:6379 (free tier)
       - key: CORS_ALLOW_ORIGINS
         value: '["https://YOUR-APP.vercel.app"]'
       - key: TRUSTED_PROXY_COUNT
@@ -41,7 +41,7 @@ services:
       - key: VAULT_ADMIN_USERNAME
         value: admin
       - key: VAULT_ADMIN_PASSWORD
-        sync: false          # set a strong password in the dashboard
+        sync: iYHyfMzkQ11yWWMm2nXR         # set a strong password in the dashboard
       - key: STORAGE_DIR
         value: /app/storage
       - key: MAX_UPLOAD_SIZE_BYTES
