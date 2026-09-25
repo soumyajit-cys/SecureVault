@@ -8,6 +8,8 @@ import RequireRole from "@/components/guard/RequireRole";
 
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import VerifyEmail from "@/pages/VerifyEmail";
+import ResetPassword from "@/pages/ResetPassword";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import EncryptText from "@/pages/EncryptText";
@@ -78,6 +80,8 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/*"
             element={

@@ -1,144 +1,129 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
-import Button from "@/components/ui/Button";
-import { TextField } from "@/components/ui/Field";
-import { auth, profile } from "@/lib/endpoints";
-import { extractDetail } from "@/lib/api";
+import { Link } from "react-router-dom";
+
+import Reveal from "@/components/auth/Reveal";
+import ScrambleText from "@/components/auth/ScrambleText";
 import { IconShield } from "@/components/layout/Sidebar";
+import { useTheme } from "@/hooks/useTheme";
+import { useAuthStore } from "@/store/authStore";
 
-const shieldIcon = (
-  <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z" />
-);
-const shieldCheck = (
-  <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3zm-3 9 2 2 4-4" />
-);
+const SPEC = [
+  ["AES-256-GCM", "authenticated encryption, unique nonce per message"],
+  ["RSA-4096-OAEP", "per-user parent keys wrap each file's session key"],
+  ["Argon2id", "slow password hashing + lockout throttling"],
+  ["SHA-256", "integrity verified on every open"]
+] as const;
 
-const features = [
-  {
-    title: "AES-256-GCM encryption",
-    desc: "Military-grade authenticated encryption with unique per-message nonces.",
-    icon: <path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5" />
-  },
-  {
-    title: "Key lifecycle management",
-    desc: "Generate, rotate and revoke keys with automatic expiry and rotation policies.",
-    icon: <path d="M21 2l-5 5m-2 2l-3-3-6 6a4 4 0 0 0 6 6l6-6-3-3m-3 0l3 3" />
-  },
-  {
-    title: "Immutable audit trail",
-    desc: "Every security-relevant action is logged, timestamped and queryable in real time.",
-    icon: <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />
-  },
-  {
-    title: "Zero plaintext at rest",
-    desc: "Plaintext is never written to the vault — only ciphertext and integrity tags are.",
-    icon: shieldIcon
-  },
-  {
-    title: "Folder archives",
-    desc: "Encrypt a whole directory as a single AES-256-GCM archive and restore it later.",
-    icon: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-  },
-  {
-    title: "Role-based access",
-    desc: "Fine-grained controls for Users, Auditors and Admins, enforced server-side.",
-    icon: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 10a8 8 0 0 1 16 0" />
-  }
-];
-
-const steps = [
+const SEAL_STEPS = [
   {
     n: "01",
-    title: "Create your vault account",
-    desc: "Sign up with a strong password. Argon2 hashing protects your credentials."
+    op: "seal",
+    title: "Fresh session key per file",
+    desc: "Uploads generate a random 256-bit key. The plaintext is encrypted in a stream and never written to disk."
   },
   {
     n: "02",
-    title: "Generate an encryption key",
-    desc: "Provision an RSA-4096 key pair and share it across your workflows."
+    op: "wrap",
+    title: "Key wrapped to your RSA-4096 parent",
+    desc: "The session key is sealed with your public key and stored beside the ciphertext — only the private half re-opens it."
   },
   {
     n: "03",
-    title: "Encrypt, store and track",
-    desc: "Seal files, folders or plain text, download them only to you, and review audit logs."
+    op: "store",
+    title: "One container, ciphertext only",
+    desc: "magic + header + nonce + ciphertext + tag + wrapped key. Lose the keys and the bytes are noise."
+  },
+  {
+    n: "04",
+    op: "verify",
+    title: "Verified on every open",
+    desc: "Header, tag and SHA-256 are checked before a single byte is streamed back. Tampering fails closed."
   }
-];
+] as const;
+
+const FEATURES = [
+  {
+    title: "MFA & passkeys",
+    desc: "TOTP with recovery codes, plus FIDO2 passkeys for passwordless sign-in. Workspaces can enforce MFA by policy.",
+    mono: "TOTP · WebAuthn"
+  },
+  {
+    title: "Roles, not just logins",
+    desc: "User, Admin and Auditor roles enforced server-side on every query. Ownership-scoped reads — no IDOR by design.",
+    mono: "RBAC · ownership scope"
+  },
+  {
+    title: "Audit trail that can't be quietly edited",
+    desc: "Every security event is hash-chained and exportable to CSV. Admins can verify the chain on demand.",
+    mono: "hash-chain · CSV export"
+  },
+  {
+    title: "Key rotation & revocation",
+    desc: "Rotate parent keys on a schedule, revoke compromised ones instantly. Old containers stay readable under their recorded key.",
+    mono: "rotate · revoke · expire"
+  },
+  {
+    title: "Sealed sharing",
+    desc: "Share files by wrapping the session key to the grantee's public key. Owner-only grant and revoke, grantee download.",
+    mono: "per-grantee wrap"
+  },
+  {
+    title: "Folder archives",
+    desc: "Whole directory trees zipped then sealed as one container, with traversal and zip-bomb guards on restore.",
+    mono: "zip + AES-GCM"
+  }
+] as const;
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={theme === "light"}
+      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-800 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:text-white"
+    >
+      <span aria-hidden="true">{theme === "dark" ? "◐" : "◑"}</span>
+      {theme === "dark" ? "Light" : "Dark"}
+    </button>
+  );
+}
 
 export default function Landing() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const setTokens = useAuthStore((s) => s.setTokens);
-  const setUser = useAuthStore((s) => s.setUser);
-  const navigate = useNavigate();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const res = await auth.login({ email, password });
-      setTokens(res.access_token);
-      try {
-        const me = await profile.me();
-        setUser(me);
-      } catch {
-        setUser(null);
-      }
-      navigate("/dashboard", { replace: true });
-    } catch (err) {
-      setError(extractDetail(err));
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
-    <div className="min-h-screen bg-surface-soft">
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-cyber-line bg-surface-elevated">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
+
+      {/* ── Nav ─────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-slate-50/90 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-white">
-              <svg
-                className="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                {shieldIcon}
-              </svg>
+          <Link to="/" className="flex items-center gap-2.5" aria-label="SecureVault home">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
+              <IconShield />
             </span>
-            <span className="text-lg font-bold tracking-tight text-ink">
-              SecureVault
-            </span>
+            <span className="text-base font-bold tracking-tight">SecureVault</span>
           </Link>
-
-          <nav className="hidden items-center gap-8 text-sm font-medium text-ink-soft md:flex">
-            <a href="#features" className="transition-colors hover:text-brand-600">
-              Features
-            </a>
-            <a href="#how" className="transition-colors hover:text-brand-600">
-              How it works
-            </a>
-            <a href="#security" className="transition-colors hover:text-brand-600">
-              Security
-            </a>
+          <nav
+            className="hidden items-center gap-7 text-sm font-medium text-slate-600 dark:text-slate-400 md:flex"
+            aria-label="Page sections"
+          >
+            <a href="#model" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">The seal</a>
+            <a href="#features" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">Features</a>
+            <a href="#start" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">How it starts</a>
           </nav>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
-                className="inline-flex items-center justify-center rounded-lg bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
               >
                 Open dashboard
               </Link>
@@ -146,13 +131,13 @@ export default function Landing() {
               <>
                 <Link
                   to="/login"
-                  className="text-sm font-semibold text-ink-soft transition-colors hover:text-brand-600"
+                  className="hidden px-2 text-sm font-semibold text-slate-600 transition-colors hover:text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:text-slate-300 dark:hover:text-blue-400 sm:inline"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center justify-center rounded-lg bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 >
                   Get started
                 </Link>
@@ -162,322 +147,308 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-6 pb-24 pt-16 lg:grid-cols-2 lg:pb-28 lg:pt-24">
-          {/* Left: marketing copy */}
-          <div className="text-center lg:text-left">
-            <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {shieldCheck}
-              </svg>
-              Enterprise-grade encryption
-            </span>
-
-            <h1 className="mt-8 animate-fade-up text-4xl font-extrabold tracking-tight text-ink [animation-delay:80ms] sm:text-5xl lg:text-6xl">
-              Encrypt files, folders and text —{" "}
-              <span className="bg-brand-gradient-warm bg-clip-text text-transparent">
-                by design, at rest.
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-xl animate-fade-up text-lg leading-relaxed text-ink-soft [animation-delay:160ms] lg:mx-0">
-              SecureVault seals your sensitive data with authenticated AES-256-GCM
-              encryption, manages your RS256 keys, and keeps a complete audit trail — from
-              first upload to permanent deletion.
-            </p>
-
-            <div className="mt-8 animate-fade-up [animation-delay:240ms]">
-              {isAuthenticated ? (
+      <main id="main">
+        {/* ── Hero ──────────────────────────────────────── */}
+        <section className="relative overflow-hidden" aria-labelledby="hero-title">
+          {/* faint engineering grid, not a gradient blob */}
+          <div
+            aria-hidden="true"
+            className="cyber-bg absolute inset-0 opacity-60 dark:opacity-40"
+          />
+          <div className="relative mx-auto grid max-w-6xl gap-12 px-6 pb-20 pt-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pb-28 lg:pt-20">
+            <div className="animate-fade-up">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                Server-side sealed vault
+              </p>
+              <h1
+                id="hero-title"
+                className="mt-5 text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-5xl"
+              >
+                Steal the disk,
+                <br />
+                get nothing but noise.
+              </h1>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-400">
+                SecureVault encrypts every file, folder and text snippet with{" "}
+                <span className="font-mono text-[0.95em] font-semibold text-slate-800 dark:text-slate-200">
+                  AES-256-GCM
+                </span>{" "}
+                under per-file keys wrapped by your{" "}
+                <span className="font-mono text-[0.95em] font-semibold text-slate-800 dark:text-slate-200">
+                  RSA-4096
+                </span>{" "}
+                parent key. What rests on the volume is ciphertext — verifiable,
+                auditable, revocable.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
-                  to="/dashboard"
-                  className="inline-flex items-center justify-center rounded-lg bg-brand-gradient px-7 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                  to={isAuthenticated ? "/dashboard" : "/register"}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 >
-                  Open your vault
+                  {isAuthenticated ? "Open your vault" : "Create a free vault"}
                 </Link>
-              ) : (
                 <Link
-                  to="/register"
-                  className="inline-flex items-center justify-center rounded-lg bg-brand-gradient px-7 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:brightness-110"
+                  to="/login"
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:text-white"
                 >
-                  Start encrypting free
-                </Link>
-              )}
-            </div>
-
-            {/* Trust row */}
-            <dl className="mx-auto mt-14 grid max-w-lg grid-cols-3 gap-6 lg:mx-0">
-              {[
-                ["AES-256", "authenticated encryption"],
-                ["Argon2id", "password hashing"],
-                ["Zero-copy", "sealed plaintext paths"]
-              ].map(([k, v]) => (
-                <div key={k} className="text-center lg:text-left">
-                  <dt className="bg-brand-gradient-warm bg-clip-text text-xl font-extrabold text-transparent">
-                    {k}
-                  </dt>
-                  <dd className="mt-1 text-xs text-ink-faint">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          {/* Right: embedded login */}
-          {isAuthenticated ? (
-            <div className="animate-fade-up mx-auto w-full max-w-md text-center lg:justify-self-end">
-              <div className="rounded-2xl border border-cyber-line bg-surface-elevated p-8 shadow-card">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white">
-                  <IconShield />
-                </div>
-                <h2 className="mt-5 text-xl font-extrabold tracking-tight text-ink">
-                  You&apos;re already signed in
-                </h2>
-                <p className="mt-1.5 text-sm text-ink-faint">
-                  Continue to your sealed workspace.
-                </p>
-                <Link
-                  to="/dashboard"
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-brand-gradient px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-110"
-                >
-                  Open dashboard
+                  Sign in
                 </Link>
               </div>
+              <dl className="mt-10 grid max-w-lg grid-cols-3 gap-6 border-t border-slate-200 pt-6 dark:border-slate-800">
+                {[
+                  ["AES-256", "authenticated cipher"],
+                  ["4096-bit", "RSA parent keys"],
+                  ["0 bytes", "plaintext at rest"]
+                ].map(([k, v]) => (
+                  <div key={k}>
+                    <dt className="font-mono text-lg font-bold text-slate-900 dark:text-white">
+                      {k}
+                    </dt>
+                    <dd className="mt-0.5 text-xs text-slate-500 dark:text-slate-500">{v}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-          ) : (
-            <div className="animate-fade-up mx-auto w-full max-w-sm [animation-delay:120ms] lg:justify-self-end">
-              <div className="rounded-2xl border border-cyber-line bg-surface-elevated p-8 shadow-card">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-gradient text-white">
-                    <IconShield />
+
+            {/* Seal/open terminal — the hero animation */}
+            <div className="animate-fade-up [animation-delay:150ms]">
+              <div
+                className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 text-slate-300 shadow-modal dark:border-slate-700 dark:shadow-none"
+                role="img"
+                aria-label="Animation showing a filename dissolving into ciphertext and resolving back to plaintext"
+              >
+                <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-700" aria-hidden="true" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-700" aria-hidden="true" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" aria-hidden="true" />
+                  <span className="ml-2 font-mono text-xs text-slate-500">
+                    seal ⇄ open — live
                   </span>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-                      Access control
-                    </p>
-                    <h2 className="text-lg font-extrabold tracking-tight text-ink">
-                      Sign in
-                    </h2>
-                    <p className="text-xs text-ink-faint">Welcome back to the vault</p>
+                </div>
+                <div className="space-y-4 p-5">
+                  <ScrambleText text="quarterly-report.pdf → 9f3a…c41d.sealed" />
+                  <div className="border-t border-slate-800 pt-4 font-mono text-xs leading-6 text-slate-500">
+                    <p><span className="text-slate-600 dark:text-slate-500">$</span> vault seal quarterly-report.pdf</p>
+                    <p>├─ session key <span className="text-blue-400">aes-256-gcm · nonce 96-bit</span></p>
+                    <p>├─ wrap <span className="text-blue-400">rsa-4096-oaep · kid 7f:2a…</span></p>
+                    <p>└─ stored <span className="text-emerald-400">ciphertext only ✓ tag verified</span></p>
                   </div>
                 </div>
-
-                <form onSubmit={handleLogin} className="mt-7 space-y-4">
-                  <TextField
-                    label="Email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                  />
-                  <TextField
-                    label="Password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                  />
-
-                  {error && (
-                    <div className="animate-fade-in rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
-                      {error}
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    className="w-full py-3"
-                    loading={loading}
-                  >
-                    {loading ? "Signing in…" : "Sign in"}
-                  </Button>
-                </form>
-
-                <p className="mt-5 text-center text-sm text-ink-faint">
-                  No account?{" "}
-                  <Link
-                    to="/register"
-                    className="font-semibold text-brand-600 transition-colors hover:text-brand-700"
-                  >
-                    Create one
-                  </Link>
-                </p>
               </div>
+              <p className="mt-3 font-mono text-[11px] leading-relaxed text-slate-500 dark:text-slate-600">
+                Illustrative transcript. Real nonces, keys and tags are random per operation.
+              </p>
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="border-t border-cyber-line bg-surface-elevated">
-        <div className="mx-auto max-w-6xl px-6 py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-              Features
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Everything you need to secure your data
-            </h2>
-            <p className="mt-4 text-lg text-ink-soft">
-              A focused toolkit that makes strong crypto practical and auditable.
-            </p>
           </div>
+        </section>
 
-          <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="group rounded-xl border border-cyber-line bg-surface-elevated p-6 shadow-card transition-all duration-200 hover:border-brand-300 hover:shadow-card-hover"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-100 bg-brand-50 text-brand-600 transition-colors duration-200 group-hover:bg-brand-gradient group-hover:text-white">
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {f.icon}
-                  </svg>
-                </span>
-                <h3 className="mt-4 text-base font-semibold text-ink">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        {/* ── Crypto model ──────────────────────────────── */}
+        <section
+          id="model"
+          aria-labelledby="model-title"
+          className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40"
+        >
+          <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
+            <Reveal>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                01 — The seal, honestly
+              </p>
+              <h2 id="model-title" className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+                No &ldquo;bank-level security&rdquo;. Just the construction.
+              </h2>
+              <p className="mt-4 max-w-2xl leading-relaxed text-slate-600 dark:text-slate-400">
+                Four operations stand between your upload and the disk. Each one
+                is inspectable in{" "}
+                <span className="font-mono text-[0.9em]">backend/app/crypto/</span> —
+                and each one fails closed.
+              </p>
+            </Reveal>
 
-      {/* How it works */}
-      <section id="how" className="border-t border-cyber-line bg-surface-soft">
-        <div className="mx-auto max-w-6xl px-6 py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-              How it works
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Three steps to a sealed vault
-            </h2>
-          </div>
+            <ol className="mt-12 grid gap-4 md:grid-cols-2">
+              {SEAL_STEPS.map((s, i) => (
+                <Reveal as="li" key={s.n} delay={Math.min(i, 3) * 70}>
+                  <div className="h-full rounded-xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-950">
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                        {s.n}
+                      </span>
+                      <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">
+                        {s.op}
+                      </span>
+                    </div>
+                    <h3 className="mt-2 font-semibold">{s.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                      {s.desc}
+                    </p>
+                  </div>
+                </Reveal>
+              ))}
+            </ol>
 
-          <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
-            {steps.map((s) => (
-              <div
-                key={s.n}
-                className="relative overflow-hidden rounded-xl border border-cyber-line bg-surface-elevated p-6 shadow-card"
-              >
-                <span className="absolute -right-2 -top-3 text-6xl font-extrabold tracking-tight text-ink/10">
-                  {s.n}
-                </span>
-                <div className="relative">
-                  <span className="font-mono text-sm font-bold tracking-widest text-brand-600">
-                    {s.n}
-                  </span>
-                  <h3 className="mt-2 text-base font-semibold text-ink">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">{s.desc}</p>
+            <Reveal className="mt-8">
+              <div className="grid gap-4 lg:grid-cols-[1fr_1fr] lg:items-stretch">
+                <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-5">
+                  <p className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Container layout — *.svlt
+                  </p>
+                  <pre className="overflow-x-auto font-mono text-xs leading-7 text-slate-400">{`magic "SVLT" · version u16
+header: key_id · algorithm · nonce
+ciphertext: AES-256-GCM (...)
+tag: 128-bit auth tag
+wrapped_key: RSA-4096-OAEP blob`}</pre>
+                </div>
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.07] p-5 text-sm leading-relaxed">
+                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
+                    Honest scope
+                  </p>
+                  <p className="mt-2 text-slate-700 dark:text-slate-300">
+                    SecureVault is <strong>server-side custody, not
+                    zero-knowledge</strong>: the server generates your RSA
+                    parent keys, holds the private halves wrapped at rest, and
+                    sees plaintext in memory while sealing and opening. An
+                    operator with the database <em>and</em> the secret material
+                    can decrypt. What this buys you: a stolen volume, a
+                    discarded disk, or a backup leak reveals nothing.
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </Reveal>
 
-      {/* Security */}
-      <section id="security" className="border-t border-cyber-line bg-surface-elevated">
-        <div className="mx-auto grid max-w-6xl gap-14 px-6 py-24 lg:grid-cols-2 lg:items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-              Security
-            </p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Garbage in never stored.{" "}
-              <span className="bg-brand-gradient-warm bg-clip-text text-transparent">
-                Plaintext never rests.
-              </span>
-            </h2>
-            <ul className="mt-8 space-y-4">
-              {[
-                "AES-256-GCM with SHA-256 integrity verification on every container",
-                "Rotating RS256 signing keys with kid-based verification",
-                "Rotation, revocation and expiry enforced at the key level",
-                "Lockout thresholds and slow Argon2id hashing against brute force"
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-ink-soft">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-brand-100 bg-brand-50 text-brand-600">
-                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12l5 5L20 7" />
-                    </svg>
-                  </span>
-                  {item}
-                </li>
+            <Reveal>
+              <ul className="mt-8 flex flex-wrap gap-2" aria-label="Algorithms in use">
+                {SPEC.map(([term, def]) => (
+                  <li
+                    key={term}
+                    title={def}
+                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
+                  >
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{term}</span>
+                    <span className="hidden sm:inline">{def}</span>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── Features ──────────────────────────────────── */}
+        <section id="features" aria-labelledby="features-title" className="border-t border-slate-200 dark:border-slate-800">
+          <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
+            <Reveal>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                02 — Control plane
+              </p>
+              <h2 id="features-title" className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Encryption is the floor. Control is the product.
+              </h2>
+            </Reveal>
+            <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map((f, i) => (
+                <Reveal as="li" key={f.title} delay={(i % 3) * 70}>
+                  <div className="h-full rounded-xl border border-slate-200 bg-white p-6 transition-colors hover:border-blue-500/50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-blue-500/40">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">
+                      {f.mono}
+                    </p>
+                    <h3 className="mt-2 font-semibold">{f.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                      {f.desc}
+                    </p>
+                  </div>
+                </Reveal>
               ))}
             </ul>
           </div>
+        </section>
 
-          <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-card">
-            <p className="mb-5 flex items-center gap-2 font-mono text-sm font-semibold text-slate-300">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              </span>
-              vault layout
-            </p>
-            <pre className="overflow-x-auto font-mono text-xs leading-7 text-slate-400">{`storage/
-├── containers/   # sealed .svlt
-│   └── *.svlt    AES-256-GCM ciphertext only
-├── temp/         # staging, purged by GC
-└── keys/         # wrapped private material`}</pre>
+        {/* ── How it starts ─────────────────────────────── */}
+        <section
+          id="start"
+          aria-labelledby="start-title"
+          className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40"
+        >
+          <div className="mx-auto max-w-6xl px-6 py-20 lg:py-24">
+            <Reveal>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                03 — How it starts
+              </p>
+              <h2 id="start-title" className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Three steps to a sealed vault
+              </h2>
+            </Reveal>
+            <ol className="mt-12 grid gap-4 md:grid-cols-3">
+              {[
+                ["01", "Create your account", "Sign up with a 12+ character passphrase. Argon2id hashes it; breach-listed passwords are refused with guidance, not a raw error."],
+                ["02", "Get your RSA-4096 parent key", "Provision a parent key pair in Key Manager. Rotate on schedule, revoke on suspicion, expiry enforced."],
+                ["03", "Seal, share, audit", "Encrypt files, folders or text. Share via per-grantee wraps, watch every event land in the hash-chained log."]
+              ].map(([n, title, desc], i) => (
+                <Reveal as="li" key={n} delay={i * 70}>
+                  <div className="relative h-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-950">
+                    <span aria-hidden="true" className="absolute -right-1 -top-4 select-none text-6xl font-extrabold tracking-tight text-slate-900/[0.06] dark:text-white/[0.06]">
+                      {n}
+                    </span>
+                    <span className="relative font-mono text-sm font-bold tracking-widest text-blue-600 dark:text-blue-400">
+                      {n}
+                    </span>
+                    <h3 className="relative mt-2 font-semibold">{title}</h3>
+                    <p className="relative mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                      {desc}
+                    </p>
+                  </div>
+                </Reveal>
+              ))}
+            </ol>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="relative overflow-hidden border-t border-cyber-line bg-brand-gradient">
-        <div className="relative mx-auto max-w-4xl px-6 py-24 text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Ready to lock down your data?
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-            Create your vault in under a minute and start encrypting text, files
-            and folders — with full key control and audit logs.
-          </p>
-          <Link
-            to={isAuthenticated ? "/dashboard" : "/register"}
-            className="mt-8 inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 text-base font-semibold text-brand-700 shadow-sm transition-all duration-200 hover:bg-brand-50 active:scale-[0.98]"
-          >
-            {isAuthenticated ? "Open dashboard" : "Create a free vault"}
-          </Link>
-        </div>
-      </section>
+        {/* ── CTA ───────────────────────────────────────── */}
+        <section aria-labelledby="cta-title" className="border-t border-slate-200 dark:border-slate-800">
+          <div className="mx-auto max-w-6xl px-6 py-20 text-center lg:py-24">
+            <Reveal>
+              <p className="font-mono text-xs text-slate-500 dark:text-slate-500">
+                $ vault init --user you
+              </p>
+              <h2 id="cta-title" className="mx-auto mt-4 max-w-xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Your first sealed file is a minute away.
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-slate-600 dark:text-slate-400">
+                Register, provision a key, upload — every step verified, every
+                event logged.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  to={isAuthenticated ? "/dashboard" : "/register"}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                >
+                  {isAuthenticated ? "Open dashboard" : "Create a free vault"}
+                </Link>
+                {!isAuthenticated && (
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-8 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
+                  >
+                    Sign in
+                  </Link>
+                )}
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-cyber-line bg-surface-elevated">
+      <footer className="border-t border-slate-200 dark:border-slate-800">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-gradient text-white">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {shieldIcon}
-              </svg>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+              <IconShield />
             </span>
-            <span className="text-sm font-bold tracking-tight text-ink">
-              SecureVault
-            </span>
+            <span className="text-sm font-bold tracking-tight">SecureVault</span>
           </div>
-          <p className="text-xs text-ink-faint">
-            Zero plaintext storage · AES-256-GCM · Full audit trail
+          <p className="font-mono text-[11px] text-slate-500 dark:text-slate-600">
+            AES-256-GCM · RSA-4096 · Argon2id · hash-chained audit
           </p>
-          <div className="flex items-center gap-4 text-sm text-ink-soft">
-            <Link to="/login" className="transition-colors hover:text-brand-600">
-              Sign in
-            </Link>
-            <Link to="/register" className="transition-colors hover:text-brand-600">
-              Register
-            </Link>
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+            <Link to="/login" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">Sign in</Link>
+            <Link to="/register" className="transition-colors hover:text-blue-600 dark:hover:text-blue-400">Register</Link>
           </div>
         </div>
       </footer>
