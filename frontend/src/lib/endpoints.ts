@@ -17,13 +17,50 @@ import type {
   User
 } from "@/types";
 
+export interface PasskeyLoginOptions {
+  challenge: string;
+  allowCredentials?: Array<{
+    id: string;
+    type: string;
+    transports?: string[];
+  }>;
+  rpId?: string;
+  userVerification?: string;
+  timeout?: number;
+  [key: string]: unknown;
+}
+
 export const auth = {
   login: (body: { email: string; password: string }) =>
     api.post<LoginResponse>("/auth/login", body).then((r) => r.data),
   register: (body: { email: string; username: string; password: string }) =>
     api.post<User>("/auth/register", body).then((r) => r.data),
   verifyMfa: (body: { mfa_token: string; code: string }) =>
-    api.post<LoginResponse>("/auth/mfa/verify", body).then((r) => r.data)
+    api.post<LoginResponse>("/auth/mfa/verify", body).then((r) => r.data),
+  requestPasswordReset: (body: { email: string }) =>
+    api
+      .post<{ message: string }>("/auth/password-reset/request", body)
+      .then((r) => r.data),
+  confirmPasswordReset: (body: { token: string; new_password: string }) =>
+    api
+      .post<{ message: string }>("/auth/password-reset/confirm", body)
+      .then((r) => r.data),
+  verifyEmail: (body: { token: string }) =>
+    api
+      .post<{ message: string }>("/auth/verify-email", body)
+      .then((r) => r.data),
+  resendVerification: (body: { email: string }) =>
+    api
+      .post<{ message: string }>("/auth/resend-verification", body)
+      .then((r) => r.data),
+  passkeyLoginBegin: (body: { email?: string }) =>
+    api
+      .post<{ options: PasskeyLoginOptions }>("/auth/passkeys/login/begin", body)
+      .then((r) => r.data),
+  passkeyLoginComplete: (body: { response: unknown }) =>
+    api
+      .post<LoginResponse>("/auth/passkeys/login/complete", body)
+      .then((r) => r.data)
 };
 
 export const profile = {
