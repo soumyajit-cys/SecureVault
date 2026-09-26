@@ -77,14 +77,7 @@ class StorageService:
             or build_object_store(
                 settings,
                 root=self.files_dir,
-            )
-            if backend is None and object_store is None
-            else (
-                object_store
-                or build_object_store(
-                    settings,
-                    root=self.files_dir,
-                )
+                backend=self.backend,
             )
         )
 
@@ -360,3 +353,107 @@ class StorageService:
             total += container.stat().st_size
 
         return total
+
+    # -------------------------------------------------
+    # Committed Containers (backend-agnostic)
+    # -------------------------------------------------
+    #
+    # These methods route through the configured
+    # ObjectStore (local disk or S3) and work with
+    # streams, so memory stays flat for arbitrary file
+    # sizes. Keys use the same ``files/<user>/<file>.svlt``
+    # shape as the historical relative paths, so stored
+    # ``storage_path`` values are valid in both backends.
+
+    def container_key(
+        self,
+        user_id: uuid.UUID,
+        file_id: uuid.UUID,
+    ) -> str:
+        """
+        Object key for an encrypted container.
+        """
+
+        return (
+            f"files/{user_id}/{file_id}.svlt"
+        )
+
+    def write_container(
+        self,
+        key: str,
+    ):
+        """
+        Open a streaming writer for a container object.
+
+        Returns a context manager yielding a binary stream;
+        closing commits, raising aborts (no partial object).
+        """
+
+        return self._store.write(key)
+
+    def put_container(
+        self,
+        key: str,
+        stream: BinaryIO,
+        chunk_size: int = 1024 * 1024,
+    ) -> int:
+        """
+        Store ``stream`` as a container object. Streams in
+        blocks; returns bytes written.
+        """
+
+        return self._store.put(
+            key,
+            stream,
+            chunk_size=chunk_size,
+        )
+
+    def open_container(
+        self,
+        key: str,
+    ) -> BinaryIO:
+        """
+        Open a streaming reader for a container object.
+
+        The caller owns the stream and must close it.
+        Raises NotFoundError when the key does not exist.
+        """
+
+        return self._store.open(key)
+
+    def container_exists(
+        self,
+        key: str,
+    ) -> bool:
+
+        return self._store.exists(key)
+
+    def container_size(
+        self,
+        key: str,
+    ) -> int | None:
+
+        return self._store.size(key)
+
+    def delete_container(
+        self,
+        key: str,
+    ) -> bool:
+        """
+        Delete a container object by key. Returns True when
+        something was removed. (Compare ``remove_container``,
+        which takes a StoredFile record and resolves its path
+        through the local layout.)
+        """
+
+        return self._store.delete(key)
+
+    def iter_container_keys(
+        self,
+        prefix: str = "files/",
+    ) -> Iterable[str]:
+        """
+        Yield every committed-container key.
+        """
+
+        return self._store.iter_keys(prefix)
