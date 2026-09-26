@@ -140,12 +140,6 @@ class UploadService:
 
         if isinstance(source, (str, Path)):
 
-            self._enforce_quota(
-                user_id,
-                quota_bytes,
-                size,
-            )
-
             with self._storage.write_container(
                 storage_key
             ) as out:
@@ -165,7 +159,7 @@ class UploadService:
             result, source_size = self._encrypt_stream_source(
                 source,
                 public_key,
-                target,
+                storage_key,
                 chunk_size,
                 user_id,
             )
@@ -201,7 +195,7 @@ class UploadService:
             sha256=result.sha256,
             is_folder=False,
             folder_file_count=0,
-            container=target,
+            storage_path=storage_key,
             idempotency_key=idempotency_key,
         )
 
@@ -255,17 +249,21 @@ class UploadService:
 
         file_id = uuid.uuid4()
 
-        target = self._storage.container_path(
+        storage_key = self._storage.container_key(
             user_id,
             file_id,
         )
 
-        result = self._folder_encryptor.encrypt_folder(
-            folder,
-            public_key,
-            output_path=target,
-            owner_id=str(user_id),
-        )
+        with self._storage.write_container(
+            storage_key
+        ) as out:
+
+            result = self._folder_encryptor.encrypt_folder_to_stream(
+                folder,
+                public_key,
+                out,
+                owner_id=str(user_id),
+            )
 
         self._enforce_quota(
             user_id,
@@ -286,7 +284,7 @@ class UploadService:
             sha256=result.encryption.sha256,
             is_folder=True,
             folder_file_count=file_count,
-            container=target,
+            storage_path=storage_key,
         )
 
     # -------------------------------------------------
