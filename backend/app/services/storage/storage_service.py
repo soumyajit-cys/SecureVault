@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import BinaryIO, Iterable
 
 from app.core.config import get_settings
-from app.core.exceptions import NotFoundError
 from app.domain.models.stored_file import StoredFile
 from app.infrastructure.storage.object_store import ObjectStore
 
@@ -77,7 +76,7 @@ class StorageService:
             object_store
             or build_object_store(
                 settings,
-                root=self.files_dir,
+                root=self.root,
                 backend=self.backend,
             )
         )
@@ -269,13 +268,14 @@ class StorageService:
     ) -> bool:
         """
         Remove the encrypted container for a stored file record.
+
+        Routes through the configured object store, so it works
+        identically for the local and S3 backends.
         """
 
-        path = self.resolve_path(
+        return self._store.delete(
             stored_file.storage_path
         )
-
-        return self.remove(path)
 
     def remove_temp_files_older_than(
         self,
