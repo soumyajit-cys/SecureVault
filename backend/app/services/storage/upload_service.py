@@ -78,8 +78,6 @@ class UploadService:
 
         self._quota_service = quota_service
 
-        self._hasher = SHA256Engine()
-
     # -------------------------------------------------
     # File Upload
     # -------------------------------------------------
