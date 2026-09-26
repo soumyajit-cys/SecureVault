@@ -37,7 +37,12 @@ from app.services.storage.upload_service import UploadService
 
 BUCKET = "securevault-test"
 REGION = "us-east-1"
-ENDPOINT = "https://s3.us-west-004.backblazeb2.com"
+# NOTE: moto only intercepts AWS endpoints, so tests use one.
+# Backblaze B2 compatibility comes from boto3's standard
+# ``endpoint_url`` mechanism — the exact same code path, with
+# the endpoint string and region passed through verbatim
+# (production B2 form: https://s3.<region>.backblazeb2.com).
+ENDPOINT = "https://s3.us-east-1.amazonaws.com"
 
 
 @pytest.fixture
