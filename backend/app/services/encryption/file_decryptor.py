@@ -344,7 +344,7 @@ class FileDecryptor:
 
         finally:
 
-            if not container.closed:
+            if close_container and not container.closed:
                 container.close()
 
     # -------------------------------------------------
