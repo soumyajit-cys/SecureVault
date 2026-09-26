@@ -16,7 +16,6 @@ from app.core.exceptions import (
 )
 
 from app.crypto.file.file_header import FileHeader
-from app.crypto.hashing.sha256 import SHA256Engine
 from app.domain.models.crypto_key import CryptoKey
 from app.domain.models.stored_file import StoredFile
 from app.domain.repositories.stored_file_repository import (
