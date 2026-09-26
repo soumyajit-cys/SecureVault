@@ -609,16 +609,14 @@ class FileStreamer:
 
     def __iter__(self):
 
-        container = (
-            self._downloads.container_path(
+        try:
+            stream = self._downloads.open_container_stream(
                 self._file
             )
-        )
-
-        if not container.is_file():
+        except NotFoundError as exc:
             raise NotFoundError(
                 "Encrypted container missing on disk."
-            )
+            ) from exc
 
         from app.crypto.rsa.hybrid_encryptor import (
             HybridEncryptor,
@@ -634,6 +632,18 @@ class FileStreamer:
 
         serializer = ContainerSerializer()
 
+        try:
+
+            serializer.read_header(stream)
+
+            wrapped_key = serializer.read_wrapped_key(stream)
+
+        except Exception as exc:
+            stream.close()
+            raise NotFoundError(
+                "Encrypted container missing on disk."
+            ) from exc
+
         private_key = (
             self._downloads._keys.unlock_private_key(
                 self._key
@@ -643,10 +653,6 @@ class FileStreamer:
         hybrid = HybridEncryptor()
 
         decrypt = DecryptStream()
-
-        stream, _, wrapped_key = (
-            serializer.open_file(container)
-        )
 
         try:
 
@@ -666,8 +672,10 @@ class FileStreamer:
 
         finally:
 
-            if not stream.closed:
+            try:
                 stream.close()
+            except Exception:
+                pass
 
 
 @router.delete(
