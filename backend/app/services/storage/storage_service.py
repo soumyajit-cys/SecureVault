@@ -458,3 +458,50 @@ class StorageService:
         """
 
         return self._store.iter_keys(prefix)
+
+    def stage_container(
+        self,
+        key: str,
+    ) -> tuple[Path, bool]:
+        """
+        Materialize container bytes as a local path for APIs
+        that require real files (folder restore, decrypt-to-path).
+
+        Returns ``(path, owns_temp)``: for the local backend the
+        path is the container itself (no cleanup); for remote
+        backends the bytes are streamed to a temp file the caller
+        must remove afterwards. Raises NotFoundError when the
+        container does not exist.
+        """
+
+        from app.core.exceptions import NotFoundError
+
+        if self.backend == "local":
+
+            path = self.resolve_path(key)
+
+            if not path.is_file():
+                raise NotFoundError(
+                    "Encrypted container missing on disk."
+                )
+
+            return path, False
+
+        if not self._store.exists(key):
+            raise NotFoundError(
+                "Encrypted container missing on disk."
+            )
+
+        temp = self.create_temp_path(suffix=".svlt")
+
+        with self._store.open(key) as src:
+
+            with temp.open("wb") as out:
+
+                shutil.copyfileobj(
+                    src,
+                    out,
+                    1024 * 1024,
+                )
+
+        return temp, True

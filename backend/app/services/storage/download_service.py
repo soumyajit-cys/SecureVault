@@ -92,9 +92,35 @@ class DownloadService:
     ) -> Path:
         """
         Absolute path of the encrypted container on disk.
+
+        Local backend only. Prefer :meth:`open_container_stream`
+        for backend-agnostic streaming reads.
         """
 
         return self._storage.resolve_path(
+            file.storage_path
+        )
+
+    def open_container_stream(
+        self,
+        file: StoredFile,
+    ):
+        """
+        Open a streaming reader for the file's container.
+
+        Works for every backend (local disk or S3); the caller
+        must close the stream. Raises NotFoundError with the
+        historical message when the container is missing.
+        """
+
+        if not self._storage.container_exists(
+            file.storage_path
+        ):
+            raise NotFoundError(
+                "Encrypted container missing on disk."
+            )
+
+        return self._storage.open_container(
             file.storage_path
         )
 
