@@ -531,14 +531,9 @@ class SharedSessionStreamer:
 
     def __iter__(self):
 
-        try:
-            stream = self._downloads.open_container_stream(
-                self._file
-            )
-        except NotFoundError as exc:
-            raise NotFoundError(
-                "Encrypted container missing on disk."
-            ) from exc
+        stream = self._downloads.open_container_stream(
+            self._file
+        )
 
         from app.services.encryption.container_serializer import (
             ContainerSerializer,
@@ -546,17 +541,9 @@ class SharedSessionStreamer:
 
         serializer = ContainerSerializer()
 
-        try:
+        serializer.read_header(stream)
 
-            serializer.read_header(stream)
-
-            wrapped = serializer.read_wrapped_key(stream)
-
-        except Exception as exc:
-            stream.close()
-            raise NotFoundError(
-                "Encrypted container missing on disk."
-            ) from exc
+        wrapped = serializer.read_wrapped_key(stream)
 
         # NOTE: ``wrapped`` here is the owner's copy; the real
         # session key comes from the share grant (unwrapped once
@@ -609,14 +596,9 @@ class FileStreamer:
 
     def __iter__(self):
 
-        try:
-            stream = self._downloads.open_container_stream(
-                self._file
-            )
-        except NotFoundError as exc:
-            raise NotFoundError(
-                "Encrypted container missing on disk."
-            ) from exc
+        stream = self._downloads.open_container_stream(
+            self._file
+        )
 
         from app.crypto.rsa.hybrid_encryptor import (
             HybridEncryptor,
@@ -632,17 +614,9 @@ class FileStreamer:
 
         serializer = ContainerSerializer()
 
-        try:
+        serializer.read_header(stream)
 
-            serializer.read_header(stream)
-
-            wrapped_key = serializer.read_wrapped_key(stream)
-
-        except Exception as exc:
-            stream.close()
-            raise NotFoundError(
-                "Encrypted container missing on disk."
-            ) from exc
+        wrapped_key = serializer.read_wrapped_key(stream)
 
         private_key = (
             self._downloads._keys.unlock_private_key(
