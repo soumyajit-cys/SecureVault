@@ -144,24 +144,26 @@ class DownloadService:
             NotFoundError: container missing on disk.
         """
 
-        container = self.container_path(
-            file
-        )
+        stream = self.open_container_stream(file)
 
-        if not container.is_file():
-            raise NotFoundError(
-                "Encrypted container missing on disk."
+        try:
+
+            private_key = self._keys.unlock_private_key(
+                key
             )
 
-        private_key = self._keys.unlock_private_key(
-            key
-        )
+            return self._file_decryptor.decrypt_to_stream(
+                stream,
+                private_key,
+                output,
+            )
 
-        return self._file_decryptor.decrypt_to_stream(
-            container,
-            private_key,
-            output,
-        )
+        finally:
+
+            try:
+                stream.close()
+            except Exception:
+                pass
 
     # -------------------------------------------------
     # Path Decryption
@@ -179,35 +181,37 @@ class DownloadService:
         Defaults to a unique path inside the storage vault area.
         """
 
-        container = self.container_path(
-            file
+        container, owns_temp = self._storage.stage_container(
+            file.storage_path
         )
 
-        if not container.is_file():
-            raise NotFoundError(
-                "Encrypted container missing on disk."
+        try:
+
+            private_key = self._keys.unlock_private_key(
+                key
             )
 
-        private_key = self._keys.unlock_private_key(
-            key
-        )
-
-        destination = (
-            Path(destination)
-            if destination
-            else (
-                self._storage.vault_dir_for()
-                / file.original_filename
+            destination = (
+                Path(destination)
+                if destination
+                else (
+                    self._storage.vault_dir_for()
+                    / file.original_filename
+                )
             )
-        )
 
-        result = self._file_decryptor.decrypt_file(
-            container,
-            private_key,
-            output_path=destination,
-        )
+            result = self._file_decryptor.decrypt_file(
+                container,
+                private_key,
+                output_path=destination,
+            )
 
-        return result.decrypted_path
+            return result.decrypted_path
+
+        finally:
+
+            if owns_temp:
+                self._storage.remove(container)
 
     # -------------------------------------------------
     # Folder Restoration
