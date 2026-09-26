@@ -138,18 +138,14 @@ class GarbageCollector:
 
         removed = 0
 
-        for container in (
-            self._storage.iter_containers()
+        for key in (
+            self._storage.iter_container_keys()
         ):
 
-            relative = self._storage.relative_path(
-                container
-            )
-
-            if relative in known:
+            if key in known:
                 continue
 
-            self._storage.remove(container)
+            self._storage.delete_container(key)
 
             removed += 1
 
@@ -170,11 +166,9 @@ class GarbageCollector:
             self._files.get_all_active()
         ):
 
-            path = self._storage.resolve_path(
+            if self._storage.container_exists(
                 file.storage_path
-            )
-
-            if path.is_file():
+            ):
                 continue
 
             self._files.soft_delete(

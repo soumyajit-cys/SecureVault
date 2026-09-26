@@ -394,17 +394,17 @@ def storage_usage(
     ),
 ):
 
-    containers = list(
-        storage.iter_containers()
+    keys = list(
+        storage.iter_container_keys()
     )
 
     return StorageUsageResponse(
         storage_bytes=sum(
-            c.stat().st_size
-            for c in containers
+            storage.container_size(key) or 0
+            for key in keys
         ),
         stored_file_count=len(
-            containers
+            keys
         ),
         temp_file_count=sum(
             1
