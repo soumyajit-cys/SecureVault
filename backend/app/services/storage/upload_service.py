@@ -316,7 +316,7 @@ class UploadService:
 
         file_id = uuid.uuid4()
 
-        target = self._storage.container_path(
+        storage_key = self._storage.container_key(
             user_id,
             file_id,
         )
@@ -329,9 +329,24 @@ class UploadService:
             size,
         )
 
-        target.write_bytes(
-            container.read_bytes()
-        )
+        sha256 = hashlib.sha256()
+
+        with container.open("rb") as src:
+
+            with self._storage.write_container(
+                storage_key
+            ) as out:
+
+                while True:
+
+                    chunk = src.read(1024 * 1024)
+
+                    if not chunk:
+                        break
+
+                    sha256.update(chunk)
+
+                    out.write(chunk)
 
         return self._register(
             user_id=user_id,
@@ -344,12 +359,10 @@ class UploadService:
             ),
             original_size=0,
             encrypted_size=size,
-            sha256=self._hasher.digest_file(
-                target
-            ),
+            sha256=sha256.hexdigest(),
             is_folder=is_folder,
             folder_file_count=folder_file_count,
-            container=target,
+            storage_path=storage_key,
         )
 
     # -------------------------------------------------
