@@ -373,7 +373,7 @@ class UploadService:
         self,
         source: BinaryIO,
         public_key: RSAPublicKey,
-        target: Path,
+        storage_key: str,
         chunk_size: int,
         user_id: uuid.UUID,
     ) -> tuple["EncryptionResult", int]:
@@ -397,13 +397,17 @@ class UploadService:
 
                     out.write(chunk)
 
-            result = self._file_encryptor.encrypt_file(
-                temp,
-                public_key,
-                output_path=target,
-                chunk_size=chunk_size,
-                owner_id=str(user_id),
-            )
+            with self._storage.write_container(
+                storage_key
+            ) as out:
+
+                result = self._file_encryptor.encrypt_to_stream(
+                    temp,
+                    public_key,
+                    out,
+                    chunk_size=chunk_size,
+                    owner_id=str(user_id),
+                )
 
             return result, source_size
 
@@ -423,7 +427,7 @@ class UploadService:
         sha256: str,
         is_folder: bool,
         folder_file_count: int,
-        container: Path,
+        storage_path: str,
         idempotency_key: str | None = None,
     ) -> StoredFile:
 
@@ -432,9 +436,7 @@ class UploadService:
             user_id=user_id,
             key_id=key.id,
             original_filename=filename,
-            storage_path=self._storage.relative_path(
-                container
-            ),
+            storage_path=storage_path,
             mime_type=mime_type,
             original_size=original_size,
             encrypted_size=encrypted_size,
