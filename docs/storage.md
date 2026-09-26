@@ -1,5 +1,24 @@
 # SecureVault — Storage
 
+## Backends
+
+Committed containers live behind the `ObjectStore` interface
+(`backend/app/infrastructure/storage/`):
+
+- `STORAGE_BACKEND=local` (default) — containers as files under
+  `STORAGE_DIR`, the historical behavior.
+- `STORAGE_BACKEND=s3` — any S3-compatible bucket (Backblaze B2, AWS S3,
+  MinIO) via boto3 with `endpoint_url`. Writes stream through multipart
+  upload, reads stream through `get_object`; see `docs/deployment.md`
+  for the B2 setup. Missing `S3_*` settings fail fast at startup.
+
+Container keys (`files/<user_id>/<file_id>.svlt`) are identical in both
+backends, so `StoredFile.storage_path` rows stay valid across a switch.
+Ephemeral scratch (`tmp/` staged uploads, `vault/` restore dirs) always
+stays on local disk — it is per-request transient and needs no
+persistence. Only the raw bytes layer is backend-specific; the container
+format and crypto are untouched.
+
 ## Vault layout
 
 `STORAGE_DIR` (default `backend/storage/`) hosts:

@@ -104,7 +104,7 @@ class DownloadService:
     def open_container_stream(
         self,
         file: StoredFile,
-    ):
+    ) -> BinaryIO:
         """
         Open a streaming reader for the file's container.
 
