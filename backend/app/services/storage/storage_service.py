@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import BinaryIO, Iterable
 
 from app.core.config import get_settings
+from app.core.exceptions import NotFoundError
 from app.domain.models.stored_file import StoredFile
 from app.infrastructure.storage.object_store import ObjectStore
 
