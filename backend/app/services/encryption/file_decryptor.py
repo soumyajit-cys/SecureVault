@@ -258,34 +258,68 @@ class FileDecryptor:
 
     def decrypt_to_stream(
         self,
-        source_path: str | Path,
+        source_path: str | Path | BinaryIO,
         private_key: RSAPrivateKey,
         stream: BinaryIO,
     ) -> tuple[str, int]:
         """
         Decrypt a container into an open binary stream.
 
-        Returns a tuple of ``(sha256, chunk_count)`` so callers can
-        relay integrity information.  The stream is not closed.
+        ``source_path`` is usually a container path; it may also
+        be an already-open binary stream (e.g. straight from
+        object storage). Caller-owned streams are never closed
+        here. Returns a tuple of ``(sha256, chunk_count)`` so
+        callers can relay integrity information. The output
+        stream is not closed.
         """
 
-        source = Path(source_path)
+        close_container = False
 
-        if not source.is_file():
-            raise DecryptionError(
-                f"Encrypted file not found: {source}"
-            )
+        if isinstance(
+            source_path,
+            (str, Path),
+        ):
 
-        try:
+            source = Path(source_path)
 
-            container, _, wrapped_key = (
-                self._serializer.open_file(source)
-            )
+            if not source.is_file():
+                raise DecryptionError(
+                    f"Encrypted file not found: {source}"
+                )
 
-        except Exception as exc:
-            raise DecryptionError(
-                f"Invalid encrypted container: {exc}"
-            ) from exc
+            try:
+
+                container, _, wrapped_key = (
+                    self._serializer.open_file(source)
+                )
+
+            except Exception as exc:
+                raise DecryptionError(
+                    f"Invalid encrypted container: {exc}"
+                ) from exc
+
+            close_container = True
+
+        else:
+
+            container = source_path
+
+            try:
+
+                self._serializer.read_header(
+                    container
+                )
+
+                wrapped_key = (
+                    self._serializer.read_wrapped_key(
+                        container
+                    )
+                )
+
+            except Exception as exc:
+                raise DecryptionError(
+                    f"Invalid encrypted container: {exc}"
+                ) from exc
 
         try:
 
