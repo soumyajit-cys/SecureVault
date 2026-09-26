@@ -4,9 +4,11 @@ import shutil
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import BinaryIO, Iterable
 
 from app.core.config import get_settings
 from app.domain.models.stored_file import StoredFile
+from app.infrastructure.storage.object_store import ObjectStore
 
 settings = get_settings()
 
@@ -17,29 +19,30 @@ class StoragePathError(Exception):
 
 class StorageService:
     """
-    Manages the on-disk secure storage layout.
+    Manages the secure storage layout and committed containers.
 
-    Layout
-    ------
+    Two kinds of bytes live here:
 
-    ::
+    - **Committed containers** (``files/<user>/<file>.svlt``) go
+      through the configured :class:`ObjectStore` — local disk
+      by default, or any S3-compatible bucket when
+      ``STORAGE_BACKEND=s3``. The key format is identical to
+      the historical relative path, so database rows stay
+      valid across backends.
+    - **Ephemeral scratch** (``tmp/`` staged uploads,
+      ``vault/`` restore dirs) always stays on local disk:
+      it is per-request transient and never needs persistence.
 
-        <STORAGE_DIR>/
-        ├── tmp/                      # staged uploads
-        │   └── <uuid>.part
-        ├── files/                    # committed encrypted containers
-        │   └── <user_id>/
-        │       └── <file_id>.svlt
-        └── vault/                    # exported/restored material
-            └── <uuid>/
-
-    Every path is derived exclusively from UUIDs, never from user
-    supplied names, so path traversal is impossible by design.
+    The historical path-based API below is unchanged, so
+    local-mode behavior (and its tests) are untouched.
     """
 
     def __init__(
         self,
         storage_dir: str | Path | None = None,
+        *,
+        backend: str | None = None,
+        object_store: ObjectStore | None = None,
     ) -> None:
 
         self.root = Path(
@@ -57,6 +60,32 @@ class StorageService:
 
         self.vault_dir = (
             self.root / "vault"
+        )
+
+        from app.infrastructure.storage.factory import (
+            build_object_store,
+        )
+
+        self.backend = (
+            backend
+            or settings.STORAGE_BACKEND
+            or "local"
+        ).lower()
+
+        self._store: ObjectStore = (
+            object_store
+            or build_object_store(
+                settings,
+                root=self.files_dir,
+            )
+            if backend is None and object_store is None
+            else (
+                object_store
+                or build_object_store(
+                    settings,
+                    root=self.files_dir,
+                )
+            )
         )
 
         self.ensure_layout()
