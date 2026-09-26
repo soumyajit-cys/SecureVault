@@ -235,23 +235,25 @@ class DownloadService:
                 "Stored file is not a folder."
             )
 
-        container = self.container_path(
-            file
+        container, owns_temp = self._storage.stage_container(
+            file.storage_path
         )
 
-        if not container.is_file():
-            raise NotFoundError(
-                "Encrypted container missing on disk."
+        try:
+
+            private_key = self._keys.unlock_private_key(
+                key
             )
 
-        private_key = self._keys.unlock_private_key(
-            key
-        )
+            result = self._folder_decryptor.decrypt_folder(
+                container,
+                private_key,
+                destination=destination,
+            )
 
-        result = self._folder_decryptor.decrypt_folder(
-            container,
-            private_key,
-            destination=destination,
-        )
+            return result.restored_folder
 
-        return result.restored_folder
+        finally:
+
+            if owns_temp:
+                self._storage.remove(container)

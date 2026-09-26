@@ -531,20 +531,14 @@ class SharedSessionStreamer:
 
     def __iter__(self):
 
-        container = (
-            self._downloads.container_path(
+        try:
+            stream = self._downloads.open_container_stream(
                 self._file
             )
-        )
-
-        if not container.is_file():
+        except NotFoundError as exc:
             raise NotFoundError(
                 "Encrypted container missing on disk."
-            )
-
-        from app.crypto.streams.decrypt_stream import (
-            DecryptStream,
-        )
+            ) from exc
 
         from app.services.encryption.container_serializer import (
             ContainerSerializer,
@@ -552,11 +546,29 @@ class SharedSessionStreamer:
 
         serializer = ContainerSerializer()
 
-        decrypt = DecryptStream()
+        try:
 
-        stream, _, _wrapped = (
-            serializer.open_file(container)
+            serializer.read_header(stream)
+
+            wrapped = serializer.read_wrapped_key(stream)
+
+        except Exception as exc:
+            stream.close()
+            raise NotFoundError(
+                "Encrypted container missing on disk."
+            ) from exc
+
+        # NOTE: ``wrapped`` here is the owner's copy; the real
+        # session key comes from the share grant (unwrapped once
+        # by ShareService). It is read only to advance the stream
+        # past the header — the value itself is unused.
+        _ = wrapped
+
+        from app.crypto.streams.decrypt_stream import (
+            DecryptStream,
         )
+
+        decrypt = DecryptStream()
 
         try:
 
@@ -571,8 +583,10 @@ class SharedSessionStreamer:
 
         finally:
 
-            if not stream.closed:
+            try:
                 stream.close()
+            except Exception:
+                pass
 
 
 class FileStreamer:
