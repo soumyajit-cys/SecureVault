@@ -425,21 +425,29 @@ class ShareService:
                 "Share service is not wired to storage."
             )
 
-        container = self._storage.resolve_path(
-            stored.storage_path
-        )
-
-        if not container.is_file():
+        try:
+            stream = self._storage.open_container(
+                stored.storage_path
+            )
+        except Exception as exc:
             raise ShareError(
                 "Encrypted container missing on disk."
-            )
-
-        stream, _, wrapped = self._serializer.open_file(
-            container
-        )
+            ) from exc
 
         try:
-            return wrapped
+
+            self._serializer.read_header(stream)
+
+            return self._serializer.read_wrapped_key(stream)
+
+        except Exception as exc:
+            raise ShareError(
+                f"Could not read file container: {exc}"
+            ) from exc
+
         finally:
-            if not stream.closed:
+
+            try:
                 stream.close()
+            except Exception:
+                pass
