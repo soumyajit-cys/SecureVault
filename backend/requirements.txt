@@ -36,3 +36,9 @@ opentelemetry-instrumentation-fastapi>=0.51b0
 
 # WebAuthn passkeys
 webauthn>=3.0.0
+
+# S3-compatible object storage backend (Backblaze B2, AWS S3, MinIO)
+boto3>=1.34.0
+
+# S3 mock for tests (no real credentials needed)
+moto[s3]>=5.0.0
