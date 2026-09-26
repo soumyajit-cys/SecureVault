@@ -133,20 +133,30 @@ class UploadService:
 
         file_id = uuid.uuid4()
 
-        target = self._storage.container_path(
+        storage_key = self._storage.container_key(
             user_id,
             file_id,
         )
 
         if isinstance(source, (str, Path)):
 
-            result = self._file_encryptor.encrypt_file(
-                source,
-                public_key,
-                output_path=target,
-                chunk_size=chunk_size,
-                owner_id=str(user_id),
+            self._enforce_quota(
+                user_id,
+                quota_bytes,
+                size,
             )
+
+            with self._storage.write_container(
+                storage_key
+            ) as out:
+
+                result = self._file_encryptor.encrypt_to_stream(
+                    source,
+                    public_key,
+                    out,
+                    chunk_size=chunk_size,
+                    owner_id=str(user_id),
+                )
 
             original_size = size
 
