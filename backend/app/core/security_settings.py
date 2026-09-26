@@ -26,6 +26,45 @@ _PLACEHOLDER_ADMIN_PASSWORDS = {
 }
 
 
+def validate_storage_settings() -> None:
+    """
+    Fail fast when the object-storage backend is
+    misconfigured — at startup, not on first upload.
+
+    Called from the app lifespan in every environment
+    (unlike the production-only guards below).
+    """
+
+    backend = (settings.STORAGE_BACKEND or "local").lower()
+
+    if backend not in ("local", "s3"):
+        raise RuntimeError(
+            "STORAGE_BACKEND must be 'local' or 's3', "
+            f"got {settings.STORAGE_BACKEND!r}."
+        )
+
+    if backend != "s3":
+        return
+
+    missing = [
+        name
+        for name, value in (
+            ("S3_ENDPOINT_URL", settings.S3_ENDPOINT_URL),
+            ("S3_BUCKET", settings.S3_BUCKET),
+            ("S3_ACCESS_KEY", settings.S3_ACCESS_KEY),
+            ("S3_SECRET_KEY", settings.S3_SECRET_KEY),
+        )
+        if not value
+    ]
+
+    if missing:
+        raise RuntimeError(
+            "STORAGE_BACKEND='s3' but required settings "
+            f"are missing: {', '.join(missing)}. "
+            "Set them before starting the server."
+        )
+
+
 def validate_security_settings():
 
     if len(settings.SECRET_KEY) < 32:

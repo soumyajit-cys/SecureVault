@@ -16,7 +16,8 @@ from app.core.exceptions import (
     SecureVaultException,
 )
 from app.core.security_settings import (
-    validate_security_settings
+    validate_security_settings,
+    validate_storage_settings,
 )
 from app.core.middleware import (
     RateLimitMiddleware,
@@ -65,6 +66,7 @@ async def lifespan(app: FastAPI):
 
     configure_logging()
 
+    validate_storage_settings()
     validate_security_settings()
     initialize_security_data()
 

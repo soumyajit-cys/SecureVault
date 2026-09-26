@@ -74,6 +74,22 @@ class Settings(BaseSettings):
 
     STORAGE_DIR: str = "storage"
 
+    # Committed-container backend: "local" (disk under
+    # STORAGE_DIR) or "s3" (any S3-compatible API —
+    # AWS S3, Backblaze B2, MinIO, …). Ephemeral
+    # scratch (staged uploads, restore dirs) always
+    # stays on local disk regardless of backend.
+    STORAGE_BACKEND: str = "local"
+    S3_ENDPOINT_URL: str | None = None
+    S3_BUCKET: str | None = None
+    S3_ACCESS_KEY: str | None = None
+    S3_SECRET_KEY: str | None = None
+    # Backblaze B2 names regions like "us-west-004";
+    # the endpoint is then
+    # https://s3.us-west-004.backblazeb2.com
+    S3_REGION: str = "us-west-004"
+    S3_MULTIPART_PART_BYTES: int = 8 * 1024 * 1024
+
     ENCRYPTED_FILE_EXTENSION: str = ".svlt"
     ENCRYPTED_ARCHIVE_EXTENSION: str = ".svltz"
 
