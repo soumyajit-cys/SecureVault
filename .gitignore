@@ -17,9 +17,10 @@ uploads/
 storage/
 logs/
 
-# Keep the storage service package tracked even
+# Keep the storage packages tracked even
 # though runtime storage/upload dirs are ignored.
 !backend/app/services/storage/
+!backend/app/infrastructure/storage/
 
 .DS_Store
 
