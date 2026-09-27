@@ -8,6 +8,7 @@ from typing import BinaryIO, Iterable
 
 from app.core.config import get_settings
 from app.domain.models.stored_file import StoredFile
+from app.infrastructure.storage.keys import validate_container_key
 from app.infrastructure.storage.object_store import ObjectStore
 
 settings = get_settings()
@@ -269,12 +270,23 @@ class StorageService:
         """
         Remove the encrypted container for a stored file record.
 
-        Routes through the configured object store, so it works
-        identically for the local and S3 backends.
+        DELETION PATH — READ THIS FIRST when debugging a "file
+        won't delete" issue. This intentionally does NOT use the
+        historical ``resolve_path() + remove()`` local-filesystem
+        path. It deletes ``stored_file.storage_path`` through the
+        configured ObjectStore (``self._store.delete``), so the
+        same call removes a file from local disk when
+        ``STORAGE_BACKEND=local`` and the S3 object when
+        ``STORAGE_BACKEND=s3``. If this method ever regressed to
+        path-based removal, S3 deletes would silently no-op (the
+        local path wouldn't exist) while Postgres rows disappeared
+        — objects leaking in the bucket with no record pointing
+        at them. The key shape is validated before the delete;
+        see ``_checked_key``.
         """
 
         return self._store.delete(
-            stored_file.storage_path
+            self._checked_key(stored_file.storage_path)
         )
 
     def remove_temp_files_older_than(
@@ -373,11 +385,27 @@ class StorageService:
     ) -> str:
         """
         Object key for an encrypted container.
+
+        The key is always derived server-side from UUIDs — never
+        from user input — and self-validated on the way out so a
+        future format change fails loudly here, not in S3.
         """
 
-        return (
+        return validate_container_key(
             f"files/{user_id}/{file_id}.svlt"
         )
+
+    @staticmethod
+    def _checked_key(key: str) -> str:
+        """
+        Enforce the container-key shape before any store
+        operation. StoredFile.storage_path values originate
+        server-side, but a malicious or corrupted DB row must
+        never become an arbitrary object key — see
+        app/infrastructure/storage/keys.py.
+        """
+
+        return validate_container_key(key)
 
     def write_container(
         self,
@@ -390,7 +418,7 @@ class StorageService:
         closing commits, raising aborts (no partial object).
         """
 
-        return self._store.write(key)
+        return self._store.write(self._checked_key(key))
 
     def put_container(
         self,
@@ -404,7 +432,7 @@ class StorageService:
         """
 
         return self._store.put(
-            key,
+            self._checked_key(key),
             stream,
             chunk_size=chunk_size,
         )
@@ -420,21 +448,21 @@ class StorageService:
         Raises NotFoundError when the key does not exist.
         """
 
-        return self._store.open(key)
+        return self._store.open(self._checked_key(key))
 
     def container_exists(
         self,
         key: str,
     ) -> bool:
 
-        return self._store.exists(key)
+        return self._store.exists(self._checked_key(key))
 
     def container_size(
         self,
         key: str,
     ) -> int | None:
 
-        return self._store.size(key)
+        return self._store.size(self._checked_key(key))
 
     def delete_container(
         self,
@@ -443,11 +471,10 @@ class StorageService:
         """
         Delete a container object by key. Returns True when
         something was removed. (Compare ``remove_container``,
-        which takes a StoredFile record and resolves its path
-        through the local layout.)
+        which takes a StoredFile record instead of a raw key.)
         """
 
-        return self._store.delete(key)
+        return self._store.delete(self._checked_key(key))
 
     def iter_container_keys(
         self,
@@ -475,6 +502,8 @@ class StorageService:
         """
 
         from app.core.exceptions import NotFoundError
+
+        key = self._checked_key(key)
 
         if self.backend == "local":
 

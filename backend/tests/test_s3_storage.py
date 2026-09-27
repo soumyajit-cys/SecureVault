@@ -470,6 +470,113 @@ def test_s3_store_rejects_missing_config():
     assert "S3_BUCKET" in message
 
 
+# -------------------------------------------------
+# Key-shape / traversal safety
+# -------------------------------------------------
+
+TRAVERSAL_KEYS = [
+    "files/../../etc/passwd",
+    "files/..\\..\\windows\\system32",
+    "/abs/path.svlt",
+    "files/u/f.svlt",
+    "tmp/evil.svlt",
+    "vault/x.svlt",
+    "files/00000000-0000-0000-0000-000000000000/not-a-uuid.svlt",
+    "files/00000000-0000-0000-0000-000000000000/00000000-0000-0000-0000-000000000001.txt",
+    "",
+    "files/00000000-0000-0000-0000-000000000000/"
+    "00000000-0000-0000-0000-000000000001.svlt/extra",
+]
+
+
+def test_validate_container_key_unit():
+    from app.infrastructure.storage.keys import validate_container_key
+
+    good = (
+        "files/12345678-1234-1234-1234-1234567890ab/"
+        "abcdef01-2345-6789-abcd-ef0123456789.svlt"
+    )
+    assert validate_container_key(good) == good
+
+    for bad in TRAVERSAL_KEYS:
+        with pytest.raises(ValueError):
+            validate_container_key(bad)
+
+
+def test_s3_traversal_keys_rejected(storage, s3_bucket):
+    """A malicious or corrupted storage_path must never become an
+    S3 object key: every store-facing operation rejects it, and
+    nothing lands in the bucket."""
+
+    for bad in TRAVERSAL_KEYS:
+        with pytest.raises(ValueError):
+            storage.open_container(bad)
+        with pytest.raises(ValueError):
+            storage.container_exists(bad)
+        with pytest.raises(ValueError):
+            storage.container_size(bad)
+        with pytest.raises(ValueError):
+            storage.delete_container(bad)
+        with pytest.raises(ValueError):
+            storage.put_container(bad, io.BytesIO(b"x"))
+        with pytest.raises(ValueError):
+            with storage.write_container(bad):
+                pass
+        with pytest.raises(ValueError):
+            storage.stage_container(bad)
+
+    assert list(storage.iter_container_keys()) == []
+
+    names = [
+        obj["Key"]
+        for page in s3_bucket.get_paginator("list_objects_v2").paginate(
+            Bucket=BUCKET
+        )
+        for obj in page.get("Contents", [])
+    ]
+    assert names == []
+
+
+def test_local_traversal_keys_rejected(tmp_path):
+    """Same invariant for the local backend. Note this is stricter
+    than the old resolve_path() guard, which allowed any shape that
+    stayed under the storage root (e.g. ``tmp/…``); all writer
+    paths only ever emit container_key() shapes, so no legitimate
+    row is affected."""
+
+    local = StorageService(storage_dir=tmp_path / "storage")
+
+    for bad in TRAVERSAL_KEYS:
+        with pytest.raises(ValueError):
+            local.open_container(bad)
+        with pytest.raises(ValueError):
+            local.delete_container(bad)
+        with pytest.raises(ValueError):
+            local.container_exists(bad)
+
+
+def test_shape_is_not_ownership(downloader, uploader, user, key, tmp_path):
+    """A well-formed key for a *different* user UUID passes shape
+    validation (it is a legitimate container address) — access
+    control stays at the DB layer, where rows are ownership-scoped."""
+
+    from app.infrastructure.storage.keys import validate_container_key
+
+    source = tmp_path / "owned.txt"
+    source.write_text("mine")
+    stored = uploader.upload_file(user.id, key, source)
+
+    foreign = f"files/{uuid.uuid4()}/{stored.id}.svlt"
+    assert validate_container_key(foreign) == foreign
+
+    # …but the row itself is unreachable to anyone but the owner.
+    with pytest.raises(NotFoundError):
+        downloader.get_for_user(uuid.uuid4(), stored.id)
+
+    found = downloader.get_for_user(user.id, stored.id)
+    assert found.id == stored.id
+
+
 def test_validate_storage_settings(monkeypatch):
     import app.core.security_settings as sec
 
