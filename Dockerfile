@@ -26,6 +26,11 @@ USER vault
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=5 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/live')"
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/api/v1/health/live')"
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Single worker: each uvicorn worker holds the full app (crypto, DB pool)
+# at ~150-250 MB RSS, so --workers 1 is the only safe choice inside
+# Render's 512 MB free tier. NOTE: raise workers only with more RAM
+# (roughly one worker per 512 MB) AND Redis rate limiting
+# (RATE_LIMIT_BACKEND=redis), which production startup enforces.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
