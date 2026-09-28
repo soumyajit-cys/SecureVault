@@ -1,8 +1,11 @@
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
 venv/
 .venv/
+*.pem
 .idea/
 .vscode/
 .pytest_cache/

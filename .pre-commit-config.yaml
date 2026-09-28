@@ -1,0 +1,9 @@
+# Install once: pip install pre-commit && pre-commit install
+# Then every `git commit` scans staged changes for secrets first.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        # protect = staged changes only (fast, no history rewrite noise)
+        args: ["protect", "--staged", "--verbose", "--config", ".gitleaks.toml"]

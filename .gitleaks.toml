@@ -1,0 +1,14 @@
+# Gitleaks config: default rules, plus an allowlist for documentation
+# example placeholders like <b2-application-key-id>. Real secrets in
+# docs/ (no angle brackets) are still flagged.
+title = "SecureVault gitleaks config"
+
+[[rules]]
+description = "Render blueprint 'sync:' line carrying a real secret value instead of 'false' (dashboard prompt). Placeholders starting with CHANGEME are exempt."
+id = "render-sync-secret"
+regex = '''(?im)^\s*sync:\s*['"]?(?!false\b)(?!CHANGEME)[A-Za-z0-9_+\/=:.@~$-]{8,}'''
+
+[allowlist]
+description = "Angle-bracket placeholders in docs and examples"
+paths = ['''docs/.*''', '''.*\.example$''']
+regexes = ['''<[A-Za-z0-9_.:/-]+>''']

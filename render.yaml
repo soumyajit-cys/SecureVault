@@ -23,13 +23,13 @@ services:
       - key: APP_ENV
         value: production
       - key: SECRET_KEY
-        sync: adab0eeb42962f0f2179cdfc6264b81da8d85fec82cd1847a68602a6ceb9f965  # set a random 32+ char value in the dashboard
+        sync: CHANGEME-generate-32-plus-random-chars # set a random 32+ char value in the dashboard
       - key: DATABASE_URL
-        sync: postgresql://neondb_owner:npg_7fYACcaqmgB3@ep-spring-waterfall-b3mf0sgb-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require  # postgresql+psycopg://user:pass@neon-host/securevault
+        sync: CHANGEME-postgresql-plus-psycopg-url # postgresql+psycopg://user:pass@neon-host/securevault
       - key: RATE_LIMIT_BACKEND
         value: redis
       - key: REDIS_URL
-        sync: postgresql://neondb_owner:npg_oWVPw09CnUcp@ep-rough-morning-azzb8ypa.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=req   # redis://...@upstash-host:6379 (free tier)
+        sync: CHANGEME-redis-url # redis://...@upstash-host:6379 (free tier)
       - key: CORS_ALLOW_ORIGINS
         value: '["https://YOUR-APP.vercel.app"]'
       - key: TRUSTED_PROXY_COUNT
@@ -43,7 +43,7 @@ services:
       - key: VAULT_ADMIN_USERNAME
         value: admin
       - key: VAULT_ADMIN_PASSWORD
-        sync: iYHyfMzkQ11yWWMm2nXR         # set a strong password in the dashboard
+        sync: CHANGEME-strong-admin-password # set a strong password in the dashboard
       - key: STORAGE_DIR
         value: /app/storage
       - key: STORAGE_BACKEND
