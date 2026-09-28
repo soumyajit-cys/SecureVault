@@ -1,6 +1,10 @@
 # Render Blueprint — SecureVault backend (FastAPI + Postgres + Redis)
 # Deploy: Render Dashboard → New → Blueprint → connect this repo.
 # Free tier: web service sleeps after 15 min idle (cold start ~1 min).
+#
+# SECRETS POLICY: every credential below is `sync: false` (prompt in the
+# dashboard) with NO value after it. Never put a real value in this file —
+# gitleaks (pre-commit + CI) fails the build on `sync: <value>` lines.
 # Free-tier caveats:
 #   - Filesystem is ephemeral: uploaded vault files are LOST on redeploy/restart.
 #     Either use the paid "Persistent Disk" (mount at /app/storage) with
@@ -12,7 +16,6 @@ services:
   - type: web
     name: securevault-api
     runtime: docker
-    repo: https://github.com/YOUR_USERNAME/SecureVault
     plan: free
     region: oregon
     dockerContext: .
@@ -23,40 +26,64 @@ services:
       - key: APP_ENV
         value: production
       - key: SECRET_KEY
-        sync: CHANGEME-generate-32-plus-random-chars # set a random 32+ char value in the dashboard
+        sync: false # generate: openssl rand -hex 32 (min 32 chars, enforced at startup)
       - key: DATABASE_URL
-        sync: CHANGEME-postgresql-plus-psycopg-url # postgresql+psycopg://user:pass@neon-host/securevault
+        # Must use the postgresql+psycopg:// driver prefix, e.g.
+        # postgresql+psycopg://user:pass@<neon-host>/securevault?sslmode=require
+        # (plain postgresql:// is rejected at startup; see app/core/config.py).
+        sync: false
       - key: RATE_LIMIT_BACKEND
         value: redis
       - key: REDIS_URL
-        sync: CHANGEME-redis-url # redis://...@upstash-host:6379 (free tier)
+        # redis:// or rediss:// only (Upstash: rediss://default:<pass>@<host>:6379).
+        # Postgres and Upstash REST URLs are rejected at startup.
+        sync: false
       - key: CORS_ALLOW_ORIGINS
-        value: '["https://YOUR-APP.vercel.app"]'
+        # JSON list of exact frontend origins, e.g. ["https://vault.vercel.app"].
+        # Set after Vercel deploy (Render → Vercel → back to Render).
+        sync: false
       - key: TRUSTED_PROXY_COUNT
         value: "1"
       - key: PWNED_CHECK_ENABLED
         value: "true"
       - key: ENABLE_SECURITY_HEADERS
         value: "true"
+      - key: SECURE_COOKIES
+        value: "true"
+      - key: WEBAUTHN_RP_ID
+        # Relying-party ID = backend domain without scheme, e.g. vault-api.onrender.com
+        sync: false
+      - key: WEBAUTHN_RP_NAME
+        value: SecureVault
+      - key: WEBAUTHN_ORIGIN
+        # Exact frontend origin for passkey ceremonies, e.g. https://vault.vercel.app
+        sync: false
+      - key: APP_BASE_URL
+        # Public frontend URL, used in emailed links (verify/reset)
+        sync: false
       - key: VAULT_ADMIN_EMAIL
-        value: admin@example.com
+        sync: false
       - key: VAULT_ADMIN_USERNAME
         value: admin
       - key: VAULT_ADMIN_PASSWORD
-        sync: CHANGEME-strong-admin-password # set a strong password in the dashboard
+        sync: false
       - key: STORAGE_DIR
         value: /app/storage
       - key: STORAGE_BACKEND
         value: s3
       - key: S3_ENDPOINT_URL
-        sync: false    # e.g. https://s3.us-west-004.backblazeb2.com (B2 bucket region)
+        # e.g. https://s3.us-west-004.backblazeb2.com (B2 bucket region)
+        sync: false
       - key: S3_BUCKET
         sync: false
       - key: S3_ACCESS_KEY
-        sync: false    # B2 application key ID (bucket-scoped, not master key)
+        # B2 application key ID (bucket-scoped, not master key)
+        sync: false
       - key: S3_SECRET_KEY
-        sync: false    # B2 application key secret
+        # B2 application key secret
+        sync: false
       - key: S3_REGION
+        # MUST match the B2 bucket region (e.g. us-west-004); it signs requests.
         value: us-west-004
       - key: MAX_UPLOAD_SIZE_BYTES
         value: "52428800"    # 50 MB — stays under Render free-tier limits
