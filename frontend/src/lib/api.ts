@@ -6,11 +6,16 @@ export const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
  * The access token lives in memory only; it is never
  * written to localStorage or sessionStorage so an XSS
  * payload cannot read it later. The refresh token stays
- * in an HttpOnly cookie managed by the server; this
- * client only carries the CSRF token for the double-
- * submit exchange.
+ * in an HttpOnly cookie managed by the server. The CSRF
+ * token is likewise kept in memory: same-origin it could
+ * be read from the readable cookie, but cross-origin
+ * (Vercel -> Render) document.cookie never sees the
+ * backend's cookies, so the server also delivers the token
+ * in auth JSON bodies and the client captures it here.
  */
 let accessToken: string | null = null;
+
+let csrfToken: string | null = null;
 
 const CSRF_COOKIE = "sv_csrf";
 const CSRF_HEADER = "X-CSRF-Token";
@@ -23,11 +28,48 @@ export function setAccessToken(token: string | null): void {
   accessToken = token;
 }
 
+export function setCsrfToken(token: string | null): void {
+  csrfToken = token;
+}
+
 export function getCsrfToken(): string | null {
+  if (csrfToken) return csrfToken;
   const match = document.cookie.match(
     new RegExp(`(?:^|; )${CSRF_COOKIE}=([^;]*)`)
   );
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * Fetch the current CSRF token from the server (holder of
+ * the refresh cookie only). Needed after a page reload
+ * cross-origin, when memory is empty and the cookie is
+ * unreadable from JS.
+ */
+export async function fetchCsrfToken(): Promise<string | null> {
+  try {
+    const { data } = await axios.get(`${API_BASE}/auth/csrf`, {
+      withCredentials: true
+    });
+    const token =
+      (data as { csrf_token?: unknown } | undefined)?.csrf_token;
+    if (typeof token === "string" && token) {
+      csrfToken = token;
+      return token;
+    }
+  } catch {
+    // No cookie / not authenticated: caller treats null
+    // as "no session to refresh".
+  }
+  return null;
+}
+
+/**
+ * Memory token if present, else cookie (same-origin dev),
+ * else a server round-trip (cross-origin reload).
+ */
+export async function ensureCsrfToken(): Promise<string | null> {
+  return getCsrfToken() ?? fetchCsrfToken();
 }
 
 const api = axios.create({

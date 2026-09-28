@@ -195,6 +195,7 @@ app.add_middleware(
         "Authorization",
         "Content-Type",
         "X-Request-ID",
+        "X-CSRF-Token",
     ],
 )
 

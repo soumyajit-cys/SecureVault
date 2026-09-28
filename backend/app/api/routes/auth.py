@@ -30,6 +30,7 @@ from app.api.dependencies.storage import (
 
 from app.core.config import get_settings
 from app.core.cookie_auth import (
+    CSRF_COOKIE_NAME,
     attach_auth_cookies,
     clear_auth_cookies,
     read_refresh_token,
