@@ -126,19 +126,23 @@ export function getCsrfToken(): string | null {
  * unreadable from JS.
  */
 export async function fetchCsrfToken(): Promise<string | null> {
+  let response;
   try {
-    const { data } = await axios.get(`${API_BASE}/auth/csrf`, {
+    response = await axios.get(`${API_BASE}/auth/csrf`, {
       withCredentials: true
     });
-    const token =
-      (data as { csrf_token?: unknown } | undefined)?.csrf_token;
-    if (typeof token === "string" && token) {
-      csrfToken = token;
-      return token;
-    }
-  } catch {
-    // No cookie / not authenticated: caller treats null
-    // as "no session to refresh".
+  } catch (error) {
+    // Unreachable server must throw so callers retry with
+    // backoff; only "no session" resolves null.
+    if (isNetworkError(error)) throw error;
+    return null;
+  }
+  if (response.status === 401) return null;
+  const token = (response.data as { csrf_token?: unknown } | undefined)
+    ?.csrf_token;
+  if (typeof token === "string" && token) {
+    csrfToken = token;
+    return token;
   }
   return null;
 }

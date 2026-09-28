@@ -6,6 +6,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { getPasskeyAssertion, isWebAuthnAvailable } from "@/components/auth/webauthn";
 import Button from "@/components/ui/Button";
 import { auth, profile } from "@/lib/endpoints";
+import { isNetworkError, withWakeUpRetry } from "@/lib/api";
 import { mapAuthError } from "@/lib/authErrors";
 import { useAuthStore } from "@/store/authStore";
 
@@ -33,6 +34,7 @@ export default function Login() {
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [showResend, setShowResend] = useState(false);
+  const [waking, setWaking] = useState(false);
 
   const from =
     (location.state as { from?: { pathname: string } })?.from?.pathname ??
@@ -75,11 +77,22 @@ export default function Login() {
     }
 
     setLoading(true);
+    setWaking(false);
     try {
-      const res = await auth.login({
-        email: email.trim(),
-        password
-      });
+      // A cold server fails at the network level before auth
+      // runs, so retrying this POST cannot double-execute a
+      // login — either the server never saw it, or it returns
+      // fresh tokens again. Auth failures (401 etc.) throw
+      // non-network errors and are NOT retried.
+      const res = await withWakeUpRetry(
+        () =>
+          auth.login({
+            email: email.trim(),
+            password
+          }),
+        undefined,
+        () => setWaking(true)
+      );
       if (res.mfa_required && res.mfa_token) {
         setMfaToken(res.mfa_token);
         setStep("mfa");
@@ -87,11 +100,19 @@ export default function Login() {
       }
       await finish(res.access_token);
     } catch (err) {
-      const mapped = mapAuthError(err);
-      setError(mapped.message);
-      setShowResend(mapped.kind === "unverified");
+      if (isNetworkError(err)) {
+        setError(
+          "The server is unreachable. If it just woke from sleep, " +
+            "wait a few seconds and try again."
+        );
+      } else {
+        const mapped = mapAuthError(err);
+        setError(mapped.message);
+        setShowResend(mapped.kind === "unverified");
+      }
     } finally {
       setLoading(false);
+      setWaking(false);
     }
   }
 
@@ -280,8 +301,18 @@ export default function Login() {
           )}
 
           <Button type="submit" className="w-full py-3" loading={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {waking
+              ? "Waking up the server…"
+              : loading
+                ? "Signing in…"
+                : "Sign in"}
           </Button>
+          {waking && (
+            <p role="status" className="text-center text-xs text-slate-500 dark:text-slate-400">
+              Render&apos;s free tier sleeps when idle — retrying automatically,
+              this can take up to a minute.
+            </p>
+          )}
 
           {isWebAuthnAvailable() && (
             <>
