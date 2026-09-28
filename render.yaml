@@ -25,7 +25,7 @@ services:
       - key: SECRET_KEY
         sync: adab0eeb42962f0f2179cdfc6264b81da8d85fec82cd1847a68602a6ceb9f965  # set a random 32+ char value in the dashboard
       - key: DATABASE_URL
-        sync: https://adapted-asp-44607-gcp-usc1-search.upstash.io   # postgresql+psycopg://user:pass@neon-host/securevault
+        sync: postgresql://neondb_owner:npg_7fYACcaqmgB3@ep-spring-waterfall-b3mf0sgb-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require  # postgresql+psycopg://user:pass@neon-host/securevault
       - key: RATE_LIMIT_BACKEND
         value: redis
       - key: REDIS_URL
