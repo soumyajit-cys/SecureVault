@@ -394,15 +394,26 @@ def storage_usage(
     ),
 ):
 
-    keys = list(
-        storage.iter_container_keys()
-    )
+    keys = [
+        key
+        for key in storage.iter_container_keys()
+        # Usage counts committed containers only — the same
+        # *.svlt filter the historical disk walk used. Staging
+        # litter (decrypted zips, extracted trees) is GC's job,
+        # not usage accounting's.
+        if key.endswith(".svlt")
+    ]
+
+    total = 0
+
+    for key in keys:
+        try:
+            total += storage.container_size(key) or 0
+        except ValueError:
+            continue
 
     return StorageUsageResponse(
-        storage_bytes=sum(
-            storage.container_size(key) or 0
-            for key in keys
-        ),
+        storage_bytes=total,
         stored_file_count=len(
             keys
         ),

@@ -207,9 +207,17 @@ class GarbageCollector:
             )
         ):
 
-            self._storage.remove_container(
-                file
-            )
+            try:
+                self._storage.remove_container(
+                    file
+                )
+            except ValueError:
+                # Corrupted storage_path: no valid container can
+                # exist under that key, so there is nothing to
+                # remove — drop the record anyway (matches the
+                # historical silent no-op) instead of aborting
+                # the whole purge pass on one bad row.
+                pass
 
             self._files.delete(file)
 
