@@ -15,6 +15,9 @@ export interface User {
 export interface LoginResponse {
   access_token: string;
   refresh_token?: string;
+  /** Double-submit token, mirrored from the readable cookie for
+      cross-origin clients that cannot read backend cookies. */
+  csrf_token?: string;
   mfa_required?: boolean;
   mfa_token?: string;
   user?: {
