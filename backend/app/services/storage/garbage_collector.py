@@ -145,7 +145,12 @@ class GarbageCollector:
             if key in known:
                 continue
 
-            self._storage.delete_container(key)
+            # Store-originated key (already prefix-confined by
+            # the listing), not a DB value — orphans include
+            # non-container litter (e.g. decrypted *.zip files
+            # staged beside containers by folder restores),
+            # which shape validation would wrongly reject.
+            self._storage.delete_orphan(key)
 
             removed += 1
 

@@ -476,6 +476,25 @@ class StorageService:
 
         return self._store.delete(self._checked_key(key))
 
+    def delete_orphan(
+        self,
+        key: str,
+    ) -> bool:
+        """
+        Delete a store-listed key without shape validation.
+
+        ONLY for keys obtained from ``iter_container_keys()``
+        (provenance: the store itself, already confined to the
+        ``files/`` prefix) — e.g. the GC orphan sweep removing
+        staging litter such as decrypted ``*.zip`` files the
+        folder-restore flow leaves beside containers. NEVER pass
+        DB values or user input here; those go through
+        ``delete_container``/``remove_container`` and their shape
+        checks. Returns True when something was removed.
+        """
+
+        return self._store.delete(key)
+
     def iter_container_keys(
         self,
         prefix: str = "files/",
