@@ -88,7 +88,18 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Every token-issuing response carries the CSRF token in
+    // its body (login, MFA verify, passkey, refresh). Capture
+    // it globally so no caller has to remember.
+    const token = (
+      response.data as { csrf_token?: unknown } | undefined
+    )?.csrf_token;
+    if (typeof token === "string" && token) {
+      csrfToken = token;
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const original = error.config as (typeof error.config & {
       _retried?: boolean;
@@ -105,7 +116,7 @@ api.interceptors.response.use(
     ) {
       original._retried = true;
 
-      const csrf = getCsrfToken();
+      const csrf = getCsrfToken() ?? (await fetchCsrfToken());
 
       if (csrf) {
         try {
@@ -115,6 +126,10 @@ api.interceptors.response.use(
           });
 
           setAccessToken(data.access_token);
+
+          if (typeof data.csrf_token === "string" && data.csrf_token) {
+            setCsrfToken(data.csrf_token);
+          }
 
           original.headers.Authorization = `Bearer ${data.access_token}`;
 
