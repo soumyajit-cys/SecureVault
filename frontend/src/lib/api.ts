@@ -2,6 +2,85 @@ import axios, { AxiosError } from "axios";
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
 
+if (
+  typeof import.meta.env.VITE_API_BASE === "undefined" &&
+  import.meta.env.PROD
+) {
+  // Production builds must set VITE_API_BASE to the absolute backend
+  // origin (e.g. https://securevault-api.onrender.com/api/v1). The
+  // relative fallback only works behind a same-origin proxy (vite dev
+  // server or equivalent) and silently breaks auth on Vercel.
+  console.warn(
+    "[SecureVault] VITE_API_BASE is not set; falling back to '/api/v1'. " +
+      "Set VITE_API_BASE in the Vercel dashboard for production."
+  );
+}
+
+/**
+ * Render's free tier sleeps after ~15 min idle; the first request
+ * after sleep fails at the network level (refused/reset/timeout)
+ * while the instance boots (~50 s). These helpers retry such
+ * failures with backoff instead of surfacing a raw error.
+ *
+ * Only connection-level failures (no HTTP response) are retried,
+ * and only for idempotent methods plus the auth bootstrap calls
+ * the app explicitly wraps — never blindly for every POST, so a
+ * processed-but-unanswered mutation can't execute twice.
+ */
+export function isNetworkError(error: unknown): boolean {
+  return (
+    (axios.isAxiosError(error) && !error.response) ||
+    error instanceof TypeError // fetch() network failure
+  );
+}
+
+const COLD_START_DELAYS_MS = [2000, 5000, 10000, 15000, 20000];
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function notifyColdStart(
+  attempt: number,
+  maxAttempts: number
+): void {
+  window.dispatchEvent(
+    new CustomEvent("api:cold-start", {
+      detail: { attempt, maxAttempts }
+    })
+  );
+}
+
+export function notifyColdStartDone(): void {
+  window.dispatchEvent(new CustomEvent("api:cold-start-done"));
+}
+
+/**
+ * Run fn, retrying network errors with backoff. Returns fn's
+ * result, or rethrows the last error after maxAttempts.
+ */
+export async function withWakeUpRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = COLD_START_DELAYS_MS.length + 1,
+  onAttempt?: (attempt: number, maxAttempts: number) => void
+): Promise<T> {
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await fn();
+      if (attempt > 1) notifyColdStartDone();
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (!isNetworkError(error) || attempt >= maxAttempts) throw error;
+      notifyColdStart(attempt, maxAttempts);
+      onAttempt?.(attempt, maxAttempts);
+      await sleep(COLD_START_DELAYS_MS[attempt - 1] ?? 20000);
+    }
+  }
+  throw lastError;
+}
+
 /**
  * The access token lives in memory only; it is never
  * written to localStorage or sessionStorage so an XSS
@@ -103,7 +182,28 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const original = error.config as (typeof error.config & {
       _retried?: boolean;
+      _coldRetried?: boolean;
     });
+
+    // Cold-start / unreachable server: retry idempotent reads
+    // with backoff. Mutations are left to their callers (login
+    // and session-restore opt in explicitly via withWakeUpRetry)
+    // so a processed-but-unanswered write can't run twice.
+    if (
+      !error.response &&
+      original &&
+      !original._coldRetried &&
+      ["get", "head", "options", "delete"].includes(
+        (original.method ?? "get").toLowerCase()
+      )
+    ) {
+      original._coldRetried = true;
+      try {
+        return await withWakeUpRetry(() => api(original));
+      } catch (retryError) {
+        return Promise.reject(retryError);
+      }
+    }
 
     const status = error.response?.status;
 

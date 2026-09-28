@@ -4,8 +4,10 @@ import type { User } from "@/types";
 import {
   ensureCsrfToken,
   getAccessToken,
+  isNetworkError,
   setAccessToken,
   setCsrfToken,
+  withWakeUpRetry,
   API_BASE
 } from "@/lib/api";
 
@@ -13,6 +15,8 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   sessionChecked: boolean;
+  /** True while session-restore is retrying a sleeping server. */
+  wakingUp: boolean;
   setTokens: (access: string) => void;
   setUser: (user: User | null) => void;
   logout: () => void;
@@ -48,7 +52,10 @@ async function refreshSilently(): Promise<string | null> {
       setCsrfToken(body.csrf_token);
     }
     return typeof body.access_token === "string" ? body.access_token : null;
-  } catch {
+  } catch (error) {
+    // Network failures must throw so withWakeUpRetry retries
+    // them; auth failures (bad/expired cookie) resolve null.
+    if (isNetworkError(error)) throw error;
     return null;
   }
 }
@@ -57,6 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: getAccessToken() !== null,
   sessionChecked: false,
+  wakingUp: false,
 
   setTokens: (access) => {
     setAccessToken(access);
@@ -91,7 +99,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
 
-    const token = await refreshSilently();
+    // The free-tier server may be asleep: retry the refresh
+    // with backoff and surface the waking state to the UI
+    // instead of bouncing to /login on the first failure.
+    let token: string | null = null;
+    try {
+      token = await withWakeUpRetry(refreshSilently, undefined, () =>
+        set({ wakingUp: true })
+      );
+    } catch {
+      token = null;
+    } finally {
+      set({ wakingUp: false });
+    }
 
     if (token) {
       setAccessToken(token);
@@ -101,12 +121,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     if (token) {
       try {
-        const res = await fetch(`${API_BASE}/profile/me`, {
-          credentials: "include",
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const res = await withWakeUpRetry(() =>
+          fetch(`${API_BASE}/profile/me`, {
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+        );
         user = res.ok ? ((await res.json()) as User) : null;
       } catch {
         user = null;
