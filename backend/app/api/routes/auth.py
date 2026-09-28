@@ -212,6 +212,37 @@ def verify_mfa_login(
     )
 
 
+@router.get("/csrf")
+def get_csrf_token(
+    request: Request,
+):
+    """
+    Re-issue the current CSRF token to a holder of the
+    refresh cookie.
+
+    Cross-origin sessions need this after a page reload:
+    the in-memory body token is gone and frontend JS cannot
+    read the backend's cookies, so without this endpoint the
+    client could never assemble the X-CSRF-Token header for
+    /refresh or /logout again. Safe by construction: the
+    response is only readable by an allowed CORS origin, and
+    a cross-site attacker who triggers this request cannot
+    read the token back out of it.
+    """
+
+    csrf_token = request.cookies.get(
+        CSRF_COOKIE_NAME
+    )
+
+    if not csrf_token:
+        raise HTTPException(
+            status_code=401,
+            detail="No CSRF cookie present",
+        )
+
+    return {"csrf_token": csrf_token}
+
+
 @router.post("/refresh")
 def refresh(
     request: Request,
