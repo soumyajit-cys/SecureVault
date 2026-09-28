@@ -4,11 +4,11 @@
 title = "SecureVault gitleaks config"
 
 [[rules]]
-description = "Render blueprint 'sync:' line carrying a real secret value instead of 'false' (dashboard prompt). Placeholders starting with CHANGEME are exempt."
+description = "Render blueprint 'sync:' line carrying a value instead of 'false' (dashboard prompt). Values shorter than 8 chars (e.g. 'false') never match; CHANGEME placeholders are exempt in [allowlist]."
 id = "render-sync-secret"
-regex = '''(?im)^\s*sync:\s*['"]?(?!false\b)(?!CHANGEME)[A-Za-z0-9_+\/=:.@~$-]{8,}'''
+regex = '''(?i)^\s*sync:\s*['"]?[A-Za-z0-9_+\/=:.@~$-]{8,}'''
 
 [allowlist]
-description = "Angle-bracket placeholders in docs and examples"
+description = "Angle-bracket placeholders in docs/examples, plus the CHANGEME placeholder convention used in deploy templates"
 paths = ['''docs/.*''', '''.*\.example$''']
-regexes = ['''<[A-Za-z0-9_.:/-]+>''']
+regexes = ['''<[A-Za-z0-9_.:/-]+>''', '''CHANGEME''']
