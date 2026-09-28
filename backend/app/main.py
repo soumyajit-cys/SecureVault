@@ -16,6 +16,9 @@ from app.core.exceptions import (
     SecureVaultException,
 )
 from app.core.security_settings import (
+    validate_cors_settings,
+    validate_database_settings,
+    validate_redis_settings,
     validate_security_settings,
     validate_storage_settings,
 )
@@ -67,6 +70,9 @@ async def lifespan(app: FastAPI):
     configure_logging()
 
     validate_storage_settings()
+    validate_database_settings()
+    validate_redis_settings()
+    validate_cors_settings()
     validate_security_settings()
     initialize_security_data()
 
