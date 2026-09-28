@@ -97,7 +97,12 @@ def _issue_token_response(
     """
     Deliver an access token in the body and the
     refresh token in an HttpOnly cookie; the CSRF
-    token is exposed in a readable cookie.
+    token is exposed in a readable cookie AND in the
+    JSON body. The body copy is what makes the
+    double-submit flow work cross-origin (Vercel ->
+    Render), where frontend JS cannot read the backend's
+    cookies via document.cookie — the client keeps the
+    body token in memory and sends it as X-CSRF-Token.
     """
 
     settings = get_settings()
@@ -118,6 +123,8 @@ def _issue_token_response(
         in tokens.items()
         if key != "refresh_token"
     }
+
+    body["csrf_token"] = csrf_token
 
     response = JSONResponse(
         content=body

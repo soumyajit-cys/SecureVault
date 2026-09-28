@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     # Cookie-based refresh transport. SECURE_COOKIES is
     # forced on in production.
     SECURE_COOKIES: bool = False
+    # SameSite attribute for the auth cookies: "strict" (default,
+    # safe for same-site dev across localhost ports), "lax", or
+    # "none". Production forces "none" (with Secure) because the
+    # frontend is cross-origin (Vercel -> Render); browsers drop
+    # Strict/Lax cookies on cross-site subrequests, which would
+    # silently break refresh/logout.
+    COOKIE_SAMESITE: str = "strict"
 
     WEBAUTHN_RP_ID: str = "localhost"
     WEBAUTHN_RP_NAME: str = "SecureVault"
