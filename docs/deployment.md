@@ -1,5 +1,69 @@
 # SecureVault — Deployment
 
+## Never commit secrets
+
+Real credential values must never appear in tracked files — not in
+`render.yaml` (`sync:` lines must always be bare `sync: false`,
+"prompt in dashboard"), not in docs, not in tests. Guards:
+
+- `.gitignore` excludes `.env`, `.env.*` (except `.env.example`), and
+  `*.pem`. `.env` was never tracked; keep it that way.
+- `.pre-commit-config.yaml` runs gitleaks on staged changes
+  (`pip install pre-commit && pre-commit install` to activate).
+- `.gitleaks.toml` pins the default ruleset plus a custom
+  `render-sync-secret` rule that fails on any `sync: <value>` line,
+  and CI (`.github/workflows/ci.yml`, `secrets-scan` job) scans every
+  push/PR. Note the scanner's limit: stock gitleaks does not catch
+  Render's split `key:`/`sync:` shape, which is why the custom rule
+  exists — do not remove it.
+- If a secret ever lands in git history, scrubbing the history does
+  NOT un-leak it: rotate every exposed credential immediately (new
+  Neon password, new Upstash DB/token, new `SECRET_KEY`, new admin
+  password, new B2 application key), then rewrite history (see
+  "Scrubbing git history" below) and force-push.
+
+## Deploy order (Render + Vercel + Neon + Upstash + B2)
+
+The frontend URL is needed by the backend (CORS, WebAuthn, emailed
+links) and the backend URL is needed by the frontend, so deploy in
+this order:
+
+1. **Neon** — create the Postgres DB; copy the pooled connection URL.
+   It must use the `postgresql+psycopg://` driver prefix (plain
+   `postgresql://` is rejected at startup) and must NOT contain
+   `channel_binding=require` (the pooler doesn't support it).
+2. **Upstash** — create the Redis DB; copy the **Redis wire-protocol**
+   URL (`rediss://default:<password>@<host>:6379`), NOT the REST URL
+   (`https://...upstash.io`, rejected at startup).
+3. **Backblaze B2** — create a bucket; note its region; create a
+   bucket-scoped application key (never the master key).
+4. **Render** — New → Blueprint with this repo's `render.yaml`; enter
+   every `sync: false` value in the dashboard (Neon URL, Upstash URL,
+   generated `SECRET_KEY`, admin password, B2 endpoint/bucket/key/secret,
+   `WEBAUTHN_*`, `APP_BASE_URL` temporarily set to a placeholder).
+   Deploy; note the backend URL (`https://<name>.onrender.com`).
+5. **Vercel** — import `frontend/`; set `VITE_API_BASE` to
+   `https://<render-backend>/api/v1`; deploy; note the frontend URL.
+6. **Back to Render** — set the now-known URLs: `CORS_ALLOW_ORIGINS`
+   to `["https://<vercel-app>"]`, `WEBAUTHN_RP_ID` to the backend host,
+   `WEBAUTHN_ORIGIN` and `APP_BASE_URL` to the frontend origin.
+   Redeploy and smoke-test (register → upload → download).
+
+## Free-tier limitations
+
+- **Cold starts**: the Render free web service sleeps after ~15 min
+  idle; first request takes up to ~50 s. The frontend retries with
+  backoff and shows a "Waking up the server" state (global banner +
+  login/splash messaging) instead of a raw error.
+- **No persistent disk**: `STORAGE_BACKEND=local` loses containers on
+  every deploy/restart — use `STORAGE_BACKEND=s3` (B2) instead.
+- **512 MB RAM**: the Docker image runs a single uvicorn worker
+  (`--workers 1`); do not raise it without a bigger instance.
+- **50 MB upload cap**: `MAX_UPLOAD_SIZE_BYTES=52428800` in
+  `render.yaml` stays under free-tier request limits.
+- **Neon free Postgres** is auto-deleted after 90 days of inactivity;
+  back it up. **Render has no free managed Redis** — Upstash covers it.
+
 ## Environment variables
 
 See `backend/.env.example` and `backend/app/core/config.py` for the full
@@ -10,7 +74,9 @@ list. Critical settings:
 | `DATABASE_URL` | yes | `postgresql+psycopg://user:pass@host:5432/securevault` |
 | `SECRET_KEY` | yes | at-rest master key; **must be unique, long, random**; rotate deliberately |
 | `VAULT_ADMIN_EMAIL/USERNAME/PASSWORD` | yes | bootstrap admin |
-| `CORS_ALLOW_ORIGINS` | prod | restrict to your origin, e.g. `["https://vault.example.com"]` |
+| `CORS_ALLOW_ORIGINS` | prod | JSON list of exact origins, e.g. `["https://vault.example.com"]`; `*` with credentials is rejected at startup |
+| `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGIN` / `APP_BASE_URL` | prod | backend host (no scheme), frontend origin, public frontend URL |
+| `SECURE_COOKIES` / `COOKIE_SAMESITE` | prod | production forces `Secure` + `SameSite=None` for cross-origin auth |
 | `TRUSTED_PROXY_COUNT` | prod | 1 when behind a TLS proxy |
 | `RATE_LIMIT_BACKEND` | **mandatory in prod** | `redis` with `REDIS_URL`; startup refuses to run with the in-memory backend in production |
 | `STORAGE_BACKEND` | when no persistent disk | `local` (default, disk under `STORAGE_DIR`) or `s3` (S3-compatible bucket) |
@@ -20,6 +86,36 @@ list. Critical settings:
 | `APP_ENV` | yes | `production` |
 
 Do NOT commit `.env`; provision secrets via the platform's secret manager.
+Startup validates formats before serving: `DATABASE_URL` needs the
+`postgresql+psycopg://` prefix (no `channel_binding=require`);
+`REDIS_URL` must be `redis(s)://` (Postgres and Upstash REST URLs are
+rejected with a hint); `CORS_ALLOW_ORIGINS` must parse as a JSON list;
+production enforces `SECRET_KEY` length/placeholder and admin-password
+rules. See `backend/tests/test_config_validation.py` for the matrix.
+
+## Scrubbing git history
+
+If secrets were ever committed (e.g. values after `sync:` in an old
+`render.yaml` revision), use **git filter-repo** (actively maintained;
+BFG is effectively unmaintained and cannot do content replacement as
+flexibly):
+
+```bash
+pip install git-filter-repo
+# 1. Fresh mirror clone (never scrub in your working repo)
+git clone --mirror <repo-url> securevault-scrub && cd securevault-scrub
+# 2. Replace each leaked value. repeat --replace-text per secret class;
+#    each file holds ONE regex==>replacement rule, applied to history.
+printf '%s\n' 'regex:(?m)^(\\s*sync:\\s*)(?!false\\b)(?!CHANGEME)\\S+==>$1[REDACTED]' > sync.txt
+git filter-repo --replace-text sync.txt --force
+# 3. Inspect: git log -p -- render.yaml must show no real values, then
+git push --force --all && git push --force --tags
+```
+
+Then: **rotate everything first** (scrubbing hides history but anyone
+who cloned already has the secrets), tell collaborators to re-clone
+(fetched deltas won't reconcile), and confirm the gitleaks CI job is
+green before merging anything else.
 
 ## Object storage (S3-compatible)
 
