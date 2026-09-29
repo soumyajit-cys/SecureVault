@@ -104,9 +104,11 @@ flexibly):
 pip install git-filter-repo
 # 1. Fresh mirror clone (never scrub in your working repo)
 git clone --mirror <repo-url> securevault-scrub && cd securevault-scrub
-# 2. Replace each leaked value. repeat --replace-text per secret class;
-#    each file holds ONE regex==>replacement rule, applied to history.
-printf '%s\n' 'regex:(?m)^(\\s*sync:\\s*)(?!false\\b)(?!CHANGEME)\\S+==>$1[REDACTED]' > sync.txt
+# 2. Replace each leaked value. The file holds ONE rule per line in
+#    `regex:PATTERN==>replacement` form (Python re syntax, so \1 is
+#    the group reference). This rule redacts every `sync: <value>`
+#    line but leaves `sync: false` and CHANGEME placeholders alone.
+printf '%s\n' 'regex:(?m)^(\s*sync:\s*)(?!false\b)(?!CHANGEME)\S+==>\1[REDACTED]' > sync.txt
 git filter-repo --replace-text sync.txt --force
 # 3. Inspect: git log -p -- render.yaml must show no real values, then
 git push --force --all && git push --force --tags
